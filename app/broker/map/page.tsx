@@ -1,0 +1,377 @@
+"use client";
+import { useEffect, useState, useRef } from "react";
+import Map, { Marker, Popup, NavigationControl } from "react-map-gl/mapbox";
+import type { MapRef } from "react-map-gl/mapbox";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { useLang } from "@/app/i18n/LanguageContext";
+
+const accent = "#E8B84B";
+const bgPrimary = "#0F1923";
+const bgCard = "#1E2D3D";
+const textMuted = "#94A3B8";
+const borderColor = "#2A3F55";
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
+
+const DEFAULT_RATES: Record<string, number> = { TRY: 1, USD: 38, EUR: 52 };
+
+type Project = {
+  id: string; title: string; city: string; district: string;
+  project_type: string; min_price: number; max_price: number;
+  lat: number; lng: number; ikamet_eligible: boolean;
+  cover_image_url: string | null;
+  developer_logo_url: string | null;
+};
+type Profile = { full_name: string; status: string; role: string; subscription_status: string | null };
+
+export default function BrokerMapPage() {
+  const { lang } = useLang();
+  const router = useRouter();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selected, setSelected] = useState<Project | null>(null);
+  const [currency, setCurrency] = useState<"TRY" | "USD" | "EUR">("TRY");
+  const [rates, setRates] = useState(DEFAULT_RATES);
+  const [filters, setFilters] = useState({ city: "", type: "", minPrice: "", maxPrice: "", ikamet: false });
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sidebarTab, setSidebarTab] = useState<"filter" | "list">("filter");
+  const mapRef = useRef<MapRef>(null);
+
+  const t = {
+    tr: {
+      signout: "Çıkış", showProjects: "Detayları Gör", filter: "Filtrele",
+      city: "Şehir", type: "Proje Tipi", minPrice: "Min Fiyat", maxPrice: "Max Fiyat",
+      apply: "Uygula", reset: "Sıfırla", allTypes: "Tüm Tipler",
+      paywallTitle: "Premium Özellik", paywallText: "Detayları görmek için abonelik gereklidir.",
+      subscribe: "Abone Ol", cancel: "Vazgeç", ikamet: "İkamet İzni Uygun",
+      loading: "Yükleniyor...", projects: "proje",
+      types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"],
+    },
+    en: {
+      signout: "Sign Out", showProjects: "View Details", filter: "Filter",
+      city: "City", type: "Project Type", minPrice: "Min Price", maxPrice: "Max Price",
+      apply: "Apply", reset: "Reset", allTypes: "All Types",
+      paywallTitle: "Premium Feature", paywallText: "A subscription is required to view project details.",
+      subscribe: "Subscribe", cancel: "Cancel", ikamet: "Residence Permit Eligible",
+      loading: "Loading...", projects: "projects",
+      types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"],
+    },
+  }[lang];
+
+  useEffect(() => {
+    fetch("https://api.frankfurter.app/latest?from=TRY&to=USD,EUR")
+      .then(r => r.json())
+      .then(data => {
+        if (data.rates) {
+          setRates({ TRY: 1, USD: 1 / data.rates.USD, EUR: 1 / data.rates.EUR });
+        }
+      }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { router.push("/login"); return; }
+      supabase.from("profiles").select("full_name, status, role, subscription_status").eq("id", user.id).single()
+        .then(({ data }) => {
+          if (!data || data.status !== "active") { router.push("/pending"); return; }
+          if (data.role !== "broker") { router.push("/developer"); return; }
+          setProfile(data);
+        });
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!profile) return;
+    loadProjects({});
+  }, [profile]);
+
+  function loadProjects(f: typeof filters, currentRates = rates, currentCurrency = currency) {
+    const supabase = createClient();
+    let q = supabase.from("projects")
+      .select("id, title, city, district, project_type, min_price, max_price, lat, lng, ikamet_eligible, cover_image_url, profiles(logo_url)")
+      .eq("status", "published");
+    if (f.city) q = q.ilike("city", `%${f.city.trim()}%`);
+    if (f.type) q = q.eq("project_type", f.type);
+    const minTRY = f.minPrice ? parseFloat(f.minPrice) * currentRates[currentCurrency] : null;
+    const maxTRY = f.maxPrice ? parseFloat(f.maxPrice) * currentRates[currentCurrency] : null;
+    if (minTRY) q = q.gte("max_price", minTRY);
+    if (maxTRY) q = q.lte("min_price", maxTRY);
+    if (f.ikamet) q = q.eq("ikamet_eligible", true);
+    q.then(({ data, error }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const results: Project[] = ((data as any[]) || []).map((p: any) => ({
+        ...p,
+        developer_logo_url: p.profiles?.logo_url ?? null,
+      }));
+      setProjects(results);
+      // Karte zu Ergebnissen fliegen
+      if (results.length === 1) {
+        mapRef.current?.flyTo({ center: [results[0].lng, results[0].lat], zoom: 13, duration: 1000 });
+      } else if (results.length > 1) {
+        // Bounds berechnen
+        const lngs = results.map(p => p.lng);
+        const lats = results.map(p => p.lat);
+        mapRef.current?.fitBounds(
+          [[Math.min(...lngs) - 0.5, Math.min(...lats) - 0.5], [Math.max(...lngs) + 0.5, Math.max(...lats) + 0.5]],
+          { duration: 1000, padding: 60 }
+        );
+      }
+    });
+  }
+
+  function applyFilters() { loadProjects(filters, rates, currency); }
+  function resetFilters() {
+    const empty = { city: "", type: "", minPrice: "", maxPrice: "", ikamet: false };
+    setFilters(empty);
+    loadProjects(empty, rates, currency);
+  }
+
+  function formatPrice(p: number) {
+    const converted = p / rates[currency];
+    const symbol = currency === "TRY" ? "₺" : currency === "USD" ? "$" : "€";
+    return `${symbol}${Math.round(converted).toLocaleString()}`;
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function generatePDF() {
+    const ids = Array.from(selectedIds).join(",");
+    router.push(`/broker/catalog?projects=${ids}`);
+  }
+
+  if (!profile) return (
+    <div style={{ backgroundColor: bgPrimary, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <p style={{ color: textMuted }}>{t.loading}</p>
+    </div>
+  );
+
+  const inputStyle = {
+    width: "100%", padding: "8px 10px", backgroundColor: bgPrimary,
+    border: `1px solid ${borderColor}`, borderRadius: 7, color: "#F1F5F9",
+    fontSize: 13, outline: "none", boxSizing: "border-box" as const,
+  };
+
+  return (
+    <div style={{ height: "100vh", display: "flex", flexDirection: "column", backgroundColor: bgPrimary, fontFamily: "system-ui, sans-serif" }}>
+
+      {/* Navbar */}
+      <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+        <span style={{ color: accent, fontSize: 20, fontWeight: 800 }}>YapiMap</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ color: textMuted, fontSize: 13 }}>{profile.full_name}</span>
+          <button onClick={() => fetch("/api/auth/signout").then(() => router.push("/"))}
+            style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
+            {t.signout}
+          </button>
+        </div>
+      </nav>
+
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+
+        {/* Sidebar */}
+        <div style={{ width: 280, backgroundColor: bgCard, borderRight: `1px solid ${borderColor}`, flexShrink: 0, display: "flex", flexDirection: "column" }}>
+
+          {/* Tabs */}
+          <div style={{ display: "flex", borderBottom: `1px solid ${borderColor}`, flexShrink: 0 }}>
+            {(["filter", "list"] as const).map(tab => (
+              <button key={tab} onClick={() => setSidebarTab(tab)}
+                style={{ flex: 1, padding: "12px 0", fontSize: 13, fontWeight: 700, cursor: "pointer", border: "none", backgroundColor: "transparent", color: sidebarTab === tab ? accent : textMuted, borderBottom: sidebarTab === tab ? `2px solid ${accent}` : "2px solid transparent" }}>
+                {tab === "filter" ? (lang === "tr" ? "Filtre" : "Filter") : (lang === "tr" ? `Liste (${projects.length})` : `List (${projects.length})`)}
+              </button>
+            ))}
+          </div>
+
+          {/* PDF Button wenn Projekte ausgewählt */}
+          {selectedIds.size > 0 && (
+            <div style={{ padding: "10px 16px", borderBottom: `1px solid ${borderColor}`, flexShrink: 0 }}>
+              <button onClick={generatePDF}
+                style={{ width: "100%", padding: "9px", backgroundColor: accent, color: "#0F1923", fontWeight: 700, fontSize: 13, borderRadius: 7, border: "none", cursor: "pointer" }}>
+                📄 {lang === "tr" ? `PDF Oluştur (${selectedIds.size})` : `Generate PDF (${selectedIds.size})`}
+              </button>
+            </div>
+          )}
+
+          <div style={{ flex: 1, overflowY: "auto" }}>
+          {sidebarTab === "filter" && (
+          <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+
+          {/* Währung */}
+          <div>
+            <label style={{ fontSize: 11, color: textMuted, display: "block", marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>
+              {lang === "tr" ? "Para Birimi" : "Currency"}
+            </label>
+            <div style={{ display: "flex", gap: 6 }}>
+              {(["TRY", "USD", "EUR"] as const).map(c => (
+                <button key={c} onClick={() => setCurrency(c)}
+                  style={{ flex: 1, padding: "6px 0", borderRadius: 6, border: `1px solid ${currency === c ? accent : borderColor}`, backgroundColor: currency === c ? `${accent}22` : "transparent", color: currency === c ? accent : textMuted, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                  {c === "TRY" ? "₺" : c === "USD" ? "$" : "€"} {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ borderTop: `1px solid ${borderColor}` }} />
+
+          {/* City */}
+          <div>
+            <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.city}</label>
+            <input style={inputStyle} value={filters.city} onChange={e => setFilters(f => ({ ...f, city: e.target.value }))} />
+          </div>
+
+          {/* Type */}
+          <div>
+            <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.type}</label>
+            <select style={{ ...inputStyle }} value={filters.type} onChange={e => setFilters(f => ({ ...f, type: e.target.value }))}>
+              <option value="">{t.allTypes}</option>
+              {t.types.map(tp => <option key={tp} value={tp}>{tp}</option>)}
+            </select>
+          </div>
+
+          {/* Price Range */}
+          <div>
+            <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>
+              {t.minPrice} ({currency === "TRY" ? "₺" : currency === "USD" ? "$" : "€"})
+            </label>
+            <input style={inputStyle} type="number" value={filters.minPrice} onChange={e => setFilters(f => ({ ...f, minPrice: e.target.value }))} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>
+              {t.maxPrice} ({currency === "TRY" ? "₺" : currency === "USD" ? "$" : "€"})
+            </label>
+            <input style={inputStyle} type="number" value={filters.maxPrice} onChange={e => setFilters(f => ({ ...f, maxPrice: e.target.value }))} />
+          </div>
+
+          {/* İkamet */}
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+            <input type="checkbox" checked={filters.ikamet} onChange={e => setFilters(f => ({ ...f, ikamet: e.target.checked }))}
+              style={{ width: 15, height: 15, accentColor: accent }} />
+            <span style={{ fontSize: 13, color: "#F1F5F9" }}>{t.ikamet}</span>
+          </label>
+
+          {/* Buttons */}
+          <button onClick={applyFilters}
+            style={{ width: "100%", padding: "10px", backgroundColor: accent, color: "#0F1923", fontWeight: 700, fontSize: 13, borderRadius: 8, border: "none", cursor: "pointer" }}>
+            {t.apply}
+          </button>
+          <button onClick={resetFilters}
+            style={{ width: "100%", padding: "9px", backgroundColor: "transparent", color: textMuted, fontSize: 13, borderRadius: 8, border: `1px solid ${borderColor}`, cursor: "pointer" }}>
+            {t.reset}
+          </button>
+
+          </div>
+          )}
+
+          {sidebarTab === "list" && (
+            <div>
+              {projects.map(p => (
+                <div key={p.id}
+                  onClick={() => { setSelected(p); mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 13, duration: 800 }); }}
+                  style={{ padding: "14px 16px", borderBottom: `1px solid ${borderColor}`, cursor: "pointer", backgroundColor: selected?.id === p.id ? `${accent}11` : "transparent", display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  {/* Checkbox */}
+                  <div onClick={e => { e.stopPropagation(); toggleSelect(p.id); }}
+                    style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${selectedIds.has(p.id) ? accent : borderColor}`, backgroundColor: selectedIds.has(p.id) ? accent : "transparent", flexShrink: 0, marginTop: 2, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                    {selectedIds.has(p.id) && <span style={{ color: "#0F1923", fontSize: 11, fontWeight: 900 }}>✓</span>}
+                  </div>
+                  {/* Cover thumb */}
+                  {p.cover_image_url
+                    ? <img src={p.cover_image_url} alt="" style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6, flexShrink: 0 }} />
+                    : <div style={{ width: 48, height: 48, backgroundColor: bgPrimary, borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🏢</div>
+                  }
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2, color: selected?.id === p.id ? accent : "#F1F5F9", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.title}</div>
+                    <div style={{ fontSize: 11, color: textMuted, marginBottom: 2 }}>{p.district}, {p.city}</div>
+                    <div style={{ fontSize: 12, color: accent, fontWeight: 600 }}>{formatPrice(p.min_price)} – {formatPrice(p.max_price)}</div>
+                  </div>
+                </div>
+              ))}
+              {projects.length === 0 && (
+                <div style={{ padding: 32, textAlign: "center", color: textMuted, fontSize: 13 }}>
+                  {lang === "tr" ? "Proje bulunamadı" : "No projects found"}
+                </div>
+              )}
+            </div>
+          )}
+          </div>
+        </div>
+
+        {/* Map */}
+        <div style={{ flex: 1, position: "relative" }}>
+          <Map
+            ref={mapRef}
+            mapboxAccessToken={MAPBOX_TOKEN}
+            initialViewState={{ longitude: 35.2433, latitude: 38.9637, zoom: 5.5 }}
+            style={{ width: "100%", height: "100%" }}
+            mapStyle="mapbox://styles/mapbox/dark-v11"
+          >
+            <NavigationControl position="bottom-right" />
+
+            {projects.map(p => (
+              <Marker key={p.id} longitude={p.lng} latitude={p.lat} anchor="bottom"
+                onClick={e => { e.originalEvent.stopPropagation(); setSelected(p); }}>
+                <div style={{
+                  backgroundColor: selectedIds.has(p.id) ? "#10B981" : selected?.id === p.id ? "#fff" : accent,
+                  color: "#0F1923", fontSize: 11, fontWeight: 700,
+                  padding: "4px 10px", borderRadius: 6, cursor: "pointer",
+                  whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+                  transform: selected?.id === p.id ? "scale(1.15)" : "scale(1)",
+                  transition: "all 0.15s",
+                  outline: selectedIds.has(p.id) ? "2px solid #fff" : "none",
+                }}>
+                  {selectedIds.has(p.id) ? "✓ " : ""}{p.city}
+                </div>
+              </Marker>
+            ))}
+
+            {selected && (
+              <Popup longitude={selected.lng} latitude={selected.lat} anchor="top"
+                onClose={() => setSelected(null)} closeButton closeOnClick={false} maxWidth="260px">
+                <div style={{ backgroundColor: bgCard, borderRadius: 10, padding: 14, width: 230, color: "#F1F5F9", fontFamily: "system-ui, sans-serif" }}>
+                  {selected.developer_logo_url && (
+                    <div style={{ width: "100%", height: 60, backgroundColor: "#0F1923", borderRadius: 7, marginBottom: 10, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <img src={selected.developer_logo_url} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                    </div>
+                  )}
+                  {selected.cover_image_url && !selected.developer_logo_url && (
+                    <div style={{ width: "100%", height: 90, backgroundColor: "#0F1923", borderRadius: 7, marginBottom: 10, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <img src={selected.cover_image_url} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                    </div>
+                  )}
+                  <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3 }}>{selected.title}</div>
+                  <div style={{ fontSize: 12, color: textMuted, marginBottom: 6 }}>{selected.district}, {selected.city}</div>
+                  <div style={{ fontSize: 12, color: textMuted, marginBottom: 4 }}>{selected.project_type}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: accent, marginBottom: 8 }}>
+                    {formatPrice(selected.min_price)} – {formatPrice(selected.max_price)}
+                  </div>
+                  {selected.ikamet_eligible && (
+                    <div style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 999, backgroundColor: "#10B98120", color: "#10B981", display: "inline-block", marginBottom: 10 }}>
+                      ✓ {t.ikamet}
+                    </div>
+                  )}
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => router.push(`/projects/${selected.id}`)}
+                      style={{ flex: 1, padding: "8px", backgroundColor: accent, color: "#0F1923", fontWeight: 700, fontSize: 13, borderRadius: 7, border: "none", cursor: "pointer" }}>
+                      {t.showProjects}
+                    </button>
+                    <button onClick={() => toggleSelect(selected.id)}
+                      style={{ padding: "8px 10px", backgroundColor: selectedIds.has(selected.id) ? "#10B981" : "transparent", color: selectedIds.has(selected.id) ? "#fff" : accent, fontWeight: 700, fontSize: 12, borderRadius: 7, border: `1px solid ${selectedIds.has(selected.id) ? "#10B981" : accent}`, cursor: "pointer", whiteSpace: "nowrap" }}>
+                      {selectedIds.has(selected.id) ? "✓ PDF" : "+ PDF"}
+                    </button>
+                  </div>
+                </div>
+              </Popup>
+            )}
+          </Map>
+        </div>
+      </div>
+
+    </div>
+  );
+}

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <!-- Sky -->
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#87CEEB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E0F0FF;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="building" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#D4A843;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C49533;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="sea" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#2980B9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1A5276;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#sky)"/>
+  <!-- Sea -->
+  <rect x="0" y="340" width="800" height="160" fill="url(#sea)" opacity="0.7"/>
+  <!-- Mountains -->
+  <polygon points="0,300 120,180 240,300" fill="#7D9B76" opacity="0.6"/>
+  <polygon points="100,300 250,160 400,300" fill="#5D7A56" opacity="0.7"/>
+  <polygon points="400,300 580,140 760,300" fill="#4A6645" opacity="0.6"/>
+  <!-- Main Building -->
+  <rect x="200" y="120" width="180" height="220" rx="4" fill="url(#building)"/>
+  <!-- Windows -->
+  <rect x="220" y="140" width="30" height="25" rx="3" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="265" y="140" width="30" height="25" rx="3" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="310" y="140" width="30" height="25" rx="3" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="220" y="180" width="30" height="25" rx="3" fill="#B8D4E8" opacity="0.9"/>
+  <rect x="265" y="180" width="30" height="25" rx="3" fill="#B8D4E8" opacity="0.9"/>
+  <rect x="310" y="180" width="30" height="25" rx="3" fill="#B8D4E8" opacity="0.9"/>
+  <rect x="220" y="220" width="30" height="25" rx="3" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="265" y="220" width="30" height="25" rx="3" fill="#FFD700" opacity="0.9"/>
+  <rect x="310" y="220" width="30" height="25" rx="3" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="220" y="260" width="30" height="25" rx="3" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="265" y="260" width="30" height="25" rx="3" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="310" y="260" width="30" height="25" rx="3" fill="#B8D4E8" opacity="0.8"/>
+  <!-- Second Building -->
+  <rect x="420" y="160" width="140" height="180" rx="4" fill="#C49533" opacity="0.9"/>
+  <rect x="435" y="175" width="25" height="20" rx="2" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="470" y="175" width="25" height="20" rx="2" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="505" y="175" width="25" height="20" rx="2" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="435" y="210" width="25" height="20" rx="2" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="470" y="210" width="25" height="20" rx="2" fill="#FFD700" opacity="0.9"/>
+  <rect x="505" y="210" width="25" height="20" rx="2" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="435" y="245" width="25" height="20" rx="2" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="470" y="245" width="25" height="20" rx="2" fill="#B8D4E8" opacity="0.8"/>
+  <rect x="505" y="245" width="25" height="20" rx="2" fill="#B8D4E8" opacity="0.8"/>
+  <!-- Ground/Garden -->
+  <rect x="0" y="335" width="800" height="20" fill="#5D8A3C"/>
+  <circle cx="180" cy="330" r="25" fill="#4A7A2C"/>
+  <circle cx="600" cy="328" r="30" fill="#4A7A2C"/>
+  <circle cx="650" cy="332" r="20" fill="#3D6A22"/>
+  <!-- Pool -->
+  <ellipse cx="350" cy="345" rx="60" ry="15" fill="#5DADE2" opacity="0.7"/>
+  <!-- Label -->
+  <rect x="20" y="20" width="220" height="50" rx="8" fill="#0F1923" opacity="0.8"/>
+  <text x="130" y="42" font-family="Arial" font-weight="bold" font-size="14" fill="#E8B84B" text-anchor="middle">KONAK CİTY</text>
+  <text x="130" y="60" font-family="Arial" font-size="11" fill="#94A3B8" text-anchor="middle">Mahmutlar, Alanya</text>
+</svg>
