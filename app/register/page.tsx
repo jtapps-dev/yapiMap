@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -12,7 +12,7 @@ const bgCard = "#1E2D3D";
 const textMuted = "#94A3B8";
 const borderColor = "#2A3F55";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const { lang } = useLang();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -381,5 +381,13 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   );
 }
