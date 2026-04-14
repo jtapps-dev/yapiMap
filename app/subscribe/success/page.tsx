@@ -15,10 +15,12 @@ export default function SubscribeSuccessPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const t = {
-    tr: { title: "Abonelik Aktif!", sub: "YapiMap Premium'a hoş geldiniz. Tüm projelere artık erişebilirsiniz.", redirect: "Haritaya yönlendiriliyorsunuz..." },
-    en: { title: "Subscription Active!", sub: "Welcome to YapiMap Premium. You now have full access to all projects.", redirect: "Redirecting to map..." },
-  }[lang];
+  const tSuccess = {
+    tr: { title: "Abonelik Aktif!", sub: "YapıMap Premium'a hoş geldiniz. Tüm projelere artık erişebilirsiniz.", redirect: "Haritaya yönlendiriliyorsunuz..." },
+    en: { title: "Subscription Active!", sub: "Welcome to YapıMap Premium. You now have full access to all projects.", redirect: "Redirecting to map..." },
+    ru: { title: "Подписка активна!", sub: "Добро пожаловать в YapıMap Premium. Теперь у вас есть полный доступ ко всем проектам.", redirect: "Переход на карту..." },
+  };
+  const t = tSuccess[lang as keyof typeof tSuccess] ?? tSuccess.en;
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: bgPrimary, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui, sans-serif", color: "#F1F5F9" }}>

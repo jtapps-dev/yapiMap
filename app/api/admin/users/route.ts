@@ -1,22 +1,21 @@
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { requireAdmin } from "@/lib/adminAuth";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function GET() {
-  // Prüfen ob eingeloggt + Admin
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
-  // Alle Profile mit Service Role laden (bypassed RLS)
-  const admin = createAdminClient();
-  const { data: profiles } = await admin
+  const { data: profiles, error } = await supabase
     .from("profiles")
-    .select("*")
+    .select("id, full_name, company_name, phone, email, role, status, created_at")
     .order("created_at", { ascending: false });
 
-  return NextResponse.json({ profiles: profiles || [] });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ profiles });
 }

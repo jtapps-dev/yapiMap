@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Diamond City – Project Brochure</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Georgia', serif; background: #fff; color: #1a1a1a; }
+
+  .page { width: 210mm; min-height: 297mm; margin: 0 auto; background: #fff; }
+
+  /* COVER */
+  .cover {
+    background: linear-gradient(135deg, #0F1923 0%, #1E2D3D 60%, #0F1923 100%);
+    height: 297mm; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; position: relative;
+    page-break-after: always;
+  }
+  .cover-diamond {
+    width: 80px; height: 80px; margin-bottom: 30px;
+    transform: rotate(0deg);
+  }
+  .cover-logo { color: #E8B84B; font-size: 48px; font-weight: bold; letter-spacing: 6px; margin-bottom: 6px; }
+  .cover-sub { color: #94A3B8; font-size: 14px; letter-spacing: 8px; text-transform: uppercase; margin-bottom: 50px; }
+  .cover-divider { width: 80px; height: 3px; background: #E8B84B; margin: 0 auto 50px; }
+  .cover-title { color: #F1F5F9; font-size: 38px; font-weight: bold; text-align: center; margin-bottom: 14px; }
+  .cover-location { color: #E8B84B; font-size: 16px; text-align: center; letter-spacing: 4px; margin-bottom: 50px; }
+  .cover-badge {
+    background: #E8B84B; color: #0F1923; padding: 10px 30px;
+    border-radius: 30px; font-size: 13px; font-weight: bold; letter-spacing: 2px;
+  }
+  .cover-bottom {
+    position: absolute; bottom: 40px; left: 0; right: 0; text-align: center;
+    color: #2A3F55; font-size: 11px; letter-spacing: 2px;
+  }
+
+  /* CONTENT PAGE */
+  .content-page { padding: 20mm; page-break-after: always; }
+  .section-title {
+    font-size: 11px; color: #E8B84B; letter-spacing: 4px; text-transform: uppercase;
+    margin-bottom: 8px; font-family: Arial, sans-serif;
+  }
+  .section-heading { font-size: 28px; color: #0F1923; margin-bottom: 24px; font-weight: bold; }
+  .section-text { font-size: 13px; color: #4A5568; line-height: 1.9; margin-bottom: 20px; }
+
+  .highlight-box {
+    background: #0F1923; color: #F1F5F9; padding: 24px 28px;
+    border-radius: 8px; margin: 24px 0; border-left: 4px solid #E8B84B;
+  }
+  .highlight-box h3 { color: #E8B84B; font-size: 16px; margin-bottom: 12px; font-family: Arial; }
+  .highlight-box p { font-size: 13px; line-height: 1.8; color: #94A3B8; font-family: Arial; }
+
+  .specs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+  .spec-item { background: #F8F9FA; padding: 16px; border-radius: 8px; border: 1px solid #E2E8F0; }
+  .spec-label { font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; font-family: Arial; margin-bottom: 4px; }
+  .spec-value { font-size: 20px; font-weight: bold; color: #0F1923; font-family: Arial; }
+  .spec-unit { font-size: 12px; color: #E8B84B; font-family: Arial; }
+
+  .amenity-list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 16px 0; }
+  .amenity-list li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #4A5568; font-family: Arial; }
+  .amenity-list li::before { content: "✓"; color: #E8B84B; font-weight: bold; font-size: 14px; }
+
+  .price-section { background: linear-gradient(135deg, #0F1923, #1E2D3D); padding: 28px; border-radius: 10px; margin: 24px 0; }
+  .price-label { font-size: 11px; color: #94A3B8; letter-spacing: 3px; text-transform: uppercase; font-family: Arial; margin-bottom: 8px; }
+  .price-value { font-size: 36px; font-weight: bold; color: #E8B84B; font-family: Arial; }
+  .price-note { font-size: 12px; color: #94A3B8; font-family: Arial; margin-top: 6px; }
+
+  .image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+  .img-rooftop { background: linear-gradient(180deg, #0a1628 0%, #1E90FF 60%, #0D47A1 100%); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #E8B84B; font-family: Arial; font-size: 13px; font-weight: bold; }
+  .img-interior { background: linear-gradient(180deg, #E8E0D0 0%, #D4C5A0 50%, #B8A880 100%); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #0F1923; font-family: Arial; font-size: 13px; font-weight: bold; }
+
+  .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #E2E8F0; }
+  .footer p { font-size: 11px; color: #94A3B8; font-family: Arial; line-height: 1.8; }
+
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .cover { height: 100vh; }
+    @page { margin: 0; size: A4; }
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="page">
+  <div class="cover">
+    <svg width="80" height="80" viewBox="0 0 80 80" class="cover-diamond">
+      <polygon points="40,5 70,40 40,75 10,40" fill="#E8B84B"/>
+      <polygon points="40,18 58,40 40,62 22,40" fill="#0F1923"/>
+      <polygon points="40,26 52,40 40,54 28,40" fill="#E8B84B" opacity="0.5"/>
+    </svg>
+    <div class="cover-logo">DIAMOND CITY</div>
+    <div class="cover-sub">Luxury Residences Istanbul</div>
+    <div class="cover-divider"></div>
+    <div class="cover-title">Where Luxury<br/>Meets the Bosphorus</div>
+    <div class="cover-location">📍 Kadıköy · Istanbul · Turkey</div>
+    <div class="cover-badge">BOSPHORUS VIEW RESIDENCES</div>
+    <div class="cover-bottom">
+      Osan Development Group · yapimap.com · info@diamondcity.com.tr
+    </div>
+  </div>
+</div>
+
+<!-- CONTENT PAGE 1 -->
+<div class="page">
+  <div class="content-page">
+
+    <div class="section-title">About the Project</div>
+    <div class="section-heading">Diamond City</div>
+
+    <p class="section-text">
+      Diamond City is a prestigious luxury residential development situated in the heart of
+      Kadıköy, Istanbul's most vibrant and cosmopolitan district. With breathtaking Bosphorus
+      views from every floor, the project redefines modern luxury living in Turkey's largest city.
+    </p>
+
+    <p class="section-text">
+      Developed by Osan Development Group, Diamond City comprises 85 meticulously designed
+      residences across 20 floors. Every apartment features floor-to-ceiling windows, premium
+      Italian finishes, and smart home automation systems — setting a new standard for
+      sophisticated urban living in Istanbul.
+    </p>
+
+    <div class="highlight-box">
+      <h3>💎 Why Diamond City?</h3>
+      <p>
+        • Direct Bosphorus view from all floors<br/>
+        • 5 minutes from Kadıköy metro &amp; ferry terminal<br/>
+        • Rooftop infinity pool &amp; sky lounge on floor 20<br/>
+        • Eligible for Turkish Citizenship by Investment<br/>
+        • Delivery: December 2026
+      </p>
+    </div>
+
+    <div class="specs-grid">
+      <div class="spec-item">
+        <div class="spec-label">Total Units</div>
+        <div class="spec-value">85 <span class="spec-unit">units</span></div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Floors</div>
+        <div class="spec-value">20 <span class="spec-unit">floors</span></div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Unit Types</div>
+        <div class="spec-value">1+1 <span class="spec-unit">– 3+1</span></div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Gross Area</div>
+        <div class="spec-value">65 <span class="spec-unit">– 180 m²</span></div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:24px">Amenities & Features</div>
+    <ul class="amenity-list">
+      <li>Rooftop Infinity Pool</li>
+      <li>Sky Lounge &amp; Bar</li>
+      <li>Fitness Center &amp; SPA</li>
+      <li>24/7 Concierge Service</li>
+      <li>Indoor Parking (2 per unit)</li>
+      <li>Smart Home System</li>
+      <li>Children's Play Area</li>
+      <li>Business Center</li>
+      <li>Tennis Court</li>
+      <li>Electric Car Charging</li>
+    </ul>
+
+    <div class="footer">
+      <p>Osan Development Group · Tel: +90 216 000 00 00 · info@diamondcity.com.tr · www.diamondcity.com.tr</p>
+    </div>
+  </div>
+</div>
+
+<!-- PRICES & INVESTMENT PAGE -->
+<div class="page">
+  <div class="content-page">
+
+    <div class="section-title">Prices & Investment</div>
+    <div class="section-heading">Price List</div>
+
+    <div class="price-section">
+      <div class="price-label">Starting Price</div>
+      <div class="price-value">₺8.500.000</div>
+      <div class="price-note">≈ €163.000 · $177.000 (1+1 · 65 m²)</div>
+      <br/>
+      <div class="price-label">Maximum Price</div>
+      <div class="price-value">₺22.000.000</div>
+      <div class="price-note">≈ €423.000 · $459.000 (3+1 Penthouse · 180 m²)</div>
+    </div>
+
+    <div class="image-grid">
+      <div class="img-rooftop">🏊 Rooftop Pool — Floor 20</div>
+      <div class="img-interior">🛋️ Bosphorus View Living Room</div>
+    </div>
+
+    <div class="highlight-box">
+      <h3>💰 Payment Options</h3>
+      <p>
+        • <strong style="color:#E8B84B">35% Down Payment</strong> + 36 months installment<br/>
+        • <strong style="color:#E8B84B">50% Down Payment</strong> + 5% discount<br/>
+        • <strong style="color:#E8B84B">Cash Payment</strong> + 10% discount<br/>
+        • Bank mortgage support available<br/>
+        • Eligible for Turkish Citizenship (min. $400,000)
+      </p>
+    </div>
+
+    <div class="specs-grid">
+      <div class="spec-item">
+        <div class="spec-label">Est. Rental Yield</div>
+        <div class="spec-value">%7 <span class="spec-unit">/ year</span></div>
+      </div>
+      <div class="spec-item">
+        <div class="spec-label">Delivery Date</div>
+        <div class="spec-value">Dec <span class="spec-unit">2026</span></div>
+      </div>
+    </div>
+
+    <p class="section-text" style="margin-top:20px;font-size:12px;color:#94A3B8;">
+      * Prices are quoted in Turkish Lira and may vary subject to exchange rates. Rental yield
+      estimates are based on current Kadıköy market data. Turkish Citizenship eligibility is
+      subject to applicable legal requirements — please consult your legal advisor.
+    </p>
+
+    <div class="footer" style="margin-top:40px;">
+      <p>
+        <strong>Osan Development Group</strong><br/>
+        Moda Cad. No:88, Kadıköy / Istanbul<br/>
+        Tel: +90 216 000 00 00 | WhatsApp: +90 216 000 00 00<br/>
+        info@diamondcity.com.tr | www.diamondcity.com.tr
+      </p>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

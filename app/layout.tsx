@@ -3,7 +3,7 @@ import "./globals.css";
 import { LanguageProvider } from "./i18n/LanguageContext";
 
 export const metadata: Metadata = {
-  title: "YapiMap – Türkiye'nin Proje Haritası",
+  title: "YapıMap – Türkiye'nin Proje Haritası",
   description: "Türkiye'deki tüm yeni konut projelerini harita üzerinde keşfedin.",
 };
 

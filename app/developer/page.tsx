@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/app/i18n/LanguageContext";
 import ProjectForm from "./ProjectForm";
+import ReferralBox from "@/app/components/ReferralBox";
 
 const accent = "#E8B84B";
 const bgPrimary = "#0F1923";
@@ -24,7 +25,7 @@ type Project = {
   amenities: string[] | null;
   contact_name: string | null; contact_phone: string | null; contact_email: string | null;
 };
-type Profile = { id: string; full_name: string; role: string; status: string; logo_url: string | null; subscription_status: string | null; created_at: string };
+type Profile = { id: string; full_name: string; role: string; status: string; logo_url: string | null; subscription_status: string | null; created_at: string; referral_code: string | null };
 
 export default function DeveloperPage() {
   const { lang } = useLang();
@@ -40,7 +41,7 @@ export default function DeveloperPage() {
   const [filterStatus, setFilterStatus] = useState("");
   const [logoUploading, setLogoUploading] = useState(false);
 
-  const t = {
+  const tLabels = {
     tr: {
       title: "Projelerim", add: "+ Yeni Proje", signout: "Çıkış", loading: "Yükleniyor...",
       noProjects: "Henüz proje eklemediniz.",
@@ -49,6 +50,9 @@ export default function DeveloperPage() {
       unpublish: "Taslağa Al", delete: "Sil",
       confirmDelete: "Bu projeyi silmek istediğinizden emin misiniz?",
       allTypes: "Tüm Tipler", allStatus: "Tüm Durumlar",
+      trialDays: (d: number) => `🎁 Ücretsiz deneme süreniz: ${d} gün kaldı`,
+      trialLastDay: "⚠️ Ücretsiz deneme süreniz bugün bitiyor!",
+      trialSubscribe: "Abone Ol",
     },
     en: {
       title: "My Projects", add: "+ New Project", signout: "Sign Out", loading: "Loading...",
@@ -58,8 +62,24 @@ export default function DeveloperPage() {
       unpublish: "Unpublish", delete: "Delete",
       confirmDelete: "Are you sure you want to delete this project?",
       allTypes: "All Types", allStatus: "All Status",
+      trialDays: (d: number) => `🎁 Free trial: ${d} days remaining`,
+      trialLastDay: "⚠️ Your free trial ends today!",
+      trialSubscribe: "Subscribe",
     },
-  }[lang];
+    ru: {
+      title: "Мои проекты", add: "+ Новый проект", signout: "Выйти", loading: "Загрузка...",
+      noProjects: "Проектов пока нет.",
+      draft: "Черновик", published: "Опубликован", archived: "Архив",
+      ikamet: "ВНЖ", edit: "Изменить", publish: "Опубликовать", archive: "В архив",
+      unpublish: "Снять с публикации", delete: "Удалить",
+      confirmDelete: "Вы уверены, что хотите удалить этот проект?",
+      allTypes: "Все типы", allStatus: "Все статусы",
+      trialDays: (d: number) => `🎁 Пробный период: осталось ${d} дней`,
+      trialLastDay: "⚠️ Пробный период заканчивается сегодня!",
+      trialSubscribe: "Подписаться",
+    },
+  };
+  const t = tLabels[lang as keyof typeof tLabels] ?? tLabels.en;
 
   const PROJECT_TYPES = ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"];
 
@@ -77,7 +97,7 @@ export default function DeveloperPage() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push("/login"); return; }
-      supabase.from("profiles").select("id, full_name, role, status, logo_url, subscription_status, created_at").eq("id", user.id).single()
+      supabase.from("profiles").select("id, full_name, role, status, logo_url, subscription_status, created_at, referral_code").eq("id", user.id).single()
         .then(({ data }) => {
           if (!data || data.status !== "active") { router.push("/pending"); return; }
           if (data.role !== "developer") { router.push("/broker/map"); return; }
@@ -117,6 +137,15 @@ export default function DeveloperPage() {
     if (profile) loadProjects(profile.id);
     if (selected?.id === id) setSelected(null);
   }
+
+  // Trial Banner berechnen
+  const trialDaysLeft = (() => {
+    if (!profile || profile.subscription_status === "active") return null;
+    const trialEnd = new Date(profile.created_at);
+    trialEnd.setMonth(trialEnd.getMonth() + 3);
+    const diff = Math.ceil((trialEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? diff : 0;
+  })();
 
   const statusColor = (s: string) => ({ draft: "#F59E0B", published: "#10B981", archived: textMuted }[s] || textMuted);
   const statusLabel = (s: string) => ({ draft: t.draft, published: t.published, archived: t.archived }[s] || s);
@@ -170,9 +199,44 @@ export default function DeveloperPage() {
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", backgroundColor: bgPrimary, fontFamily: "system-ui, sans-serif", color: "#F1F5F9" }}>
 
+      {/* Trial Banner */}
+      {trialDaysLeft !== null && (
+        <div style={{
+          background: trialDaysLeft <= 7
+            ? "linear-gradient(90deg, #7F1D1D, #991B1B)"
+            : trialDaysLeft <= 30
+            ? "linear-gradient(90deg, #78350F, #92400E)"
+            : "linear-gradient(90deg, #14532D, #166534)",
+          padding: "10px 24px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          flexShrink: 0, gap: 12,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>
+              {trialDaysLeft === 0 ? t.trialLastDay : t.trialDays(trialDaysLeft)}
+            </div>
+            {/* Progress Bar */}
+            <div style={{ width: 120, height: 6, backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 99, overflow: "hidden" }}>
+              <div style={{
+                height: "100%", borderRadius: 99,
+                width: `${Math.min(100, (trialDaysLeft / 90) * 100)}%`,
+                backgroundColor: trialDaysLeft <= 7 ? "#FCA5A5" : trialDaysLeft <= 30 ? "#FCD34D" : "#6EE7B7",
+              }} />
+            </div>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
+              {trialDaysLeft}/90
+            </span>
+          </div>
+          <button onClick={() => router.push("/subscribe")}
+            style={{ padding: "6px 16px", backgroundColor: accent, color: bgPrimary, fontWeight: 800, fontSize: 12, borderRadius: 8, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
+            {t.trialSubscribe} →
+          </button>
+        </div>
+      )}
+
       {/* Navbar */}
       <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-        <span style={{ color: accent, fontSize: 20, fontWeight: 800 }}>YapiMap</span>
+        <span onClick={() => router.push("/")} style={{ color: accent, fontSize: 20, fontWeight: 800, cursor: "pointer" }}>YapıMap</span>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <label title="Firma logosunu yükle / Upload company logo" style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
             {profile.logo_url
@@ -184,12 +248,19 @@ export default function DeveloperPage() {
             <input type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); }} />
           </label>
           <span style={{ color: textMuted, fontSize: 13 }}>{profile.full_name}</span>
+          <button onClick={() => router.push("/profile")}
+            style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
+            {lang === "tr" ? "Profil" : "Profile"}
+          </button>
           <button onClick={() => fetch("/api/auth/signout").then(() => router.push("/"))}
             style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
             {t.signout}
           </button>
         </div>
       </nav>
+
+      {/* Referral Banner */}
+      {profile.referral_code && <ReferralBox referralCode={profile.referral_code} lang={lang} />}
 
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
 

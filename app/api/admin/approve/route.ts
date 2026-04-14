@@ -1,29 +1,43 @@
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { requireAdmin } from "@/lib/adminAuth";
+import { z } from "zod";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const schema = z.object({ userId: z.string().uuid() });
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
 
-  // Nur Admin darf freischalten
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-  if (profile?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const body = await req.json();
+  const result = schema.safeParse(body);
+  if (!result.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  const { userId } = result.data;
 
-  const { userId } = await req.json();
-  const admin = createAdminClient();
+  const { error } = await supabase
+    .from("profiles")
+    .update({ status: "active" })
+    .eq("id", userId);
 
-  // Status auf approved setzen
-  await admin.from("profiles").update({ status: "active" }).eq("id", userId);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Password-Reset Email schicken (User setzt sein Passwort)
-  const { data: targetUser } = await admin.auth.admin.getUserById(userId);
-  if (targetUser.user?.email) {
-    await admin.auth.resetPasswordForEmail(targetUser.user.email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback?next=/set-password`,
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("email")
+    .eq("id", userId)
+    .single();
+
+  if (profile?.email) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    await supabase.auth.resetPasswordForEmail(profile.email, {
+      redirectTo: `${siteUrl}/reset-password`,
     });
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ ok: true });
 }

@@ -2,28 +2,50 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import PdfRenderer from "./PdfRenderer";
 
 type Project = {
   id: string; title: string; city: string; district: string;
   project_type: string; min_price: number; max_price: number;
   description: string | null; ikamet_eligible: boolean;
-  cover_image_url: string | null; pdf_url: string | null;
+  citizenship_eligible: boolean | null;
+  cover_image_url: string | null;
   amenities: string[] | null;
-  contact_name: string | null; contact_phone: string | null; contact_email: string | null;
-  profiles: { full_name: string; logo_url: string | null; phone: string | null } | null;
+  payment_plan: string | null;
+  handover_date: string | null;
 };
 type Image = { project_id: string; url: string };
+
+const AMENITY_ICONS: Record<string, string> = {
+  "Yüzme Havuzu": "🏊", "Swimming Pool": "🏊",
+  "Fitness Merkezi": "💪", "Fitness Center": "💪",
+  "SPA & Sauna": "🧖",
+  "Hamam": "♨️", "Turkish Bath": "♨️",
+  "Kapalı Otopark": "🅿️", "Indoor Parking": "🅿️",
+  "7/24 Güvenlik": "🔒", "24/7 Security": "🔒",
+  "Resepsiyon": "🛎️", "Reception": "🛎️",
+  "Çocuk Oyun Parkı": "🎠", "Kids Playground": "🎠",
+  "Restoran & Kafe": "☕", "Restaurant & Cafe": "☕",
+  "Tenis Kortu": "🎾", "Tennis Court": "🎾",
+  "Bahçe & Peyzaj": "🌿", "Garden & Landscaping": "🌿",
+  "Jeneratör": "⚡", "Generator": "⚡",
+  "Akıllı Ev Sistemi": "🏠", "Smart Home System": "🏠",
+  "Deniz Manzarası": "🌊", "Sea View": "🌊",
+  "Dağ Manzarası": "⛰️", "Mountain View": "⛰️",
+  "Asansör": "🛗", "Elevator": "🛗",
+  "BBQ Alanı": "🔥", "BBQ Area": "🔥",
+};
 
 function CatalogContent() {
   const params = useSearchParams();
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [images, setImages] = useState<Record<string, string[]>>({});
-  const [signedPdfs, setSignedPdfs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [brokerName, setBrokerName] = useState("");
   const [brokerPhone, setBrokerPhone] = useState("");
+  const [brokerCompany, setBrokerCompany] = useState("");
+  const [brokerEmail, setBrokerEmail] = useState("");
+  const [brokerLogo, setBrokerLogo] = useState("");
 
   useEffect(() => {
     const ids = params.get("projects")?.split(",").filter(Boolean) || [];
@@ -32,17 +54,22 @@ function CatalogContent() {
     Promise.all([
       supabase.auth.getUser(),
       supabase.from("projects")
-        .select("id, title, city, district, project_type, min_price, max_price, description, ikamet_eligible, cover_image_url, pdf_url, amenities, contact_name, contact_phone, contact_email, profiles(full_name, logo_url, phone)")
+        .select("id, title, city, district, project_type, min_price, max_price, description, ikamet_eligible, citizenship_eligible, cover_image_url, amenities, payment_plan, handover_date")
         .in("id", ids)
         .eq("status", "published"),
       supabase.from("project_images").select("project_id, url").in("project_id", ids),
-    ]).then(async ([{ data: { user } }, { data: projs, error }, { data: imgs }]) => {
-      if (error) console.error("Catalog error:", error.message);
-      console.log("Projects loaded:", projs);
-      console.log("Images loaded:", imgs);
+    ]).then(async ([{ data: { user } }, { data: projs }, { data: imgs }]) => {
       if (user) {
-        const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("id", user.id).single();
-        if (profile) { setBrokerName(profile.full_name); setBrokerPhone((profile as any).phone || ""); }
+        const { data: profile } = await supabase.from("profiles")
+          .select("full_name, phone, company_name, email, logo_url")
+          .eq("id", user.id).single();
+        if (profile) {
+          setBrokerName(profile.full_name || "");
+          setBrokerPhone((profile as any).phone || "");
+          setBrokerCompany((profile as any).company_name || "");
+          setBrokerEmail((profile as any).email || "");
+          setBrokerLogo((profile as any).logo_url || "");
+        }
       }
       const ordered = ids.map(id => (projs as Project[])?.find(p => p.id === id)).filter(Boolean) as Project[];
       setProjects(ordered);
@@ -52,181 +79,182 @@ function CatalogContent() {
         imgMap[img.project_id].push(img.url);
       });
       setImages(imgMap);
-
-      // Signed URLs für private PDFs generieren (1h gültig)
-      const pdfProjects = (ordered).filter(p => p.pdf_url);
-      if (pdfProjects.length > 0) {
-        const pdfMap: Record<string, string> = {};
-        await Promise.all(pdfProjects.map(async p => {
-          if (!p.pdf_url) return;
-          // Pfad aus der vollen URL extrahieren
-          const match = p.pdf_url.match(/project-pdfs\/(.+)$/);
-          if (!match) return;
-          const { data, error: signErr } = await supabase.storage.from("project-pdfs").createSignedUrl(match[1], 3600);
-          console.log("PDF path:", match[1], "signedUrl:", data?.signedUrl, "error:", signErr);
-          if (data?.signedUrl) pdfMap[p.id] = data.signedUrl;
-        }));
-        setSignedPdfs(pdfMap);
-      }
-
       setLoading(false);
     });
-  }, []);
+  }, []); // eslint-disable-line
 
   function formatPrice(n: number) { return "₺" + n.toLocaleString("tr-TR"); }
+  function formatDate(d: string) {
+    return new Date(d).toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
+  }
 
   if (loading) return <div style={{ padding: 60, textAlign: "center", fontFamily: "Georgia, serif", color: "#666" }}>Yükleniyor...</div>;
 
   return (
-    <div style={{ fontFamily: "Georgia, serif", backgroundColor: "#fff", color: "#1a1a1a", maxWidth: 840, margin: "0 auto", padding: "40px 40px 60px" }}>
+    <div style={{ fontFamily: "'Georgia', serif", backgroundColor: "#fff", color: "#1a1a1a", maxWidth: 860, margin: "0 auto", padding: "40px 40px 60px" }}>
 
       {/* Print Toolbar */}
-      <div className="no-print" style={{ marginBottom: 32, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+      <div className="no-print" style={{ marginBottom: 32, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: "16px 20px", backgroundColor: "#F8F9FA", borderRadius: 10, border: "1px solid #E2E8F0" }}>
         <button onClick={() => window.print()}
           style={{ padding: "10px 24px", backgroundColor: "#E8B84B", color: "#0F1923", fontWeight: 700, fontSize: 14, borderRadius: 8, border: "none", cursor: "pointer" }}>
-          🖨️ PDF olarak kaydet / Save as PDF
+          🖨️ Als PDF speichern
         </button>
         <button onClick={() => router.push("/broker/map")}
           style={{ padding: "10px 20px", backgroundColor: "transparent", color: "#666", fontSize: 14, borderRadius: 8, border: "1px solid #ccc", cursor: "pointer" }}>
-          ← Haritaya Dön
+          ← Zurück zur Karte
         </button>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 10 }}>
-          <input value={brokerName} onChange={e => setBrokerName(e.target.value)} placeholder="Danışman Adı"
-            style={{ padding: "8px 12px", border: "1px solid #ccc", borderRadius: 6, fontSize: 13, width: 180 }} />
-          <input value={brokerPhone} onChange={e => setBrokerPhone(e.target.value)} placeholder="Telefon"
-            style={{ padding: "8px 12px", border: "1px solid #ccc", borderRadius: 6, fontSize: 13, width: 150 }} />
-        </div>
+        <span style={{ fontSize: 13, color: "#666", marginLeft: "auto" }}>
+          {projects.length} Projekt{projects.length !== 1 ? "e" : ""} · {new Date().toLocaleDateString("tr-TR")}
+        </span>
       </div>
 
-      {/* Kapak */}
-      <div style={{ textAlign: "center", padding: "60px 0 48px", borderBottom: "3px solid #E8B84B", marginBottom: 56, pageBreakAfter: "always" }}>
-        <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 5, textTransform: "uppercase", marginBottom: 20 }}>YapiMap · Premium Gayrimenkul</div>
-        <h1 style={{ fontSize: 40, fontWeight: 800, color: "#0F1923", marginBottom: 10, fontFamily: "Georgia, serif" }}>Proje Kataloğu</h1>
-        <p style={{ color: "#666", fontSize: 16, marginBottom: 32 }}>{projects.length} Proje · {new Date().toLocaleDateString("tr-TR")}</p>
-        {(brokerName || brokerPhone) && (
-          <div style={{ display: "inline-block", backgroundColor: "#F8F9FA", border: "1px solid #E2E8F0", borderRadius: 10, padding: "16px 28px", textAlign: "left" }}>
-            <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 6 }}>Hazırlayan Danışman</div>
-            {brokerName && <div style={{ fontWeight: 700, fontSize: 16, color: "#0F1923" }}>{brokerName}</div>}
-            {brokerPhone && <div style={{ fontSize: 14, color: "#666", marginTop: 2 }}>📞 {brokerPhone}</div>}
+      {/* ===== COVER PAGE ===== */}
+      <div style={{ textAlign: "center", padding: "70px 0 60px", borderBottom: "4px solid #E8B84B", marginBottom: 60, pageBreakAfter: "always" }}>
+        {/* Broker Logo */}
+        {brokerLogo && (
+          <img src={brokerLogo} alt="" style={{ height: 60, maxWidth: 200, objectFit: "contain", marginBottom: 24 }} />
+        )}
+        <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 6, textTransform: "uppercase", marginBottom: 16 }}>
+          YapıMap · Premium Gayrimenkul
+        </div>
+        <h1 style={{ fontSize: 44, fontWeight: 900, color: "#0F1923", marginBottom: 8, letterSpacing: -1 }}>
+          Proje Kataloğu
+        </h1>
+        <p style={{ color: "#666", fontSize: 15, marginBottom: 40 }}>
+          {projects.length} Seçili Proje · {new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
+        </p>
+
+        {/* Broker Card */}
+        <div style={{ display: "inline-block", backgroundColor: "#0F1923", borderRadius: 14, padding: "24px 36px", textAlign: "left", minWidth: 320 }}>
+          <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Hazırlayan Danışman</div>
+          <div style={{ fontWeight: 800, fontSize: 18, color: "#F1F5F9", marginBottom: 4 }}>{brokerName}</div>
+          {brokerCompany && <div style={{ fontSize: 14, color: "#E8B84B", marginBottom: 8 }}>{brokerCompany}</div>}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
+            {brokerPhone && <div style={{ fontSize: 13, color: "#94A3B8" }}>📞 {brokerPhone}</div>}
+            {brokerEmail && <div style={{ fontSize: 13, color: "#94A3B8" }}>✉️ {brokerEmail}</div>}
+          </div>
+        </div>
+
+        {/* TOC */}
+        {projects.length > 1 && (
+          <div style={{ marginTop: 48, textAlign: "left" }}>
+            <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 14 }}>İçindekiler</div>
+            {projects.map((p, i) => (
+              <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #F1F5F9", fontSize: 14 }}>
+                <span style={{ color: "#0F1923" }}>{i + 1}. <strong>{p.title}</strong> — {p.city}</span>
+                <span style={{ color: "#E8B84B", fontWeight: 700 }}>{formatPrice(p.min_price)}</span>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* İçindekiler */}
-      {projects.length > 1 && (
-        <div style={{ marginBottom: 48, pageBreakAfter: "always" }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20, color: "#0F1923", borderBottom: "2px solid #E8B84B", paddingBottom: 8 }}>İçindekiler</h2>
-          {projects.map((p, i) => (
-            <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #F1F5F9", fontSize: 15 }}>
-              <span>{i + 1}. {p.title}</span>
-              <span style={{ color: "#E8B84B", fontWeight: 700 }}>{formatPrice(p.min_price)} – {formatPrice(p.max_price)}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Projeler */}
+      {/* ===== PROJECTS ===== */}
       {projects.map((p, i) => (
-        <div key={p.id} style={{ marginBottom: 0, pageBreakBefore: "always" }}>
+        <div key={p.id} style={{ pageBreakBefore: i === 0 ? "auto" : "always", paddingBottom: 40 }}>
 
-          {/* Cover */}
+          {/* Project Counter */}
+          <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 4, textTransform: "uppercase", marginBottom: 12 }}>
+            Proje {i + 1} / {projects.length}
+          </div>
+
+          {/* Cover Image */}
           {p.cover_image_url
-            ? <img src={p.cover_image_url} alt="" style={{ width: "100%", height: 260, objectFit: "cover", borderRadius: 10, marginBottom: 28 }} />
-            : <div style={{ width: "100%", height: 180, backgroundColor: "#F8F9FA", borderRadius: 10, marginBottom: 28, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}>🏢</div>
+            ? <img src={p.cover_image_url} alt="" style={{ width: "100%", height: 280, objectFit: "cover", borderRadius: 12, marginBottom: 24, display: "block" }} />
+            : <div style={{ width: "100%", height: 200, backgroundColor: "#F8F9FA", borderRadius: 12, marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 56, border: "1px solid #E2E8F0" }}>🏢</div>
           }
 
-          {/* Header: Titel + Logo */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16, gap: 16 }}>
-            <div>
-              <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 6 }}>Proje {i + 1} / {projects.length}</div>
-              <h2 style={{ fontSize: 30, fontWeight: 800, color: "#0F1923", margin: 0 }}>{p.title}</h2>
-              <p style={{ color: "#666", fontSize: 14, marginTop: 4 }}>📍 {p.district ? `${p.district}, ` : ""}{p.city} · {p.project_type}</p>
+          {/* Title + Location */}
+          <h2 style={{ fontSize: 32, fontWeight: 900, color: "#0F1923", margin: "0 0 6px" }}>{p.title}</h2>
+          <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", marginBottom: 20 }}>
+            <span style={{ color: "#666", fontSize: 14 }}>📍 {p.district ? `${p.district}, ` : ""}{p.city}</span>
+            <span style={{ color: "#666", fontSize: 14 }}>🏠 {p.project_type}</span>
+            {p.handover_date && (
+              <span style={{ color: "#666", fontSize: 14 }}>📅 {formatDate(p.handover_date)}</span>
+            )}
+          </div>
+
+          {/* Price + Badges */}
+          <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 24, padding: "16px 20px", backgroundColor: "#0F1923", borderRadius: 10 }}>
+            <span style={{ fontSize: 28, fontWeight: 900, color: "#E8B84B" }}>{formatPrice(p.min_price)}</span>
+            <span style={{ fontSize: 20, color: "#94A3B8" }}>—</span>
+            <span style={{ fontSize: 28, fontWeight: 900, color: "#E8B84B" }}>{formatPrice(p.max_price)}</span>
+            <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {p.ikamet_eligible && (
+                <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 999, backgroundColor: "#10B98120", color: "#10B981", border: "1px solid #10B981", fontWeight: 700 }}>✓ İkamet İzni</span>
+              )}
+              {p.citizenship_eligible && (
+                <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 999, backgroundColor: "#3B82F620", color: "#3B82F6", border: "1px solid #3B82F6", fontWeight: 700 }}>✓ Vatandaşlık</span>
+              )}
             </div>
-            {p.profiles?.logo_url && (
-              <img src={p.profiles.logo_url} alt="" style={{ height: 44, maxWidth: 160, objectFit: "contain", flexShrink: 0 }} />
-            )}
           </div>
 
-          {/* Fiyat + İkamet */}
-          <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 20, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 26, fontWeight: 800, color: "#E8B84B" }}>{formatPrice(p.min_price)} – {formatPrice(p.max_price)}</span>
-            {p.ikamet_eligible && (
-              <span style={{ fontSize: 12, padding: "4px 12px", borderRadius: 999, backgroundColor: "#10B98120", color: "#10B981", border: "1px solid #10B981", fontWeight: 600 }}>✓ İkamet İzni Uygun</span>
-            )}
-          </div>
-
-          {/* Açıklama */}
+          {/* Description */}
           {p.description && (
-            <p style={{ fontSize: 14, lineHeight: 1.9, color: "#444", marginBottom: 24, borderLeft: "3px solid #E8B84B", paddingLeft: 16 }}>{p.description}</p>
+            <div style={{ marginBottom: 24, padding: "16px 20px", borderLeft: "4px solid #E8B84B", backgroundColor: "#FFFBF0" }}>
+              <p style={{ fontSize: 14, lineHeight: 1.9, color: "#444", margin: 0 }}>{p.description}</p>
+            </div>
           )}
 
-          {/* Galeri */}
+          {/* Gallery */}
           {images[p.id]?.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 24 }}>
               {images[p.id].slice(0, 6).map((url, j) => (
-                <img key={j} src={url} alt="" style={{ width: "100%", height: 110, objectFit: "cover", borderRadius: 7 }} />
+                <img key={j} src={url} alt="" style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8 }} />
               ))}
             </div>
           )}
 
-          {/* Amenities */}
+          {/* Amenities with Icons */}
           {p.amenities && p.amenities.length > 0 && (
             <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#0F1923", marginBottom: 12, textTransform: "uppercase", letterSpacing: 1 }}>Sosyal Olanaklar</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px 0" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#0F1923", marginBottom: 14, textTransform: "uppercase", letterSpacing: 3, borderBottom: "2px solid #E8B84B", paddingBottom: 6 }}>
+                Sosyal Olanaklar
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                 {p.amenities.map((a, j) => (
-                  <div key={j} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#444" }}>
-                    <span style={{ color: "#E8B84B", fontWeight: 700 }}>✓</span> {a}
+                  <div key={j} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#333", padding: "8px 10px", backgroundColor: "#F8F9FA", borderRadius: 8, border: "1px solid #E2E8F0" }}>
+                    <span style={{ fontSize: 16 }}>{AMENITY_ICONS[a] || "✓"}</span>
+                    <span>{a}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Kontakt + Broschüre */}
-          <div style={{ display: "grid", gridTemplateColumns: p.pdf_url ? "1fr 1fr" : "1fr", gap: 16, marginBottom: 16 }}>
-            {(p.contact_name || p.contact_phone || p.contact_email || p.profiles?.full_name) && (
-              <div style={{ backgroundColor: "#F8F9FA", borderRadius: 10, padding: "16px 20px", border: "1px solid #E2E8F0" }}>
-                <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>İletişim</div>
-                <div style={{ fontWeight: 700, fontSize: 15, color: "#0F1923", marginBottom: 6 }}>{p.contact_name || p.profiles?.full_name}</div>
-                {(p.contact_phone || p.profiles?.phone) && <div style={{ fontSize: 13, color: "#444", marginBottom: 3 }}>📞 {p.contact_phone || p.profiles?.phone}</div>}
-                {p.contact_email && <div style={{ fontSize: 13, color: "#444" }}>✉️ {p.contact_email}</div>}
-                {(brokerName || brokerPhone) && (
-                  <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid #E2E8F0" }}>
-                    <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 1, marginBottom: 4 }}>DANIŞMANINIZ</div>
-                    <div style={{ fontWeight: 600, fontSize: 13, color: "#0F1923" }}>{brokerName}</div>
-                    {brokerPhone && <div style={{ fontSize: 12, color: "#666" }}>📞 {brokerPhone}</div>}
-                  </div>
-                )}
-              </div>
-            )}
-            {(p.pdf_url && signedPdfs[p.id]) && (
-              <div style={{ backgroundColor: "#0F1923", borderRadius: 10, padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
-                <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 2, textTransform: "uppercase" }}>Developer Broşürü</div>
-                <a href={signedPdfs[p.id]} target="_blank" rel="noopener noreferrer"
-                  style={{ display: "inline-block", padding: "6px 14px", backgroundColor: "#E8B84B", color: "#0F1923", fontWeight: 700, fontSize: 12, borderRadius: 6, textDecoration: "none", textAlign: "center", marginBottom: 4 }}>
-                  📄 Broşürü İndir / Download
-                </a>
-              </div>
-            )}
-          </div>
-
-          {/* Broschüre inline — alle Seiten als Bild */}
-          {(p.pdf_url && signedPdfs[p.id]) && (
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12, fontFamily: "system-ui" }}>Developer Broşürü — Tam İçerik</div>
-              <PdfRenderer url={signedPdfs[p.id]} />
+          {/* Payment Plan */}
+          {p.payment_plan && (
+            <div style={{ marginBottom: 24, padding: "16px 20px", backgroundColor: "#0F1923", borderRadius: 10 }}>
+              <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Ödeme Seçenekleri</div>
+              {p.payment_plan.split("\n").filter(Boolean).map((line, j) => (
+                <div key={j} style={{ fontSize: 13, color: "#F1F5F9", lineHeight: 1.8, display: "flex", gap: 8 }}>
+                  <span style={{ color: "#E8B84B" }}>›</span> {line}
+                </div>
+              ))}
             </div>
           )}
 
-          {/* Divider */}
-          {i < projects.length - 1 && <div style={{ borderBottom: "2px solid #E8B84B", marginBottom: 0 }} />}
+          {/* Broker Contact at bottom of each project */}
+          <div style={{ marginTop: 24, padding: "16px 20px", backgroundColor: "#F8F9FA", borderRadius: 10, border: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>Danışmanınız</div>
+              <div style={{ fontWeight: 700, fontSize: 15, color: "#0F1923" }}>{brokerName}</div>
+              {brokerCompany && <div style={{ fontSize: 12, color: "#E8B84B" }}>{brokerCompany}</div>}
+            </div>
+            <div style={{ textAlign: "right" }}>
+              {brokerPhone && <div style={{ fontSize: 13, color: "#444" }}>📞 {brokerPhone}</div>}
+              {brokerEmail && <div style={{ fontSize: 13, color: "#444" }}>✉️ {brokerEmail}</div>}
+            </div>
+          </div>
+
         </div>
       ))}
 
       {/* Footer */}
-      <div style={{ textAlign: "center", marginTop: 48, paddingTop: 24, borderTop: "1px solid #E2E8F0" }}>
-        <p style={{ fontSize: 11, color: "#94A3B8" }}>Bu katalog YapiMap tarafından oluşturulmuştur · yapimap.com · {new Date().toLocaleDateString("tr-TR")}</p>
+      <div style={{ textAlign: "center", marginTop: 48, paddingTop: 24, borderTop: "2px solid #E8B84B" }}>
+        <p style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 2 }}>
+          Bu katalog YapıMap tarafından oluşturulmuştur · yapimap.com · {new Date().toLocaleDateString("tr-TR")}
+        </p>
       </div>
 
       <style>{`
@@ -234,7 +262,6 @@ function CatalogContent() {
           .no-print { display: none !important; }
           @page { margin: 12mm; size: A4; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          canvas { max-width: 100%; page-break-inside: avoid; }
         }
       `}</style>
     </div>

@@ -23,7 +23,7 @@ export const translations = {
       ],
     },
     solution: {
-      title: "YapiMap ile",
+      title: "YapıMap ile",
       titleAccent: "Çözüm",
       items: [
         "Tüm projeler haritada, anlık güncel",
@@ -46,19 +46,17 @@ export const translations = {
     },
     pricing: {
       title: "Fiyatlandırma",
-      subtitle: "Emlakçılar ve Developer'lar için ayrı planlar",
+      subtitle: "Emlakçılar ve Developer'lar için yıllık plan",
       broker: {
         label: "EMLAKÇI",
-        price: "₺999",
-        period: "/ay",
+        period: "/yıl",
         desc: "Sınırsız arama + katalog oluşturma",
         features: ["Tüm projelere erişim", "Sınırsız katalog", "WhatsApp paylaşım", "Developer iletişim bilgileri", "Filtre sistemi"],
         cta: "Hemen Başla",
       },
       developer: {
         label: "GELİŞTİRİCİ",
-        price: "₺2.499",
-        period: "/ay",
+        period: "/yıl",
         desc: "Projelerinizi platforma ekleyin",
         badge: "POPÜLER",
         features: ["Sınırsız proje yükleme", "Proje görsel & PDF yükleme", "Satış ekibi profili", "Tüm emlakçılara görünürlük", "Günlük güncelleme"],
@@ -99,7 +97,7 @@ export const translations = {
       ],
     },
     solution: {
-      title: "The YapiMap",
+      title: "The YapıMap",
       titleAccent: "Solution",
       items: [
         "All projects on the map, updated in real-time",
@@ -122,19 +120,17 @@ export const translations = {
     },
     pricing: {
       title: "Pricing",
-      subtitle: "Separate plans for brokers and developers",
+      subtitle: "One yearly plan for brokers and developers",
       broker: {
         label: "BROKER",
-        price: "₺999",
-        period: "/mo",
+        period: "/year",
         desc: "Unlimited search + catalog creation",
         features: ["Access to all projects", "Unlimited catalogs", "WhatsApp sharing", "Developer contact info", "Filter system"],
         cta: "Get Started",
       },
       developer: {
         label: "DEVELOPER",
-        price: "₺2,499",
-        period: "/mo",
+        period: "/year",
         desc: "List your projects on the platform",
         badge: "POPULAR",
         features: ["Unlimited project uploads", "Images & PDF uploads", "Sales team profile", "Visibility to all brokers", "Daily updates"],
@@ -151,7 +147,81 @@ export const translations = {
       imprint: "Imprint",
     },
   },
+  ru: {
+    nav: {
+      login: "Войти",
+      try: "Попробовать бесплатно",
+    },
+    hero: {
+      badge: "🇹🇷 Платформа №1 для недвижимости в Турции",
+      title1: "Забудьте о",
+      title2: "группах WhatsApp",
+      subtitle: "Все новые жилые проекты Турции на одной карте. Создавайте брендированные каталоги за секунды.",
+      btnBroker: "Я риелтор →",
+      btnDeveloper: "Я застройщик →",
+    },
+    problem: {
+      title: "Как это работает сейчас?",
+      items: [
+        "Застройщик публикует информацию о проекте в WhatsApp-группе",
+        "50 риелторов пишут одновременно",
+        "Застройщик отправляет PDF каждому отдельно",
+        "Информация устаревает, файлы теряются",
+        "Часы потрачены впустую, клиент ждёт",
+      ],
+    },
+    solution: {
+      title: "YapıMap —",
+      titleAccent: "решение",
+      items: [
+        "Все проекты на карте, обновляются в реальном времени",
+        "Фильтр по городу, цене, типу, дате сдачи",
+        "Брендированный PDF-каталог за 5 секунд",
+        "Прямые контакты каждого застройщика",
+        "Отправьте клиенту всё одной ссылкой",
+      ],
+    },
+    features: {
+      title: "Возможности",
+      items: [
+        { icon: "🗺️", title: "Интерактивная карта", desc: "Все новые проекты Турции на одной карте. Нажмите, изучите, отфильтруйте." },
+        { icon: "📄", title: "Брендированный каталог", desc: "Преобразуйте выбранные проекты в PDF с логотипом вашего агентства за 5 секунд." },
+        { icon: "🔍", title: "Расширенные фильтры", desc: "Мгновенная фильтрация по городу, цене, типу, дате сдачи и застройщику." },
+        { icon: "📱", title: "Поделиться в WhatsApp", desc: "Отправьте каталог клиенту через WhatsApp одним нажатием." },
+        { icon: "🏗️", title: "Профиль застройщика", desc: "Все проекты, контакты и информация об отделе продаж каждого застройщика." },
+        { icon: "🔄", title: "Актуальные данные", desc: "Цены, наличие и новые проекты обновляются автоматически." },
+      ],
+    },
+    pricing: {
+      title: "Тарифы",
+      subtitle: "Один годовой план для риелторов и застройщиков",
+      broker: {
+        label: "РИЕЛТОР",
+        period: "/год",
+        desc: "Неограниченный поиск + создание каталогов",
+        features: ["Доступ ко всем проектам", "Неограниченные каталоги", "Поделиться в WhatsApp", "Контакты застройщиков", "Система фильтров"],
+        cta: "Начать",
+      },
+      developer: {
+        label: "ЗАСТРОЙЩИК",
+        period: "/год",
+        desc: "Добавьте свои проекты на платформу",
+        badge: "ПОПУЛЯРНО",
+        features: ["Неограниченная загрузка проектов", "Загрузка фото и PDF", "Профиль отдела продаж", "Видимость для всех риелторов", "Ежедневные обновления"],
+        cta: "Добавить проект",
+      },
+    },
+    cta: {
+      title: "Готовы начать?",
+      subtitle: "Присоединяйтесь к крупнейшей B2B-платформе недвижимости Турции.",
+      btn: "Начать бесплатно →",
+    },
+    footer: {
+      privacy: "Конфиденциальность",
+      imprint: "Impressum",
+    },
+  },
 };
 
-export type Lang = "tr" | "en";
+export type Lang = "tr" | "en" | "ru";
 export type Translations = typeof translations.tr;

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="80" viewBox="0 0 300 80">
+  <rect width="300" height="80" fill="#0F1923" rx="10"/>
+  <!-- Diamond icon -->
+  <polygon points="32,15 52,40 32,65 12,40" fill="#E8B84B"/>
+  <polygon points="32,22 46,40 32,58 18,40" fill="#0F1923"/>
+  <polygon points="32,28 42,40 32,52 22,40" fill="#E8B84B" opacity="0.6"/>
+  <!-- Text -->
+  <text x="65" y="34" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#F1F5F9">DIAMOND</text>
+  <text x="65" y="58" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#E8B84B">CITY</text>
+  <text x="65" y="72" font-family="Arial, sans-serif" font-size="10" fill="#94A3B8" letter-spacing="3">ISTANBUL · LUXURY RESIDENCES</text>
+</svg>

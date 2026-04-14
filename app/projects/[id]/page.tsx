@@ -15,7 +15,8 @@ type Project = {
   min_price: number; max_price: number; description: string | null;
   ikamet_eligible: boolean; cover_image_url: string | null; pdf_url: string | null;
   lat: number; lng: number;
-  profiles: { full_name: string; logo_url: string | null } | null;
+  contact_name: string | null; contact_phone: string | null; contact_email: string | null;
+  profiles: { full_name: string; logo_url: string | null; phone: string | null; email: string | null } | null;
 };
 type Image = { id: string; url: string };
 
@@ -28,15 +29,27 @@ export default function ProjectDetailPage() {
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedImg, setSelectedImg] = useState<string | null>(null);
+  const [signedPdfUrl, setSignedPdfUrl] = useState<string | null>(null);
+  const [tryRate, setTryRate] = useState<number>(51);
 
-  const t = {
+  useEffect(() => {
+    fetch("https://api.frankfurter.app/latest?from=TRY&to=EUR")
+      .then(r => r.json())
+      .then(d => { if (d.rates?.EUR) setTryRate(1 / d.rates.EUR); })
+      .catch(() => {});
+  }, []);
+
+  const monthlyPrice = lang === "tr" ? `₺${Math.round(29 * tryRate).toLocaleString("tr-TR")}/ay` : "€29/mo";
+  const yearlyLabel = lang === "tr" ? "Yıllık plan için →" : "Yearly plan →";
+
+  const tLabels = {
     tr: {
       back: "← Haritaya Dön", type: "Tip", location: "Konum", price: "Fiyat Aralığı",
       ikamet: "İkamet İzni Uygun", gallery: "Galeri", contact: "İletişim",
       pdf: "Broşürü İndir", whatsapp: "WhatsApp ile İletişim",
       paywallTitle: "Premium İçerik",
       paywallText: "Proje detaylarını, iletişim bilgilerini ve PDF broşürü görmek için abone olun.",
-      subscribe: "Abone Ol — €29/ay", alreadySub: "Yıllık plan için →",
+      subscribe: `Abone Ol — ${monthlyPrice}`, alreadySub: yearlyLabel,
     },
     en: {
       back: "← Back to Map", type: "Type", location: "Location", price: "Price Range",
@@ -44,9 +57,18 @@ export default function ProjectDetailPage() {
       pdf: "Download Brochure", whatsapp: "Contact via WhatsApp",
       paywallTitle: "Premium Content",
       paywallText: "Subscribe to view project details, contact info and PDF brochure.",
-      subscribe: "Subscribe — €29/mo", alreadySub: "Yearly plan →",
+      subscribe: `Subscribe — ${monthlyPrice}`, alreadySub: yearlyLabel,
     },
-  }[lang];
+    ru: {
+      back: "← Назад к карте", type: "Тип", location: "Расположение", price: "Диапазон цен",
+      ikamet: "Подходит для ВНЖ", gallery: "Галерея", contact: "Контакт",
+      pdf: "Скачать брошюру", whatsapp: "Связаться через WhatsApp",
+      paywallTitle: "Премиум контент",
+      paywallText: "Оформите подписку, чтобы просматривать детали проекта, контакты и PDF-брошюру.",
+      subscribe: `Подписаться — ${monthlyPrice}`, alreadySub: yearlyLabel,
+    },
+  };
+  const t = tLabels[lang as keyof typeof tLabels] ?? tLabels.en;
 
   useEffect(() => {
     const supabase = createClient();
@@ -55,13 +77,24 @@ export default function ProjectDetailPage() {
 
       const [{ data: profile }, { data: proj }, { data: imgs }] = await Promise.all([
         supabase.from("profiles").select("subscription_status").eq("id", user.id).single(),
-        supabase.from("projects").select("id, title, city, district, project_type, min_price, max_price, description, ikamet_eligible, cover_image_url, pdf_url, lat, lng, profiles(full_name, logo_url)").eq("id", id).eq("status", "published").single(),
+        supabase.from("projects").select("id, title, city, district, project_type, min_price, max_price, description, ikamet_eligible, cover_image_url, pdf_url, lat, lng, contact_name, contact_phone, contact_email, profiles(full_name, logo_url, phone, email)").eq("id", id).eq("status", "published").single(),
         supabase.from("project_images").select("id, url").eq("project_id", id),
       ]);
 
-      setSubscribed(true); // TODO: paywall re-enable nach Tests: profile?.subscription_status === "active"
+      setSubscribed(profile?.subscription_status === "active");
       setProject(proj as Project | null);
       setImages((imgs as Image[]) || []);
+
+      // Signed URL für privaten PDF Bucket
+      const pdfUrl = (proj as any)?.pdf_url;
+      if (pdfUrl) {
+        const match = pdfUrl.match(/project-pdfs\/(.+)$/);
+        if (match) {
+          const { data } = await supabase.storage.from("project-pdfs").createSignedUrl(match[1], 3600);
+          if (data?.signedUrl) setSignedPdfUrl(data.signedUrl);
+        }
+      }
+
       setLoading(false);
     });
   }, [id]);
@@ -86,7 +119,7 @@ export default function ProjectDetailPage() {
     <div style={{ minHeight: "100vh", backgroundColor: bgPrimary, color: "#F1F5F9", fontFamily: "system-ui, sans-serif" }}>
       {/* Navbar */}
       <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ color: accent, fontSize: 20, fontWeight: 800 }}>YapiMap</span>
+        <span onClick={() => router.push("/")} style={{ color: accent, fontSize: 20, fontWeight: 800, cursor: "pointer" }}>YapıMap</span>
         <button onClick={() => router.push("/broker/map")}
           style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
           {t.back}
@@ -166,21 +199,43 @@ export default function ProjectDetailPage() {
 
             {/* Contact + PDF */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              {project.profiles?.full_name && (
-                <div style={{ backgroundColor: bgCard, borderRadius: 12, padding: 20, border: `1px solid ${borderColor}` }}>
-                  <div style={{ fontSize: 11, color: textMuted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>{t.contact}</div>
-                  <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 12 }}>{project.profiles.full_name}</div>
-                  <a href={`https://wa.me/?text=${encodeURIComponent(project.title + " - " + project.city)}`}
-                    target="_blank" rel="noopener noreferrer"
-                    style={{ display: "block", padding: "10px", backgroundColor: "#25D366", color: "#fff", fontWeight: 700, fontSize: 13, borderRadius: 8, textAlign: "center", textDecoration: "none" }}>
-                    {t.whatsapp}
-                  </a>
-                </div>
-              )}
-              {project.pdf_url && (
+              {(() => {
+                // Projektspezifischer Kontakt hat Vorrang, Fallback auf Account-Daten
+                const contactName = project.contact_name || project.profiles?.full_name || null;
+                const contactPhone = project.contact_phone || project.profiles?.phone || null;
+                const contactEmail = project.contact_email || project.profiles?.email || null;
+                if (!contactName) return null;
+                const waMsg = lang === "tr" ? `Merhaba, YapıMap'te "${project.title}" projenizle ilgileniyorum.` : lang === "ru" ? `Здравствуйте, меня интересует ваш проект "${project.title}" на YapıMap.` : `Hello, I'm interested in your project "${project.title}" on YapıMap.`;
+                return (
+                  <div style={{ backgroundColor: bgCard, borderRadius: 12, padding: 20, border: `1px solid ${borderColor}` }}>
+                    <div style={{ fontSize: 11, color: textMuted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>{t.contact}</div>
+                    <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 12 }}>{contactName}</div>
+                    {contactPhone && (
+                      <a href={`tel:${contactPhone.replace(/\s/g, "")}`}
+                        style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#F1F5F9", textDecoration: "none", marginBottom: 8 }}>
+                        <span>📞</span><span>{contactPhone}</span>
+                      </a>
+                    )}
+                    {contactEmail && (
+                      <a href={`mailto:${contactEmail}`}
+                        style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "#F1F5F9", textDecoration: "none", marginBottom: 14 }}>
+                        <span>✉️</span><span>{contactEmail}</span>
+                      </a>
+                    )}
+                    {contactPhone && (
+                      <a href={`https://wa.me/${contactPhone.replace(/\D/g, "")}?text=${encodeURIComponent(waMsg)}`}
+                        target="_blank" rel="noopener noreferrer"
+                        style={{ display: "block", padding: "10px", backgroundColor: "#25D366", color: "#fff", fontWeight: 700, fontSize: 13, borderRadius: 8, textAlign: "center", textDecoration: "none" }}>
+                        {t.whatsapp}
+                      </a>
+                    )}
+                  </div>
+                );
+              })()}
+              {(project.pdf_url && signedPdfUrl) && (
                 <div style={{ backgroundColor: bgCard, borderRadius: 12, padding: 20, border: `1px solid ${borderColor}`, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                   <div style={{ fontSize: 11, color: textMuted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>PDF</div>
-                  <a href={project.pdf_url} target="_blank" rel="noopener noreferrer"
+                  <a href={signedPdfUrl} target="_blank" rel="noopener noreferrer"
                     style={{ display: "block", padding: "10px", backgroundColor: accent, color: bgPrimary, fontWeight: 700, fontSize: 13, borderRadius: 8, textAlign: "center", textDecoration: "none" }}>
                     {t.pdf}
                   </a>

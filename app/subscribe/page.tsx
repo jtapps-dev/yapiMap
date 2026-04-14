@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/app/i18n/LanguageContext";
@@ -10,21 +10,14 @@ const bgCard = "#1E2D3D";
 const textMuted = "#94A3B8";
 const borderColor = "#2A3F55";
 
-const PLANS = [
-  {
-    id: "monthly",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID || "",
-    tr: { name: "Aylık Plan", price: "€29", period: "/ ay", desc: "Her ay yenilenir. İstediğiniz zaman iptal." },
-    en: { name: "Monthly Plan", price: "€29", period: "/ month", desc: "Renews monthly. Cancel anytime." },
-  },
-  {
-    id: "yearly",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID || "",
-    tr: { name: "Yıllık Plan", price: "€249", period: "/ yıl", desc: "≈ €20/ay — 2 ay ücretsiz.", badge: "En Popüler" },
-    en: { name: "Yearly Plan", price: "€249", period: "/ year", desc: "≈ €20/mo — 2 months free.", badge: "Most Popular" },
-    popular: true,
-  },
-];
+const YEARLY_PLAN = {
+  id: "yearly",
+  priceId: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID || "",
+  eurPrice: 249,
+  tr: { name: "Yıllık Plan", period: "/ yıl", badge: "En İyi Değer" },
+  en: { name: "Yearly Plan", period: "/ year", badge: "Best Value" },
+  ru: { name: "Годовой план", period: "/ год", badge: "Лучшее предложение" },
+};
 
 type Profile = { role: string; subscription_status: string | null; created_at: string };
 
@@ -39,12 +32,91 @@ function trialDaysLeft(createdAt: string): number {
 export default function SubscribePage() {
   const { lang } = useLang();
   const router = useRouter();
-  const [loading, setLoading] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [tryRate, setTryRate] = useState<number>(51);
+  const [referralCode, setReferralCode] = useState("");
+  const [referralStatus, setReferralStatus] = useState<"idle" | "valid" | "invalid" | "checking">("idle");
+  const [referralName, setReferralName] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const t = {
+  // Referral-Code aus localStorage auto-einsetzen
+  useEffect(() => {
+    const pending = localStorage.getItem("pending_referral_code");
+    if (pending) {
+      setReferralCode(pending);
+      localStorage.removeItem("pending_referral_code");
+      // Auto-validieren
+      setTimeout(() => applyReferralCode(pending), 300);
+    }
+  }, []);  // eslint-disable-line
+
+  // Verhindert BFCACHE-Snapshot wenn von Stripe zurückgekehrt wird
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) window.location.reload();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
+  useEffect(() => {
+    fetch("https://api.frankfurter.app/latest?from=TRY&to=EUR")
+      .then(r => r.json())
+      .then(d => { if (d.rates?.EUR) setTryRate(1 / d.rates.EUR); })
+      .catch(() => {});
+  }, []);
+
+  function formatPrice(eurPrice: number) {
+    if (lang === "tr") {
+      const try_ = Math.round(eurPrice * tryRate);
+      return "₺" + try_.toLocaleString("tr-TR");
+    }
+    return "€" + eurPrice;
+  }
+
+  const DISCOUNT = 20; // €20 Rabatt
+  const discountedPrice = YEARLY_PLAN.eurPrice - DISCOUNT;
+
+  async function applyReferralCode(code?: string) {
+    const val = (code ?? referralCode).trim();
+    if (!val) return;
+    setReferralStatus("checking");
+    const res = await fetch("/api/referral/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: val }),
+    });
+    const json = await res.json();
+    if (json.valid) {
+      setReferralStatus("valid");
+      setReferralName(json.name);
+    } else {
+      setReferralStatus("invalid");
+      setReferralName("");
+    }
+  }
+
+  function handleReferralChange(val: string) {
+    const upper = val.toUpperCase();
+    setReferralCode(upper);
+    setReferralStatus("idle");
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (upper.trim().length >= 6) {
+      debounceRef.current = setTimeout(() => applyReferralCode(upper), 700);
+    }
+  }
+
+  function yearlyDesc() {
+    const monthlyTry = Math.round((YEARLY_PLAN.eurPrice / 12) * tryRate);
+    if (lang === "tr") return `≈ ₺${monthlyTry.toLocaleString("tr-TR")}/ay — 2 ay ücretsiz.`;
+    if (lang === "ru") return `≈ ₺${monthlyTry.toLocaleString("tr-TR")}/мес — 2 месяца бесплатно.`;
+    return `≈ €${Math.round(YEARLY_PLAN.eurPrice / 12)}/mo — 2 months free.`;
+  }
+
+  const tSub = {
     tr: {
-      title: "YapiMap Premium",
+      title: "YapıMap Premium",
       subtitle: "Projelerinizi yönetin ve tüm içeriklere erişin",
       devFeatures: ["Sınırsız proje oluşturma", "Fotoğraf ve PDF broşür yükleme", "Haritada yayımlama", "İstatistikler ve görüntülenme"],
       brokerFeatures: ["Tüm yayınlanan projelere tam erişim", "Proje detayları ve iletişim bilgileri", "PDF broşür indirme", "Harita filtreleri (fiyat, bölge, ikamet)"],
@@ -57,7 +129,7 @@ export default function SubscribePage() {
       brokerTitle: "Emlak Danışmanı",
     },
     en: {
-      title: "YapiMap Premium",
+      title: "YapıMap Premium",
       subtitle: "Manage your projects and access all content",
       devFeatures: ["Unlimited project creation", "Photo & PDF brochure upload", "Publish on map", "Stats & view counts"],
       brokerFeatures: ["Full access to all published projects", "Project details & contact info", "PDF brochure download", "Map filters (price, region, permit)"],
@@ -69,7 +141,21 @@ export default function SubscribePage() {
       devTitle: "Developer",
       brokerTitle: "Real Estate Agent",
     },
-  }[lang];
+    ru: {
+      title: "YapıMap Premium",
+      subtitle: "Управляйте проектами и получите доступ ко всему контенту",
+      devFeatures: ["Неограниченное создание проектов", "Загрузка фото и PDF-брошюр", "Публикация на карте", "Статистика и просмотры"],
+      brokerFeatures: ["Полный доступ ко всем проектам", "Детали проектов и контакты", "Скачивание PDF-брошюр", "Фильтры карты (цена, район, ВНЖ)"],
+      cta: "Начать",
+      active: "Подписка активна",
+      trialInfo: (days: number) => `У вас осталось ${days} дней бесплатного пробного периода.`,
+      trialExpired: "Ваш 3-месячный пробный период завершён. Оформите подписку для продолжения.",
+      back: "← Назад",
+      devTitle: "Застройщик",
+      brokerTitle: "Риелтор",
+    },
+  } as const;
+  const t = (tSub as any)[lang] ?? tSub.en;
 
   useEffect(() => {
     const supabase = createClient();
@@ -78,18 +164,21 @@ export default function SubscribePage() {
       supabase.from("profiles").select("role, subscription_status, created_at").eq("id", user.id).single()
         .then(({ data }) => setProfile(data));
     });
-  }, []);
+  }, []);  // eslint-disable-line
 
-  async function handleCheckout(priceId: string, planId: string) {
-    if (!priceId) { alert("Stripe Price ID not configured"); return; }
-    setLoading(planId);
+  async function handleCheckout() {
+    if (!YEARLY_PLAN.priceId) { alert("Stripe Price ID not configured"); return; }
+    setLoading(true);
     const res = await fetch("/api/stripe/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ priceId }),
+      body: JSON.stringify({
+        priceId: YEARLY_PLAN.priceId,
+        ...(referralStatus === "valid" && { referralCode: referralCode.trim() }),
+      }),
     });
     const { url, error } = await res.json();
-    if (error) { alert(error); setLoading(null); return; }
+    if (error) { alert(error); setLoading(false); return; }
     window.location.href = url;
   }
 
@@ -116,7 +205,7 @@ export default function SubscribePage() {
   return (
     <div style={{ minHeight: "100vh", backgroundColor: bgPrimary, fontFamily: "system-ui, sans-serif", color: "#F1F5F9" }}>
       <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ color: accent, fontSize: 20, fontWeight: 800 }}>YapiMap</span>
+        <span onClick={() => router.push("/")} style={{ color: accent, fontSize: 20, fontWeight: 800, cursor: "pointer" }}>YapıMap</span>
         <button onClick={() => router.push(backUrl)}
           style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
           {t.back}
@@ -161,36 +250,80 @@ export default function SubscribePage() {
           ))}
         </div>
 
-        {/* Plans */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-          {PLANS.map(plan => {
-            const p = plan[lang as "tr" | "en"];
-            return (
-              <div key={plan.id} style={{ backgroundColor: bgCard, borderRadius: 12, padding: 28, border: `2px solid ${plan.popular ? accent : borderColor}`, position: "relative" }}>
-                {plan.popular && "badge" in p && (
-                  <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", backgroundColor: accent, color: bgPrimary, fontSize: 11, fontWeight: 800, padding: "3px 14px", borderRadius: 999, letterSpacing: 1 }}>
-                    {(p as { badge: string }).badge}
-                  </div>
+        {/* Plan */}
+        <div style={{ maxWidth: 480, margin: "0 auto", position: "relative" }}>
+          <div style={{ position: "absolute", top: -14, left: "50%", transform: "translateX(-50%)", backgroundColor: accent, color: bgPrimary, fontSize: 11, fontWeight: 800, padding: "3px 16px", borderRadius: 999, letterSpacing: 1, whiteSpace: "nowrap" }}>
+            {YEARLY_PLAN[lang as "tr" | "en" | "ru"].badge}
+          </div>
+          <div style={{ backgroundColor: bgCard, borderRadius: 12, padding: 36, border: `2px solid ${accent}` }}>
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{YEARLY_PLAN[lang as "tr" | "en" | "ru"].name}</div>
+            <div style={{ marginBottom: 8 }}>
+              {referralStatus === "valid" ? (
+                <>
+                  <span style={{ fontSize: 32, fontWeight: 800, color: textMuted, textDecoration: "line-through", marginRight: 10 }}>{formatPrice(YEARLY_PLAN.eurPrice)}</span>
+                  <span style={{ fontSize: 42, fontWeight: 800, color: accent }}>{formatPrice(discountedPrice)}</span>
+                </>
+              ) : (
+                <span style={{ fontSize: 42, fontWeight: 800, color: accent }}>{formatPrice(YEARLY_PLAN.eurPrice)}</span>
+              )}
+              <span style={{ color: textMuted, fontSize: 14, marginLeft: 6 }}>{YEARLY_PLAN[lang as "tr" | "en" | "ru"].period}</span>
+            </div>
+            <div style={{ color: textMuted, fontSize: 13, marginBottom: 20 }}>{yearlyDesc()}</div>
+
+            {/* Referral Code */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ position: "relative" }}>
+                <input
+                  value={referralCode}
+                  onChange={e => handleReferralChange(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); applyReferralCode(); } }}
+                  placeholder={lang === "tr" ? "Referral kodu (opsiyonel)" : lang === "ru" ? "Реферальный код (необязательно)" : "Referral code (optional)"}
+                  style={{
+                    width: "100%",
+                    padding: "12px 42px 12px 14px",
+                    backgroundColor: bgPrimary,
+                    border: `1px solid ${referralStatus === "valid" ? "#10B981" : referralStatus === "invalid" ? "#EF4444" : borderColor}`,
+                    borderRadius: 8,
+                    color: "#F1F5F9",
+                    fontSize: 14,
+                    outline: "none",
+                    letterSpacing: referralCode ? 2 : 0,
+                    boxSizing: "border-box" as const,
+                  }}
+                />
+                {referralStatus === "checking" && (
+                  <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: textMuted, fontSize: 12 }}>...</span>
                 )}
-                <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{p.name}</div>
-                <div style={{ marginBottom: 8 }}>
-                  <span style={{ fontSize: 36, fontWeight: 800, color: accent }}>{p.price}</span>
-                  <span style={{ color: textMuted, fontSize: 14, marginLeft: 4 }}>{p.period}</span>
-                </div>
-                <div style={{ color: textMuted, fontSize: 13, marginBottom: 24 }}>{p.desc}</div>
-                <button
-                  onClick={() => handleCheckout(plan.priceId, plan.id)}
-                  disabled={loading === plan.id}
-                  style={{ width: "100%", padding: "12px", backgroundColor: plan.popular ? accent : "transparent", color: plan.popular ? bgPrimary : accent, fontWeight: 700, fontSize: 14, borderRadius: 8, border: `2px solid ${accent}`, cursor: "pointer", opacity: loading === plan.id ? 0.7 : 1 }}>
-                  {loading === plan.id ? "..." : t.cta}
-                </button>
+                {referralStatus === "valid" && (
+                  <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#10B981", fontSize: 16 }}>✓</span>
+                )}
+                {referralStatus === "invalid" && (
+                  <span style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#EF4444", fontSize: 16 }}>✗</span>
+                )}
               </div>
-            );
-          })}
+              {referralStatus === "valid" && (
+                <div style={{ marginTop: 8, fontSize: 13, color: "#10B981", display: "flex", alignItems: "center", gap: 6, backgroundColor: "#10B98115", border: "1px solid #10B98133", borderRadius: 8, padding: "8px 12px" }}>
+                  🎉 {lang === "tr" ? `${referralName} sizi davet etti — €${DISCOUNT} indirim uygulandı!` : lang === "ru" ? `${referralName} пригласил вас — скидка €${DISCOUNT} применена!` : `${referralName} invited you — €${DISCOUNT} discount applied!`}
+                </div>
+              )}
+              {referralStatus === "invalid" && (
+                <div style={{ marginTop: 6, fontSize: 12, color: "#EF4444" }}>
+                  {lang === "tr" ? "Geçersiz referral kodu." : lang === "ru" ? "Неверный реферальный код." : "Invalid referral code."}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleCheckout}
+              disabled={loading}
+              style={{ width: "100%", padding: "14px", backgroundColor: accent, color: bgPrimary, fontWeight: 700, fontSize: 15, borderRadius: 8, border: "none", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1 }}>
+              {loading ? "..." : t.cta}
+            </button>
+          </div>
         </div>
 
         <p style={{ textAlign: "center", color: textMuted, fontSize: 12, marginTop: 24 }}>
-          {lang === "tr" ? "Kredi kartı ile güvenli ödeme · İstediğiniz zaman iptal edebilirsiniz" : "Secure payment by credit card · Cancel anytime"}
+          {lang === "tr" ? "Kredi kartı ile güvenli ödeme · İstediğiniz zaman iptal edebilirsiniz" : lang === "ru" ? "Безопасная оплата картой · Отмена в любое время" : "Secure payment by credit card · Cancel anytime"}
         </p>
       </div>
     </div>

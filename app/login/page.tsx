@@ -27,6 +27,7 @@ export default function LoginPage() {
       loading: "Giriş yapılıyor...",
       noAccount: "Hesabınız yok mu?",
       register: "Talep Oluştur",
+      forgot: "Şifremi Unuttum",
     },
     en: {
       title: "Login",
@@ -36,10 +37,21 @@ export default function LoginPage() {
       loading: "Logging in...",
       noAccount: "Don't have an account?",
       register: "Request Access",
+      forgot: "Forgot Password",
+    },
+    ru: {
+      title: "Войти",
+      email: "Эл. почта",
+      password: "Пароль",
+      submit: "Войти",
+      loading: "Вход...",
+      noAccount: "Нет аккаунта?",
+      register: "Запросить доступ",
+      forgot: "Забыл пароль",
     },
   };
 
-  const t = labels[lang];
+  const t = labels[lang as keyof typeof labels] ?? labels.en;
 
   const inputStyle = {
     width: "100%",
@@ -67,9 +79,20 @@ export default function LoginPage() {
 
       if (loginError) throw loginError;
 
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase.from("profiles").select("status").eq("id", user!.id).single();
+
+      if (!profile || profile.status === "pending") { router.push("/pending"); return; }
+      if (profile.status === "rejected") { router.push("/pending"); return; }
+
       router.push("/dashboard");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Giriş başarısız");
+      const msg = err instanceof Error ? err.message.toLowerCase() : "";
+      if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials") || msg.includes("email not confirmed")) {
+        setError(lang === "tr" ? "E-posta veya şifre hatalı." : lang === "ru" ? "Неверный email или пароль." : "Incorrect email or password.");
+      } else {
+        setError(lang === "tr" ? "Giriş başarısız. Lütfen tekrar deneyin." : lang === "ru" ? "Ошибка входа. Попробуйте снова." : "Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -82,7 +105,7 @@ export default function LoginPage() {
         <div style={{ display: "flex", alignItems: "center", marginBottom: 32 }}>
           <Link href="/" style={{ color: textMuted, fontSize: 22, lineHeight: 1 }}>←</Link>
           <Link href="/" style={{ flex: 1, textAlign: "center" }}>
-            <span style={{ color: accent, fontSize: 28, fontWeight: 800 }}>YapiMap</span>
+            <span style={{ color: accent, fontSize: 28, fontWeight: 800 }}>YapıMap</span>
           </Link>
           <span style={{ width: 22 }} />
         </div>
@@ -102,7 +125,10 @@ export default function LoginPage() {
           </div>
 
           <div style={{ marginBottom: 24 }}>
-            <label style={{ display: "block", fontSize: 13, color: textMuted, marginBottom: 6 }}>{t.password}</label>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <label style={{ fontSize: 13, color: textMuted }}>{t.password}</label>
+              <Link href="/forgot-password" style={{ fontSize: 12, color: accent }}>{t.forgot}</Link>
+            </div>
             <input
               style={inputStyle}
               value={form.password}

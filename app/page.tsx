@@ -1,6 +1,8 @@
 "use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLang } from "./i18n/LanguageContext";
+import { createClient } from "@/lib/supabase/client";
 
 const accent = "#E8B84B";
 const bgPrimary = "#0F1923";
@@ -11,13 +13,36 @@ const borderColor = "#2A3F55";
 
 export default function Home() {
   const { lang, setLang, t } = useLang();
+  const [tryRate, setTryRate] = useState(51);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from("profiles").select("role").eq("id", user.id).single()
+        .then(({ data }) => { if (data) setUserRole(data.role); });
+    });
+  }, []);
+
+  useEffect(() => {
+    fetch("https://api.frankfurter.app/latest?from=TRY&to=EUR")
+      .then(r => r.json())
+      .then(d => { if (d.rates?.EUR) setTryRate(1 / d.rates.EUR); })
+      .catch(() => {});
+  }, []);
+
+  function formatPrice(eur: number) {
+    if (lang === "tr") return "₺" + Math.round(eur * tryRate).toLocaleString("tr-TR");
+    return "€" + eur;
+  }
 
   return (
     <div style={{ backgroundColor: bgPrimary, color: "#F1F5F9", minHeight: "100vh", fontFamily: "system-ui, sans-serif" }}>
 
       {/* NAVBAR */}
       <nav style={{ backgroundColor: bgSecondary, borderBottom: `1px solid ${borderColor}`, padding: "16px 40px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ color: accent, fontSize: 26, fontWeight: 800, letterSpacing: -1 }}>YapiMap</span>
+        <Link href="/" style={{ color: accent, fontSize: 26, fontWeight: 800, letterSpacing: -1, textDecoration: "none" }}>YapıMap</Link>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
 
           {/* LANGUAGE SWITCHER */}
@@ -43,12 +68,32 @@ export default function Home() {
               }}>
               EN
             </button>
+            <button
+              onClick={() => setLang("ru")}
+              style={{
+                padding: "6px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", border: "none",
+                borderLeft: `1px solid ${borderColor}`,
+                backgroundColor: lang === "ru" ? accent : "transparent",
+                color: lang === "ru" ? "#0F1923" : textMuted,
+                transition: "all 0.2s",
+              }}>
+              RU
+            </button>
           </div>
 
-          <Link href="/login" style={{ color: textMuted, fontSize: 14 }}>{t.nav.login}</Link>
-          <Link href="/register" style={{ backgroundColor: accent, color: "#0F1923", fontWeight: 700, padding: "8px 20px", borderRadius: 8, fontSize: 14 }}>
-            {t.nav.try}
-          </Link>
+          {userRole ? (
+            <Link href={userRole === "developer" ? "/developer" : "/broker/map"}
+              style={{ backgroundColor: accent, color: "#0F1923", fontWeight: 700, padding: "8px 20px", borderRadius: 8, fontSize: 14, textDecoration: "none" }}>
+              {lang === "tr" ? "Dashboard →" : lang === "ru" ? "Панель →" : "Dashboard →"}
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" style={{ color: textMuted, fontSize: 14 }}>{t.nav.login}</Link>
+              <Link href="/register" style={{ backgroundColor: accent, color: "#0F1923", fontWeight: 700, padding: "8px 20px", borderRadius: 8, fontSize: 14, textDecoration: "none" }}>
+                {t.nav.try}
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
@@ -126,7 +171,7 @@ export default function Home() {
             <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 20, padding: 32 }}>
               <p style={{ color: accent, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t.pricing.broker.label}</p>
               <div style={{ marginBottom: 8 }}>
-                <span style={{ fontSize: 42, fontWeight: 900 }}>{t.pricing.broker.price}</span>
+                <span style={{ fontSize: 42, fontWeight: 900 }}>{formatPrice(249)}</span>
                 <span style={{ color: textMuted, fontSize: 16 }}>{t.pricing.broker.period}</span>
               </div>
               <p style={{ color: textMuted, fontSize: 14, marginBottom: 28 }}>{t.pricing.broker.desc}</p>
@@ -147,7 +192,7 @@ export default function Home() {
               </div>
               <p style={{ color: accent, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t.pricing.developer.label}</p>
               <div style={{ marginBottom: 8 }}>
-                <span style={{ fontSize: 42, fontWeight: 900 }}>{t.pricing.developer.price}</span>
+                <span style={{ fontSize: 42, fontWeight: 900 }}>{formatPrice(249)}</span>
                 <span style={{ color: textMuted, fontSize: 16 }}>{t.pricing.developer.period}</span>
               </div>
               <p style={{ color: textMuted, fontSize: 14, marginBottom: 28 }}>{t.pricing.developer.desc}</p>
@@ -177,7 +222,7 @@ export default function Home() {
       {/* FOOTER */}
       <footer style={{ backgroundColor: bgSecondary, borderTop: `1px solid ${borderColor}`, padding: "24px", textAlign: "center" }}>
         <p style={{ color: textMuted, fontSize: 13 }}>
-          © 2026 YapiMap ·{" "}
+          © 2026 YapıMap ·{" "}
           <a href="https://jtapps.dev/datenschutz/yapimap" style={{ color: textMuted }}>{t.footer.privacy}</a>
           {" · "}
           <a href="https://jtapps.dev/impressum" style={{ color: textMuted }}>{t.footer.imprint}</a>

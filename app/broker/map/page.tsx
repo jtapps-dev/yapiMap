@@ -6,6 +6,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/app/i18n/LanguageContext";
+import ReferralBox from "@/app/components/ReferralBox";
 
 const accent = "#E8B84B";
 const bgPrimary = "#0F1923";
@@ -23,7 +24,7 @@ type Project = {
   cover_image_url: string | null;
   developer_logo_url: string | null;
 };
-type Profile = { full_name: string; status: string; role: string; subscription_status: string | null };
+type Profile = { full_name: string; status: string; role: string; subscription_status: string | null; referral_code: string | null };
 
 export default function BrokerMapPage() {
   const { lang } = useLang();
@@ -33,12 +34,15 @@ export default function BrokerMapPage() {
   const [selected, setSelected] = useState<Project | null>(null);
   const [currency, setCurrency] = useState<"TRY" | "USD" | "EUR">("TRY");
   const [rates, setRates] = useState(DEFAULT_RATES);
-  const [filters, setFilters] = useState({ city: "", type: "", minPrice: "", maxPrice: "", ikamet: false });
+  const [filters, setFilters] = useState({ city: "", district: "", type: "", minPrice: "", maxPrice: "", ikamet: false });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sidebarTab, setSidebarTab] = useState<"filter" | "list">("filter");
+  const [showPaywall, setShowPaywall] = useState(false);
   const mapRef = useRef<MapRef>(null);
 
-  const t = {
+  const subscribed = profile?.subscription_status === "active";
+
+  const tLabels = {
     tr: {
       signout: "Çıkış", showProjects: "Detayları Gör", filter: "Filtrele",
       city: "Şehir", type: "Proje Tipi", minPrice: "Min Fiyat", maxPrice: "Max Fiyat",
@@ -57,7 +61,17 @@ export default function BrokerMapPage() {
       loading: "Loading...", projects: "projects",
       types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"],
     },
-  }[lang];
+    ru: {
+      signout: "Выйти", showProjects: "Подробнее", filter: "Фильтр",
+      city: "Город", type: "Тип проекта", minPrice: "Мин. цена", maxPrice: "Макс. цена",
+      apply: "Применить", reset: "Сбросить", allTypes: "Все типы",
+      paywallTitle: "Премиум функция", paywallText: "Для просмотра деталей требуется подписка.",
+      subscribe: "Подписаться", cancel: "Отмена", ikamet: "Подходит для ВНЖ",
+      loading: "Загрузка...", projects: "проектов",
+      types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"],
+    },
+  } as const;
+  const t = (tLabels as any)[lang] ?? tLabels.en;
 
   useEffect(() => {
     fetch("https://api.frankfurter.app/latest?from=TRY&to=USD,EUR")
@@ -73,7 +87,7 @@ export default function BrokerMapPage() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push("/login"); return; }
-      supabase.from("profiles").select("full_name, status, role, subscription_status").eq("id", user.id).single()
+      supabase.from("profiles").select("full_name, status, role, subscription_status, referral_code").eq("id", user.id).single()
         .then(({ data }) => {
           if (!data || data.status !== "active") { router.push("/pending"); return; }
           if (data.role !== "broker") { router.push("/developer"); return; }
@@ -93,6 +107,7 @@ export default function BrokerMapPage() {
       .select("id, title, city, district, project_type, min_price, max_price, lat, lng, ikamet_eligible, cover_image_url, profiles(logo_url)")
       .eq("status", "published");
     if (f.city) q = q.ilike("city", `%${f.city.trim()}%`);
+    if (f.district) q = q.ilike("district", `%${f.district.trim()}%`);
     if (f.type) q = q.eq("project_type", f.type);
     const minTRY = f.minPrice ? parseFloat(f.minPrice) * currentRates[currentCurrency] : null;
     const maxTRY = f.maxPrice ? parseFloat(f.maxPrice) * currentRates[currentCurrency] : null;
@@ -123,7 +138,7 @@ export default function BrokerMapPage() {
 
   function applyFilters() { loadProjects(filters, rates, currency); }
   function resetFilters() {
-    const empty = { city: "", type: "", minPrice: "", maxPrice: "", ikamet: false };
+    const empty = { city: "", district: "", type: "", minPrice: "", maxPrice: "", ikamet: false };
     setFilters(empty);
     loadProjects(empty, rates, currency);
   }
@@ -143,8 +158,14 @@ export default function BrokerMapPage() {
   }
 
   function generatePDF() {
+    if (!subscribed) { setShowPaywall(true); return; }
     const ids = Array.from(selectedIds).join(",");
     router.push(`/broker/catalog?projects=${ids}`);
+  }
+
+  function handleSelectToggle(id: string) {
+    if (!subscribed) { setShowPaywall(true); return; }
+    toggleSelect(id);
   }
 
   if (!profile) return (
@@ -162,17 +183,45 @@ export default function BrokerMapPage() {
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", backgroundColor: bgPrimary, fontFamily: "system-ui, sans-serif" }}>
 
+      {/* Paywall Modal */}
+      {showPaywall && (
+        <div onClick={() => setShowPaywall(false)} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.7)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: bgCard, borderRadius: 16, padding: 40, maxWidth: 420, width: "90%", textAlign: "center", border: `1px solid ${borderColor}` }}>
+            <div style={{ fontSize: 44, marginBottom: 16 }}>🔒</div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#F1F5F9", marginBottom: 10 }}>{t.paywallTitle}</h2>
+            <p style={{ color: textMuted, fontSize: 15, marginBottom: 28 }}>{t.paywallText}</p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button onClick={() => router.push("/subscribe")}
+                style={{ padding: "12px 28px", backgroundColor: accent, color: bgPrimary, fontWeight: 800, fontSize: 15, borderRadius: 10, border: "none", cursor: "pointer" }}>
+                {t.subscribe}
+              </button>
+              <button onClick={() => setShowPaywall(false)}
+                style={{ padding: "12px 20px", backgroundColor: "transparent", color: textMuted, fontSize: 14, borderRadius: 10, border: `1px solid ${borderColor}`, cursor: "pointer" }}>
+                {t.cancel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Navbar */}
       <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-        <span style={{ color: accent, fontSize: 20, fontWeight: 800 }}>YapiMap</span>
+        <span onClick={() => router.push("/")} style={{ color: accent, fontSize: 20, fontWeight: 800, cursor: "pointer" }}>YapıMap</span>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ color: textMuted, fontSize: 13 }}>{profile.full_name}</span>
+          <button onClick={() => router.push("/profile")}
+            style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
+            {lang === "tr" ? "Profil" : "Profile"}
+          </button>
           <button onClick={() => fetch("/api/auth/signout").then(() => router.push("/"))}
             style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
             {t.signout}
           </button>
         </div>
       </nav>
+
+      {/* Referral Banner */}
+      {profile.referral_code && <ReferralBox referralCode={profile.referral_code} lang={lang} />}
 
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
 
@@ -220,10 +269,21 @@ export default function BrokerMapPage() {
 
           <div style={{ borderTop: `1px solid ${borderColor}` }} />
 
+          {/* Anzahl */}
+          <div style={{ fontSize: 12, color: textMuted, textAlign: "center", padding: "6px 0", backgroundColor: `${accent}11`, borderRadius: 6 }}>
+            <span style={{ color: accent, fontWeight: 700 }}>{projects.length}</span> {lang === "tr" ? "proje bulundu" : "projects found"}
+          </div>
+
           {/* City */}
           <div>
             <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.city}</label>
             <input style={inputStyle} value={filters.city} onChange={e => setFilters(f => ({ ...f, city: e.target.value }))} />
+          </div>
+
+          {/* District */}
+          <div>
+            <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{lang === "tr" ? "İlçe" : "District"}</label>
+            <input style={inputStyle} value={filters.district} onChange={e => setFilters(f => ({ ...f, district: e.target.value }))} />
           </div>
 
           {/* Type */}
@@ -271,24 +331,47 @@ export default function BrokerMapPage() {
 
           {sidebarTab === "list" && (
             <div>
-              {projects.map(p => (
+              {projects.map((p, i) => (
                 <div key={p.id}
-                  onClick={() => { setSelected(p); mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 13, duration: 800 }); }}
-                  style={{ padding: "14px 16px", borderBottom: `1px solid ${borderColor}`, cursor: "pointer", backgroundColor: selected?.id === p.id ? `${accent}11` : "transparent", display: "flex", gap: 10, alignItems: "flex-start" }}>
-                  {/* Checkbox */}
-                  <div onClick={e => { e.stopPropagation(); toggleSelect(p.id); }}
-                    style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${selectedIds.has(p.id) ? accent : borderColor}`, backgroundColor: selectedIds.has(p.id) ? accent : "transparent", flexShrink: 0, marginTop: 2, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                    {selectedIds.has(p.id) && <span style={{ color: "#0F1923", fontSize: 11, fontWeight: 900 }}>✓</span>}
-                  </div>
-                  {/* Cover thumb */}
-                  {p.cover_image_url
-                    ? <img src={p.cover_image_url} alt="" style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6, flexShrink: 0 }} />
-                    : <div style={{ width: 48, height: 48, backgroundColor: bgPrimary, borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🏢</div>
-                  }
+                  onClick={() => { if (!subscribed) { setShowPaywall(true); return; } setSelected(p); mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 13, duration: 800 }); }}
+                  style={{ padding: "14px 16px", borderBottom: `1px solid ${borderColor}`, cursor: subscribed ? "pointer" : "default", backgroundColor: selected?.id === p.id ? `${accent}11` : "transparent", display: "flex", gap: 10, alignItems: "flex-start" }}>
+                  {/* Checkbox — nur für Subscribed */}
+                  {subscribed ? (
+                    <div onClick={e => { e.stopPropagation(); handleSelectToggle(p.id); }}
+                      style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${selectedIds.has(p.id) ? accent : borderColor}`, backgroundColor: selectedIds.has(p.id) ? accent : "transparent", flexShrink: 0, marginTop: 2, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                      {selectedIds.has(p.id) && <span style={{ color: "#0F1923", fontSize: 11, fontWeight: 900 }}>✓</span>}
+                    </div>
+                  ) : (
+                    <div style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${borderColor}`, flexShrink: 0, marginTop: 2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: textMuted }}>
+                      🔒
+                    </div>
+                  )}
+                  {/* Cover thumb — gesperrt wenn nicht subscribed */}
+                  {subscribed ? (
+                    p.cover_image_url
+                      ? <img src={p.cover_image_url} alt="" style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6, flexShrink: 0 }} />
+                      : <div style={{ width: 48, height: 48, backgroundColor: bgPrimary, borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🏢</div>
+                  ) : (
+                    <div style={{ width: 48, height: 48, backgroundColor: bgPrimary, borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, filter: "blur(0px)" }}>🔒</div>
+                  )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2, color: selected?.id === p.id ? accent : "#F1F5F9", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.title}</div>
-                    <div style={{ fontSize: 11, color: textMuted, marginBottom: 2 }}>{p.district}, {p.city}</div>
-                    <div style={{ fontSize: 12, color: accent, fontWeight: 600 }}>{formatPrice(p.min_price)} – {formatPrice(p.max_price)}</div>
+                    {subscribed ? (
+                      <>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2, color: selected?.id === p.id ? accent : "#F1F5F9", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.title}</div>
+                        <div style={{ fontSize: 11, color: textMuted, marginBottom: 2 }}>{p.district}, {p.city}</div>
+                        <div style={{ fontSize: 12, color: accent, fontWeight: 600 }}>{formatPrice(p.min_price)} – {formatPrice(p.max_price)}</div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2, color: textMuted }}>
+                          {lang === "tr" ? `Proje ${i + 1}` : lang === "ru" ? `Проект ${i + 1}` : `Project ${i + 1}`}
+                        </div>
+                        <div style={{ fontSize: 11, color: borderColor, marginBottom: 2, userSelect: "none" }}>{"█".repeat(8)}</div>
+                        <div style={{ fontSize: 11, color: accent, fontWeight: 600, opacity: 0.5 }}>
+                          {lang === "tr" ? "Abonelik gerekli" : lang === "ru" ? "Нужна подписка" : "Subscription required"}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               ))}
@@ -315,9 +398,9 @@ export default function BrokerMapPage() {
 
             {projects.map(p => (
               <Marker key={p.id} longitude={p.lng} latitude={p.lat} anchor="bottom"
-                onClick={e => { e.originalEvent.stopPropagation(); setSelected(p); }}>
+                onClick={e => { e.originalEvent.stopPropagation(); if (!subscribed) { setShowPaywall(true); return; } setSelected(p); }}>
                 <div style={{
-                  backgroundColor: selectedIds.has(p.id) ? "#10B981" : selected?.id === p.id ? "#fff" : accent,
+                  backgroundColor: !subscribed ? accent : selectedIds.has(p.id) ? "#10B981" : selected?.id === p.id ? "#fff" : accent,
                   color: "#0F1923", fontSize: 11, fontWeight: 700,
                   padding: "4px 10px", borderRadius: 6, cursor: "pointer",
                   whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
@@ -325,7 +408,7 @@ export default function BrokerMapPage() {
                   transition: "all 0.15s",
                   outline: selectedIds.has(p.id) ? "2px solid #fff" : "none",
                 }}>
-                  {selectedIds.has(p.id) ? "✓ " : ""}{p.city}
+                  {!subscribed ? "🔒 " : selectedIds.has(p.id) ? "✓ " : ""}{p.city}
                 </div>
               </Marker>
             ))}
@@ -356,11 +439,11 @@ export default function BrokerMapPage() {
                     </div>
                   )}
                   <div style={{ display: "flex", gap: 6 }}>
-                    <button onClick={() => router.push(`/projects/${selected.id}`)}
+                    <button onClick={() => { if (!subscribed) { setShowPaywall(true); } else { router.push(`/projects/${selected.id}`); } }}
                       style={{ flex: 1, padding: "8px", backgroundColor: accent, color: "#0F1923", fontWeight: 700, fontSize: 13, borderRadius: 7, border: "none", cursor: "pointer" }}>
-                      {t.showProjects}
+                      {subscribed ? t.showProjects : "🔒 " + t.showProjects}
                     </button>
-                    <button onClick={() => toggleSelect(selected.id)}
+                    <button onClick={() => handleSelectToggle(selected.id)}
                       style={{ padding: "8px 10px", backgroundColor: selectedIds.has(selected.id) ? "#10B981" : "transparent", color: selectedIds.has(selected.id) ? "#fff" : accent, fontWeight: 700, fontSize: 12, borderRadius: 7, border: `1px solid ${selectedIds.has(selected.id) ? "#10B981" : accent}`, cursor: "pointer", whiteSpace: "nowrap" }}>
                       {selectedIds.has(selected.id) ? "✓ PDF" : "+ PDF"}
                     </button>

@@ -14,12 +14,24 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
 const PROJECT_TYPES = ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"];
 
-const AMENITIES = [
-  "Yüzme Havuzu", "Fitness Merkezi", "SPA & Sauna", "Hamam",
-  "Kapalı Otopark", "7/24 Güvenlik", "Resepsiyon",
-  "Çocuk Oyun Parkı", "Restoran & Kafe", "Tenis Kortu",
-  "Bahçe & Peyzaj", "Jeneratör", "Akıllı Ev Sistemi",
-  "Deniz Manzarası", "Dağ Manzarası", "Asansör", "BBQ Alanı",
+const AMENITIES: { tr: string; en: string; ru: string }[] = [
+  { tr: "Yüzme Havuzu", en: "Swimming Pool", ru: "Бассейн" },
+  { tr: "Fitness Merkezi", en: "Fitness Center", ru: "Фитнес-центр" },
+  { tr: "SPA & Sauna", en: "SPA & Sauna", ru: "СПА & Сауна" },
+  { tr: "Hamam", en: "Turkish Bath", ru: "Хаммам" },
+  { tr: "Kapalı Otopark", en: "Indoor Parking", ru: "Крытая парковка" },
+  { tr: "7/24 Güvenlik", en: "24/7 Security", ru: "Охрана 24/7" },
+  { tr: "Resepsiyon", en: "Reception", ru: "Ресепшн" },
+  { tr: "Çocuk Oyun Parkı", en: "Kids Playground", ru: "Детская площадка" },
+  { tr: "Restoran & Kafe", en: "Restaurant & Cafe", ru: "Ресторан & Кафе" },
+  { tr: "Tenis Kortu", en: "Tennis Court", ru: "Теннисный корт" },
+  { tr: "Bahçe & Peyzaj", en: "Garden & Landscaping", ru: "Сад & Ландшафт" },
+  { tr: "Jeneratör", en: "Generator", ru: "Генератор" },
+  { tr: "Akıllı Ev Sistemi", en: "Smart Home System", ru: "Система умного дома" },
+  { tr: "Deniz Manzarası", en: "Sea View", ru: "Вид на море" },
+  { tr: "Dağ Manzarası", en: "Mountain View", ru: "Вид на горы" },
+  { tr: "Asansör", en: "Elevator", ru: "Лифт" },
+  { tr: "BBQ Alanı", en: "BBQ Area", ru: "Зона барбекю" },
 ];
 
 type Props = {
@@ -44,6 +56,9 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
     max_sqm: project?.max_sqm?.toString() || "",
     delivery_date: project?.delivery_date || "",
     ikamet_eligible: project?.ikamet_eligible || false,
+    citizenship_eligible: project?.citizenship_eligible || false,
+    payment_plan: project?.payment_plan || "",
+    handover_date: project?.handover_date || "",
     amenities: (project?.amenities as string[]) || [],
     contact_name: project?.contact_name || "",
     contact_phone: project?.contact_phone || "",
@@ -60,6 +75,8 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [existingPdf, setExistingPdf] = useState<string>(project?.pdf_url || "");
+  const [docFiles, setDocFiles] = useState<File[]>([]);
+  const [existingDocs, setExistingDocs] = useState<{ id: string; name: string; url: string }[]>([]);
   const mapRef = useRef<MapRef>(null);
 
   function set(key: string, value: any) { setForm(f => ({ ...f, [key]: value })); }
@@ -74,12 +91,18 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
   function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { alert("Sadece JPG, PNG veya WEBP / Only JPG, PNG or WEBP"); return; }
+    if (file.size > 10 * 1024 * 1024) { alert("Maksimum 10 MB / Maximum 10 MB"); return; }
     setCoverFile(file);
     setCoverPreview(URL.createObjectURL(file));
   }
 
   function handleImagesChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files || []);
+    const files = Array.from(e.target.files || []).filter(f => {
+      if (!["image/jpeg", "image/png", "image/webp"].includes(f.type)) { alert(`${f.name}: Sadece JPG/PNG/WEBP`); return false; }
+      if (f.size > 10 * 1024 * 1024) { alert(`${f.name}: Maksimum 10 MB`); return false; }
+      return true;
+    });
     setImageFiles(f => [...f, ...files]);
     setImagePreviews(p => [...p, ...files.map(f => URL.createObjectURL(f))]);
   }
@@ -113,7 +136,7 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
   function handleDistrictChange(value: string) { set("district", value); const q = value.length >= 3 ? `${value} ${form.city}` : form.city; if (q.length >= 3) geocodeAndFly(q, value.length >= 3 ? 13 : 10); }
   function handleAddressChange(value: string) { set("address", value); if (value.length >= 5) geocodeAndFly(`${value} ${form.district} ${form.city}`.trim(), 16); }
 
-  const t = {
+  const tLabels = {
     tr: {
       title: project ? "Projeyi Düzenle" : "Yeni Proje Ekle",
       save: "Kaydet", cancel: "İptal",
@@ -121,10 +144,13 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
         title: "Proje Adı", description: "Açıklama", city: "Şehir", district: "İlçe",
         address: "Adres", type: "Proje Tipi", minPrice: "Min Fiyat (₺)", maxPrice: "Max Fiyat (₺)",
         minSqm: "Min m²", maxSqm: "Max m²", delivery: "Teslim Tarihi",
-        ikamet: "İkamet İzni Uygun", mapHint: "Haritaya tıklayarak konum belirleyin",
+        ikamet: "İkamet İzni Uygun", citizenship: "Vatandaşlık Yatırımına Uygun",
+        mapHint: "Haritaya tıklayarak konum belirleyin",
         pinSet: "Konum belirlendi", pinMissing: "Lütfen haritada konum belirleyin",
         amenities: "Sosyal Olanaklar", contact: "Proje İletişim Bilgileri",
         contactName: "Yetkili Adı", contactPhone: "Telefon", contactEmail: "E-posta",
+        paymentPlan: "Ödeme Planı", handoverDate: "Teslim Tarihi",
+        documents: "Belgeler (Maks. 5)", docsHint: "Teknik şartname, kat planı vb.",
       },
     },
     en: {
@@ -134,13 +160,33 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
         title: "Project Name", description: "Description", city: "City", district: "District",
         address: "Address", type: "Project Type", minPrice: "Min Price (₺)", maxPrice: "Max Price (₺)",
         minSqm: "Min m²", maxSqm: "Max m²", delivery: "Delivery Date",
-        ikamet: "Residence Permit Eligible", mapHint: "Click on the map to set location",
+        ikamet: "Residence Permit Eligible", citizenship: "Eligible for Citizenship by Investment",
+        mapHint: "Click on the map to set location",
         pinSet: "Location set", pinMissing: "Please set a location on the map",
         amenities: "Amenities", contact: "Project Contact",
         contactName: "Contact Name", contactPhone: "Phone", contactEmail: "Email",
+        paymentPlan: "Payment Plan", handoverDate: "Handover Date",
+        documents: "Documents (Max. 5)", docsHint: "Technical specs, floor plans, etc.",
       },
     },
-  }[lang];
+    ru: {
+      title: project ? "Редактировать проект" : "Добавить новый проект",
+      save: "Сохранить", cancel: "Отмена",
+      fields: {
+        title: "Название проекта", description: "Описание", city: "Город", district: "Район",
+        address: "Адрес", type: "Тип проекта", minPrice: "Мин. цена (₺)", maxPrice: "Макс. цена (₺)",
+        minSqm: "Мин. м²", maxSqm: "Макс. м²", delivery: "Дата сдачи",
+        ikamet: "Подходит для ВНЖ", citizenship: "Подходит для гражданства через инвестиции",
+        mapHint: "Нажмите на карту, чтобы указать расположение",
+        pinSet: "Расположение указано", pinMissing: "Пожалуйста, укажите расположение на карте",
+        amenities: "Удобства", contact: "Контакты проекта",
+        contactName: "Имя контактного лица", contactPhone: "Телефон", contactEmail: "Эл. почта",
+        paymentPlan: "План оплаты", handoverDate: "Дата сдачи",
+        documents: "Документы (макс. 5)", docsHint: "Техническая спецификация, поэтажные планы и т.д.",
+      },
+    },
+  };
+  const t = tLabels[lang as keyof typeof tLabels] ?? tLabels.en;
 
   const inputStyle = {
     width: "100%", padding: "10px 14px", backgroundColor: bgPrimary,
@@ -149,7 +195,7 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
   };
 
   async function handleSave() {
-    if (!form.title || !form.city || !form.project_type) { setError(lang === "tr" ? "Zorunlu alanları doldurun." : "Fill in required fields."); return; }
+    if (!form.title || !form.city || !form.project_type) { setError(lang === "tr" ? "Zorunlu alanları doldurun." : lang === "ru" ? "Заполните обязательные поля." : "Fill in required fields."); return; }
     if (!pin) { setError(t.fields.pinMissing); return; }
     setLoading(true); setError("");
     const supabase = createClient();
@@ -172,6 +218,9 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
       max_sqm: form.max_sqm ? parseInt(form.max_sqm) : null,
       delivery_date: form.delivery_date || null,
       ikamet_eligible: form.ikamet_eligible,
+      citizenship_eligible: form.citizenship_eligible,
+      payment_plan: form.payment_plan || null,
+      handover_date: form.handover_date || null,
       amenities: form.amenities,
       contact_name: form.contact_name || null,
       contact_phone: form.contact_phone || null,
@@ -196,13 +245,19 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
         if (url) await supabase.from("project_images").insert({ project_id: projectId, url: url, sort_order: i });
       }
     }
+    if (projectId && docFiles.length > 0) {
+      for (let i = 0; i < docFiles.length; i++) {
+        const url = await uploadFile("project-pdfs", docFiles[i], `${profile.id}/${timestamp}_doc_${i}_${docFiles[i].name}`);
+        if (url) await supabase.from("project_documents").insert({ project_id: projectId, name: docFiles[i].name, url });
+      }
+    }
     onSave();
   }
 
   return (
     <div style={{ backgroundColor: bgPrimary, minHeight: "100vh", color: "#F1F5F9", fontFamily: "system-ui, sans-serif" }}>
       <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <span style={{ color: accent, fontSize: 20, fontWeight: 800 }}>YapiMap</span>
+        <span onClick={() => router.push("/")} style={{ color: accent, fontSize: 20, fontWeight: 800, cursor: "pointer" }}>YapıMap</span>
         <button onClick={onCancel} style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>{t.cancel}</button>
       </nav>
 
@@ -272,18 +327,35 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
             </div>
           </div>
 
-          {/* İkamet */}
-          <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 14, padding: 20 }}>
+          {/* İkamet + Citizenship */}
+          <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 14, padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
             <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
               <div onClick={() => set("ikamet_eligible", !form.ikamet_eligible)}
                 style={{ width: 44, height: 24, borderRadius: 12, backgroundColor: form.ikamet_eligible ? accent : borderColor, position: "relative", transition: "background 0.2s", cursor: "pointer", flexShrink: 0 }}>
                 <div style={{ position: "absolute", top: 3, left: form.ikamet_eligible ? 23 : 3, width: 18, height: 18, borderRadius: "50%", backgroundColor: form.ikamet_eligible ? "#0F1923" : textMuted, transition: "left 0.2s" }} />
               </div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: form.ikamet_eligible ? accent : "#F1F5F9" }}>{t.fields.ikamet}</div>
-                <div style={{ fontSize: 12, color: textMuted }}>{lang === "tr" ? "Bu proje ikamet iznine uygun mu?" : "Is this project eligible for residence permit?"}</div>
-              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: form.ikamet_eligible ? accent : "#F1F5F9" }}>{t.fields.ikamet}</div>
             </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+              <div onClick={() => set("citizenship_eligible", !form.citizenship_eligible)}
+                style={{ width: 44, height: 24, borderRadius: 12, backgroundColor: form.citizenship_eligible ? accent : borderColor, position: "relative", transition: "background 0.2s", cursor: "pointer", flexShrink: 0 }}>
+                <div style={{ position: "absolute", top: 3, left: form.citizenship_eligible ? 23 : 3, width: 18, height: 18, borderRadius: "50%", backgroundColor: form.citizenship_eligible ? "#0F1923" : textMuted, transition: "left 0.2s" }} />
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: form.citizenship_eligible ? accent : "#F1F5F9" }}>{t.fields.citizenship}</div>
+            </label>
+          </div>
+
+          {/* Payment Plan + Handover Date */}
+          <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 14, padding: 20 }}>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.fields.handoverDate}</label>
+              <input style={inputStyle} type="date" value={form.handover_date} onChange={e => set("handover_date", e.target.value)} />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.fields.paymentPlan}</label>
+              <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 100 }} value={form.payment_plan} onChange={e => set("payment_plan", e.target.value)}
+                placeholder={lang === "tr" ? "%30 Peşinat + 36 ay taksit\n%50 Peşinat + %5 indirim\nNakit + %8 indirim" : "35% Down + 36 months\n50% Down + 5% discount\nCash + 10% discount"} />
+            </div>
           </div>
 
           {/* Amenities */}
@@ -291,12 +363,12 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
             <label style={{ fontSize: 13, fontWeight: 700, display: "block", marginBottom: 14, color: accent }}>{t.fields.amenities}</label>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               {AMENITIES.map(a => (
-                <label key={a} onClick={() => toggleAmenity(a)}
-                  style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "6px 8px", borderRadius: 6, backgroundColor: form.amenities.includes(a) ? `${accent}18` : "transparent", border: `1px solid ${form.amenities.includes(a) ? accent : borderColor}`, transition: "all 0.15s" }}>
-                  <div style={{ width: 16, height: 16, borderRadius: 3, border: `2px solid ${form.amenities.includes(a) ? accent : borderColor}`, backgroundColor: form.amenities.includes(a) ? accent : "transparent", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {form.amenities.includes(a) && <span style={{ color: "#0F1923", fontSize: 10, fontWeight: 900 }}>✓</span>}
+                <label key={a.tr} onClick={() => toggleAmenity(a.tr)}
+                  style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "6px 8px", borderRadius: 6, backgroundColor: form.amenities.includes(a.tr) ? `${accent}18` : "transparent", border: `1px solid ${form.amenities.includes(a.tr) ? accent : borderColor}`, transition: "all 0.15s" }}>
+                  <div style={{ width: 16, height: 16, borderRadius: 3, border: `2px solid ${form.amenities.includes(a.tr) ? accent : borderColor}`, backgroundColor: form.amenities.includes(a.tr) ? accent : "transparent", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {form.amenities.includes(a.tr) && <span style={{ color: "#0F1923", fontSize: 10, fontWeight: 900 }}>✓</span>}
                   </div>
-                  <span style={{ fontSize: 12, color: form.amenities.includes(a) ? "#F1F5F9" : textMuted }}>{a}</span>
+                  <span style={{ fontSize: 12, color: form.amenities.includes(a.tr) ? "#F1F5F9" : textMuted }}>{lang === "en" ? a.en : lang === "ru" ? a.ru : a.tr}</span>
                 </label>
               ))}
             </div>
@@ -364,8 +436,46 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
             )}
             <label style={{ display: "block", padding: "9px 14px", backgroundColor: bgPrimary, border: `1px dashed ${borderColor}`, borderRadius: 8, textAlign: "center", cursor: "pointer", fontSize: 13, color: textMuted }}>
               {lang === "tr" ? "PDF Seç" : "Choose PDF"}
-              <input type="file" accept=".pdf" onChange={e => setPdfFile(e.target.files?.[0] || null)} style={{ display: "none" }} />
+              <input type="file" accept=".pdf" onChange={e => {
+  const f = e.target.files?.[0];
+  if (!f) return;
+  if (f.type !== "application/pdf") { alert("Sadece PDF / Only PDF"); return; }
+  if (f.size > 50 * 1024 * 1024) { alert("Maksimum 50 MB / Maximum 50 MB"); return; }
+  setPdfFile(f);
+}} style={{ display: "none" }} />
             </label>
+          </div>
+
+          {/* Dokumente */}
+          <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 14, padding: 20 }}>
+            <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 4 }}>{t.fields.documents}</label>
+            <p style={{ fontSize: 12, color: textMuted, marginBottom: 12 }}>{t.fields.docsHint}</p>
+            {existingDocs.map(d => (
+              <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "8px 12px", backgroundColor: bgPrimary, borderRadius: 7 }}>
+                <span style={{ fontSize: 16 }}>📄</span>
+                <span style={{ fontSize: 13, color: "#F1F5F9", flex: 1 }}>{d.name}</span>
+                <a href={d.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: accent }}>↗</a>
+              </div>
+            ))}
+            {docFiles.map((f, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "8px 12px", backgroundColor: bgPrimary, borderRadius: 7 }}>
+                <span style={{ fontSize: 16 }}>📄</span>
+                <span style={{ fontSize: 13, color: "#F1F5F9", flex: 1 }}>{f.name}</span>
+                <button onClick={() => setDocFiles(d => d.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#EF4444", cursor: "pointer", fontSize: 16 }}>×</button>
+              </div>
+            ))}
+            {(existingDocs.length + docFiles.length) < 5 && (
+              <label style={{ display: "block", padding: "9px 14px", backgroundColor: bgPrimary, border: `1px dashed ${borderColor}`, borderRadius: 8, textAlign: "center", cursor: "pointer", fontSize: 13, color: textMuted }}>
+                {lang === "tr" ? `+ Belge Ekle (${existingDocs.length + docFiles.length}/5)` : `+ Add Document (${existingDocs.length + docFiles.length}/5)`}
+                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={e => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  if (f.size > 50 * 1024 * 1024) { alert("Max 50 MB"); return; }
+                  setDocFiles(d => [...d, f]);
+                  e.target.value = "";
+                }} style={{ display: "none" }} />
+              </label>
+            )}
           </div>
 
           {error && (

@@ -19,10 +19,12 @@ export default function SetPasswordPage() {
   const [error, setError] = useState("");
   const [ready, setReady] = useState(false);
 
-  const t = {
+  const tLabels = {
     tr: { title: "Şifrenizi Belirleyin", pw: "Şifre", confirm: "Şifre Tekrar", btn: "Kaydet ve Giriş Yap", mismatch: "Şifreler eşleşmiyor", short: "Şifre en az 8 karakter olmalı", invalid: "Geçersiz veya süresi dolmuş link." },
     en: { title: "Set Your Password", pw: "Password", confirm: "Confirm Password", btn: "Save & Login", mismatch: "Passwords don't match", short: "Password must be at least 8 characters", invalid: "Invalid or expired link." },
-  }[lang];
+    ru: { title: "Установите пароль", pw: "Пароль", confirm: "Подтвердите пароль", btn: "Сохранить и войти", mismatch: "Пароли не совпадают", short: "Пароль должен содержать не менее 8 символов", invalid: "Неверная или устаревшая ссылка." },
+  };
+  const t = tLabels[lang as keyof typeof tLabels] ?? tLabels.en;
 
   useEffect(() => {
     const supabase = createClient();
@@ -86,7 +88,7 @@ export default function SetPasswordPage() {
     <div style={{ backgroundColor: bgPrimary, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 20, padding: 40, maxWidth: 440, width: "100%" }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <span style={{ color: accent, fontSize: 28, fontWeight: 800 }}>YapiMap</span>
+          <span onClick={() => router.push("/")} style={{ color: accent, fontSize: 28, fontWeight: 800, cursor: "pointer" }}>YapıMap</span>
         </div>
         <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 32, textAlign: "center" }}>{t.title}</h1>
 

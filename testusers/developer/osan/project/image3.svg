@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <defs>
+    <linearGradient id="poolwater" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1E90FF"/>
+      <stop offset="100%" stop-color="#0D47A1"/>
+    </linearGradient>
+    <linearGradient id="rooftop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a2a3a"/>
+      <stop offset="100%" stop-color="#0F1923"/>
+    </linearGradient>
+    <linearGradient id="eveningsky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a1628"/>
+      <stop offset="40%" stop-color="#1a3a6c"/>
+      <stop offset="70%" stop-color="#E8843A"/>
+      <stop offset="100%" stop-color="#C45A1A"/>
+    </linearGradient>
+  </defs>
+  <!-- Evening sky -->
+  <rect width="800" height="500" fill="url(#eveningsky)"/>
+  <!-- Stars -->
+  <circle cx="100" cy="40" r="1.5" fill="white" opacity="0.8"/>
+  <circle cx="200" cy="25" r="1" fill="white" opacity="0.6"/>
+  <circle cx="350" cy="35" r="1.5" fill="white" opacity="0.7"/>
+  <circle cx="500" cy="20" r="1" fill="white" opacity="0.6"/>
+  <circle cx="680" cy="45" r="1.5" fill="white" opacity="0.8"/>
+  <circle cx="750" cy="30" r="1" fill="white" opacity="0.5"/>
+  <!-- City skyline in background -->
+  <rect x="0" y="200" width="800" height="180" fill="#0a1628" opacity="0.7"/>
+  <rect x="50" y="160" width="40" height="40" fill="#1a2a3a" opacity="0.8"/>
+  <rect x="120" y="140" width="55" height="60" fill="#1a2a3a" opacity="0.8"/>
+  <rect x="220" y="155" width="45" height="45" fill="#1a2a3a" opacity="0.8"/>
+  <rect x="580" y="150" width="50" height="50" fill="#1a2a3a" opacity="0.8"/>
+  <rect x="680" y="145" width="60" height="55" fill="#1a2a3a" opacity="0.8"/>
+  <!-- City lights -->
+  <g fill="#E8B84B" opacity="0.6">
+    <rect x="55" y="165" width="6" height="4" rx="1"/>
+    <rect x="65" y="172" width="6" height="4" rx="1"/>
+    <rect x="125" y="145" width="6" height="4" rx="1"/>
+    <rect x="140" y="158" width="6" height="4" rx="1"/>
+    <rect x="155" y="150" width="6" height="4" rx="1"/>
+    <rect x="585" y="155" width="6" height="4" rx="1"/>
+    <rect x="685" y="150" width="6" height="4" rx="1"/>
+    <rect x="700" y="162" width="6" height="4" rx="1"/>
+  </g>
+  <!-- Rooftop deck -->
+  <rect x="0" y="340" width="800" height="160" fill="url(#rooftop)"/>
+  <rect x="0" y="340" width="800" height="6" fill="#2A3F55"/>
+  <!-- Pool -->
+  <rect x="100" y="355" width="600" height="130" fill="url(#poolwater)" rx="8"/>
+  <!-- Pool water shimmer -->
+  <rect x="100" y="355" width="600" height="10" fill="rgba(255,255,255,0.15)" rx="8"/>
+  <line x1="150" y1="390" x2="650" y2="390" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <line x1="150" y1="420" x2="650" y2="420" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <line x1="150" y1="450" x2="650" y2="450" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  <!-- Pool lane dividers -->
+  <line x1="100" y1="380" x2="700" y2="380" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="8,8"/>
+  <line x1="100" y1="410" x2="700" y2="410" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="8,8"/>
+  <line x1="100" y1="440" x2="700" y2="440" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="8,8"/>
+  <!-- Pool edge lighting -->
+  <rect x="100" y="480" width="600" height="4" fill="#E8B84B" opacity="0.7" rx="2"/>
+  <rect x="96" y="355" width="4" height="130" fill="#E8B84B" opacity="0.7" rx="2"/>
+  <rect x="700" y="355" width="4" height="130" fill="#E8B84B" opacity="0.7" rx="2"/>
+  <!-- Sun loungers -->
+  <g fill="#C9A840" opacity="0.9">
+    <rect x="115" y="348" width="55" height="8" rx="3"/>
+    <rect x="185" y="348" width="55" height="8" rx="3"/>
+    <rect x="560" y="348" width="55" height="8" rx="3"/>
+    <rect x="630" y="348" width="55" height="8" rx="3"/>
+  </g>
+  <!-- Reflection in pool -->
+  <text x="400" y="430" text-anchor="middle" font-family="Georgia, serif" font-size="18" fill="rgba(232,184,75,0.3)" transform="scale(1,-0.5) translate(0,-960)">DIAMOND CITY</text>
+  <!-- Label -->
+  <rect x="0" y="0" width="800" height="50" fill="rgba(15,25,35,0.85)"/>
+  <text x="400" y="23" text-anchor="middle" font-family="Georgia, serif" font-size="16" font-weight="bold" fill="#E8B84B">ROOFTOP INFINITY POOL</text>
+  <text x="400" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#94A3B8" letter-spacing="2">DIAMOND CITY · FLOOR 20</text>
+</svg>
