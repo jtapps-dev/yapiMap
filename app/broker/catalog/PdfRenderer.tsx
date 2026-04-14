@@ -29,7 +29,8 @@ export default function PdfRenderer({ url }: { url: string }) {
             canvas.width = viewport.width;
             canvas.height = viewport.height;
             const ctx = canvas.getContext("2d")!;
-            await page.render({ canvasContext: ctx, viewport }).promise;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await page.render({ canvasContext: ctx, viewport } as any).promise;
           }
         }, 50);
       } catch (e) {

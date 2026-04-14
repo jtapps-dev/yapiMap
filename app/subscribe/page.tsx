@@ -241,7 +241,7 @@ export default function SubscribePage() {
             <div key={block.title} style={{ backgroundColor: bgCard, borderRadius: 12, padding: "20px 24px", border: `1px solid ${borderColor}` }}>
               <div style={{ fontSize: 22, marginBottom: 8 }}>{block.icon}</div>
               <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 12, color: accent }}>{block.title}</div>
-              {block.features.map((f, i) => (
+              {(block.features as string[]).map((f: string, i: number) => (
                 <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: "#CBD5E1", marginBottom: 6 }}>
                   <span style={{ color: accent, fontWeight: 700, flexShrink: 0 }}>✓</span> {f}
                 </div>

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Map, { Marker, NavigationControl } from "react-map-gl/mapbox";
 import type { MapRef } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -43,6 +44,7 @@ type Props = {
 };
 
 export default function ProjectForm({ profile, project, onSave, onCancel, lang }: Props) {
+  const router = useRouter();
   const [form, setForm] = useState({
     title: project?.title || "",
     description: project?.description || "",

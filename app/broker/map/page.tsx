@@ -98,7 +98,7 @@ export default function BrokerMapPage() {
 
   useEffect(() => {
     if (!profile) return;
-    loadProjects({});
+    loadProjects({ city: "", district: "", type: "", minPrice: "", maxPrice: "", ikamet: false });
   }, [profile]);
 
   function loadProjects(f: typeof filters, currentRates = rates, currentCurrency = currency) {
@@ -291,7 +291,7 @@ export default function BrokerMapPage() {
             <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.type}</label>
             <select style={{ ...inputStyle }} value={filters.type} onChange={e => setFilters(f => ({ ...f, type: e.target.value }))}>
               <option value="">{t.allTypes}</option>
-              {t.types.map(tp => <option key={tp} value={tp}>{tp}</option>)}
+              {(t.types as string[]).map((tp: string) => <option key={tp} value={tp}>{tp}</option>)}
             </select>
           </div>
 
