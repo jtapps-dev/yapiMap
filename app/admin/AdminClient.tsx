@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const accent = "#E8B84B";
 const bgPrimary = "#0F1923";
@@ -91,7 +92,7 @@ export default function AdminClient({ initialProfiles }: { initialProfiles: Prof
               {pendingCount} bekliyor
             </span>
           )}
-          <button onClick={() => fetch("/api/auth/signout").then(() => router.push("/"))}
+          <button onClick={() => createClient().auth.signOut().then(() => router.push("/"))}
             style={{ color: textMuted, fontSize: 14, background: "none", border: "none", cursor: "pointer" }}>
             Çıkış
           </button>

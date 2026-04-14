@@ -252,7 +252,7 @@ export default function DeveloperPage() {
             style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
             {lang === "tr" ? "Profil" : "Profile"}
           </button>
-          <button onClick={() => fetch("/api/auth/signout").then(() => router.push("/"))}
+          <button onClick={() => createClient().auth.signOut().then(() => router.push("/"))}
             style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
             {t.signout}
           </button>
