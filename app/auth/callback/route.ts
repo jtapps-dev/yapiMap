@@ -14,6 +14,9 @@ export async function GET(request: NextRequest) {
     await supabase.auth.exchangeCodeForSession(code);
   } else if (token_hash && type) {
     await supabase.auth.verifyOtp({ token_hash, type: type as "recovery" });
+    if (type === "recovery") {
+      return NextResponse.redirect(`${origin}/reset-password`);
+    }
   }
 
   return NextResponse.redirect(`${origin}${next}`);

@@ -63,6 +63,7 @@ export default function ResetPasswordPage() {
   const t = (tReset as any)[lang] ?? tReset.en;
 
   useEffect(() => {
+    // Implicit flow: tokens im URL-Hash
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     const access_token = params.get("access_token");
@@ -71,6 +72,7 @@ export default function ResetPasswordPage() {
       const supabase = createClient();
       supabase.auth.setSession({ access_token, refresh_token });
     }
+    // PKCE flow: Session ist bereits gesetzt via auth/callback → nichts zu tun
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
