@@ -237,7 +237,7 @@ export default function Home() {
           © 2026 YapıMap ·{" "}
           <a href="https://jtapps.dev/datenschutz/yapimap" style={{ color: textMuted }}>{t.footer.privacy}</a>
           {" · "}
-          <a href="https://jtapps.dev/impressum" style={{ color: textMuted }}>{t.footer.imprint}</a>
+          <Link href="/impressum" style={{ color: textMuted }}>{t.footer.imprint}</Link>
         </p>
       </footer>
 
