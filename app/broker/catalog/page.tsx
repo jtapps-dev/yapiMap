@@ -71,24 +71,53 @@ type Project = {
 type Image = { project_id: string; url: string };
 
 const AMENITY_ICONS: Record<string, string> = {
-  "Yüzme Havuzu": "🏊", "Swimming Pool": "🏊",
-  "Fitness Merkezi": "💪", "Fitness Center": "💪",
-  "SPA & Sauna": "🧖",
-  "Hamam": "♨️", "Turkish Bath": "♨️",
-  "Kapalı Otopark": "🅿️", "Indoor Parking": "🅿️",
-  "7/24 Güvenlik": "🔒", "24/7 Security": "🔒",
-  "Resepsiyon": "🛎️", "Reception": "🛎️",
-  "Çocuk Oyun Parkı": "🎠", "Kids Playground": "🎠",
-  "Restoran & Kafe": "☕", "Restaurant & Cafe": "☕",
-  "Tenis Kortu": "🎾", "Tennis Court": "🎾",
-  "Bahçe & Peyzaj": "🌿", "Garden & Landscaping": "🌿",
-  "Jeneratör": "⚡", "Generator": "⚡",
-  "Akıllı Ev Sistemi": "🏠", "Smart Home System": "🏠",
-  "Deniz Manzarası": "🌊", "Sea View": "🌊",
-  "Dağ Manzarası": "⛰️", "Mountain View": "⛰️",
-  "Asansör": "🛗", "Elevator": "🛗",
-  "BBQ Alanı": "🔥", "BBQ Area": "🔥",
+  "Yüzme Havuzu": "🏊", "Fitness Merkezi": "💪", "SPA & Sauna": "🧖",
+  "Hamam": "♨️", "Kapalı Otopark": "🅿️", "7/24 Güvenlik": "🔒",
+  "Resepsiyon": "🛎️", "Çocuk Oyun Parkı": "🎠", "Restoran & Kafe": "☕",
+  "Tenis Kortu": "🎾", "Bahçe & Peyzaj": "🌿", "Jeneratör": "⚡",
+  "Akıllı Ev Sistemi": "🏠", "Deniz Manzarası": "🌊", "Dağ Manzarası": "⛰️",
+  "Asansör": "🛗", "BBQ Alanı": "🔥",
 };
+
+const AMENITY_TR: Record<string, { en: string; ru: string }> = {
+  "Yüzme Havuzu":    { en: "Swimming Pool",       ru: "Бассейн" },
+  "Fitness Merkezi": { en: "Fitness Center",       ru: "Фитнес-центр" },
+  "SPA & Sauna":     { en: "SPA & Sauna",          ru: "СПА и Сауна" },
+  "Hamam":           { en: "Turkish Bath",         ru: "Хамам" },
+  "Kapalı Otopark":  { en: "Indoor Parking",       ru: "Подземная парковка" },
+  "7/24 Güvenlik":   { en: "24/7 Security",        ru: "Охрана 24/7" },
+  "Resepsiyon":      { en: "Reception",            ru: "Ресепшн" },
+  "Çocuk Oyun Parkı":{ en: "Kids Playground",      ru: "Детская площадка" },
+  "Restoran & Kafe": { en: "Restaurant & Cafe",    ru: "Ресторан и кафе" },
+  "Tenis Kortu":     { en: "Tennis Court",         ru: "Теннисный корт" },
+  "Bahçe & Peyzaj":  { en: "Garden & Landscaping", ru: "Сад и ландшафт" },
+  "Jeneratör":       { en: "Generator",            ru: "Генератор" },
+  "Akıllı Ev Sistemi":{ en: "Smart Home System",   ru: "Умный дом" },
+  "Deniz Manzarası": { en: "Sea View",             ru: "Вид на море" },
+  "Dağ Manzarası":   { en: "Mountain View",        ru: "Вид на горы" },
+  "Asansör":         { en: "Elevator",             ru: "Лифт" },
+  "BBQ Alanı":       { en: "BBQ Area",             ru: "Зона барбекю" },
+};
+
+const PROJECT_TYPE_TR: Record<string, { en: string; ru: string }> = {
+  "daire":     { en: "Apartment",  ru: "Квартира" },
+  "villa":     { en: "Villa",      ru: "Вилла" },
+  "rezidans":  { en: "Residence",  ru: "Резиденс" },
+  "ofis":      { en: "Office",     ru: "Офис" },
+  "townhouse": { en: "Townhouse",  ru: "Таунхаус" },
+  "loft":      { en: "Loft",       ru: "Лофт" },
+  "karma":     { en: "Mixed Use",  ru: "Многофункциональный" },
+};
+
+function translateAmenity(a: string, lang: string) {
+  if (lang === "tr") return a;
+  return AMENITY_TR[a]?.[lang as "en" | "ru"] ?? a;
+}
+
+function translateType(t: string, lang: string) {
+  if (lang === "tr") return t;
+  return PROJECT_TYPE_TR[t]?.[lang as "en" | "ru"] ?? t;
+}
 
 function CatalogContent() {
   const params = useSearchParams();
@@ -142,9 +171,10 @@ function CatalogContent() {
     });
   }, []); // eslint-disable-line
 
+  const locale = lang === "ru" ? "ru-RU" : lang === "en" ? "en-GB" : "tr-TR";
   function formatPrice(n: number) { return "₺" + n.toLocaleString("tr-TR"); }
   function formatDate(d: string) {
-    return new Date(d).toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
+    return new Date(d).toLocaleDateString(locale, { month: "long", year: "numeric" });
   }
 
   if (loading) return <div style={{ padding: 60, textAlign: "center", fontFamily: "Georgia, serif", color: "#666" }}>{tx.loading}</div>;
@@ -163,7 +193,7 @@ function CatalogContent() {
           {tx.backToMap}
         </button>
         <span style={{ fontSize: 13, color: "#666", marginLeft: "auto" }}>
-          {tx.projects(projects.length)} · {new Date().toLocaleDateString("tr-TR")}
+          {tx.projects(projects.length)} · {new Date().toLocaleDateString(locale)}
         </span>
       </div>
 
@@ -177,7 +207,7 @@ function CatalogContent() {
           {tx.catalogTitle}
         </h1>
         <p style={{ color: "#666", fontSize: 15, marginBottom: 40 }}>
-          {tx.projects(projects.length)} · {new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
+          {tx.projects(projects.length)} · {new Date().toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}
         </p>
 
         {/* Broker Card */}
@@ -224,7 +254,7 @@ function CatalogContent() {
           <h2 style={{ fontSize: 32, fontWeight: 900, color: "#0F1923", margin: "0 0 6px" }}>{p.title}</h2>
           <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", marginBottom: 20 }}>
             <span style={{ color: "#666", fontSize: 14 }}>📍 {p.district ? `${p.district}, ` : ""}{p.city}</span>
-            <span style={{ color: "#666", fontSize: 14 }}>🏠 {p.project_type}</span>
+            <span style={{ color: "#666", fontSize: 14 }}>🏠 {translateType(p.project_type, lang)}</span>
             {p.handover_date && (
               <span style={{ color: "#666", fontSize: 14 }}>📅 {formatDate(p.handover_date)}</span>
             )}
@@ -271,7 +301,7 @@ function CatalogContent() {
                 {p.amenities.map((a, j) => (
                   <div key={j} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#333", padding: "8px 10px", backgroundColor: "#F8F9FA", borderRadius: 8, border: "1px solid #E2E8F0" }}>
                     <span style={{ fontSize: 16 }}>{AMENITY_ICONS[a] || "✓"}</span>
-                    <span>{a}</span>
+                    <span>{translateAmenity(a, lang)}</span>
                   </div>
                 ))}
               </div>
@@ -309,7 +339,7 @@ function CatalogContent() {
       {/* Footer */}
       <div style={{ textAlign: "center", marginTop: 48, paddingTop: 24, borderTop: "2px solid #E8B84B" }}>
         <p style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 2 }}>
-          {tx.footer(new Date().toLocaleDateString("tr-TR"))}
+          {tx.footer(new Date().toLocaleDateString(locale))}
         </p>
       </div>
 
