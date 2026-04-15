@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   if (profile?.email) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     await supabase.auth.resetPasswordForEmail(profile.email, {
-      redirectTo: `${siteUrl}/reset-password`,
+      redirectTo: `${siteUrl}/auth/callback?next=/reset-password`,
     });
   }
 
