@@ -213,7 +213,7 @@ export default function BrokerMapPage() {
             style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
             {lang === "tr" ? "Profil" : "Profile"}
           </button>
-          <button onClick={() => createClient().auth.signOut().then(() => router.push("/"))}
+          <button onClick={() => createClient().auth.signOut().then(() => { window.location.href = "/"; })}
             style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
             {t.signout}
           </button>

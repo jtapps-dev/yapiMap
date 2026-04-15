@@ -96,7 +96,7 @@ export default function AdminClient({ initialProfiles }: { initialProfiles: Prof
               {pendingCount} bekliyor
             </span>
           )}
-          <button onClick={() => createClient().auth.signOut().then(() => router.push("/"))}
+          <button onClick={() => createClient().auth.signOut().then(() => { window.location.href = "/"; })}
             style={{ color: textMuted, fontSize: 14, background: "none", border: "none", cursor: "pointer" }}>
             Çıkış
           </button>
