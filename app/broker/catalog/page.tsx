@@ -2,6 +2,61 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useLang } from "@/app/i18n/LanguageContext";
+
+const ct = {
+  tr: {
+    savePdf: "🖨️ PDF Olarak Kaydet",
+    backToMap: "← Haritaya Dön",
+    loading: "Yükleniyor...",
+    projects: (n: number) => `${n} Proje`,
+    subtitle: "YapıMap · Premium Gayrimenkul",
+    catalogTitle: "Proje Kataloğu",
+    preparedBy: "Hazırlayan Danışman",
+    toc: "İçindekiler",
+    projectOf: (i: number, n: number) => `Proje ${i} / ${n}`,
+    amenities: "Sosyal Olanaklar",
+    payment: "Ödeme Seçenekleri",
+    advisor: "Danışmanınız",
+    footer: (date: string) => `Bu katalog YapıMap tarafından oluşturulmuştur · yapimap.com · ${date}`,
+    residence: "✓ İkamet İzni",
+    citizenship: "✓ Vatandaşlık",
+  },
+  en: {
+    savePdf: "🖨️ Save as PDF",
+    backToMap: "← Back to Map",
+    loading: "Loading...",
+    projects: (n: number) => `${n} Project${n !== 1 ? "s" : ""}`,
+    subtitle: "YapıMap · Premium Real Estate",
+    catalogTitle: "Project Catalog",
+    preparedBy: "Prepared by Agent",
+    toc: "Table of Contents",
+    projectOf: (i: number, n: number) => `Project ${i} / ${n}`,
+    amenities: "Amenities",
+    payment: "Payment Options",
+    advisor: "Your Agent",
+    footer: (date: string) => `This catalog was created by YapıMap · yapimap.com · ${date}`,
+    residence: "✓ Residence Permit",
+    citizenship: "✓ Citizenship",
+  },
+  ru: {
+    savePdf: "🖨️ Сохранить как PDF",
+    backToMap: "← Вернуться к карте",
+    loading: "Загрузка...",
+    projects: (n: number) => `${n} Проект${n > 1 ? "а" : ""}`,
+    subtitle: "YapıMap · Премиум Недвижимость",
+    catalogTitle: "Каталог проектов",
+    preparedBy: "Подготовлено агентом",
+    toc: "Содержание",
+    projectOf: (i: number, n: number) => `Проект ${i} / ${n}`,
+    amenities: "Инфраструктура",
+    payment: "Варианты оплаты",
+    advisor: "Ваш агент",
+    footer: (date: string) => `Каталог создан YapıMap · yapimap.com · ${date}`,
+    residence: "✓ ВНЖ",
+    citizenship: "✓ Гражданство",
+  },
+};
 
 type Project = {
   id: string; title: string; city: string; district: string;
@@ -38,6 +93,8 @@ const AMENITY_ICONS: Record<string, string> = {
 function CatalogContent() {
   const params = useSearchParams();
   const router = useRouter();
+  const { lang } = useLang();
+  const tx = ct[lang as keyof typeof ct] ?? ct.en;
   const [projects, setProjects] = useState<Project[]>([]);
   const [images, setImages] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
@@ -88,7 +145,7 @@ function CatalogContent() {
     return new Date(d).toLocaleDateString("tr-TR", { month: "long", year: "numeric" });
   }
 
-  if (loading) return <div style={{ padding: 60, textAlign: "center", fontFamily: "Georgia, serif", color: "#666" }}>Yükleniyor...</div>;
+  if (loading) return <div style={{ padding: 60, textAlign: "center", fontFamily: "Georgia, serif", color: "#666" }}>{tx.loading}</div>;
 
   return (
     <div style={{ fontFamily: "'Georgia', serif", backgroundColor: "#fff", color: "#1a1a1a", maxWidth: 860, margin: "0 auto", padding: "40px 40px 60px" }}>
@@ -97,14 +154,14 @@ function CatalogContent() {
       <div className="no-print" style={{ marginBottom: 32, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: "16px 20px", backgroundColor: "#F8F9FA", borderRadius: 10, border: "1px solid #E2E8F0" }}>
         <button onClick={() => window.print()}
           style={{ padding: "10px 24px", backgroundColor: "#E8B84B", color: "#0F1923", fontWeight: 700, fontSize: 14, borderRadius: 8, border: "none", cursor: "pointer" }}>
-          🖨️ Als PDF speichern
+          {tx.savePdf}
         </button>
         <button onClick={() => router.push("/broker/map")}
           style={{ padding: "10px 20px", backgroundColor: "transparent", color: "#666", fontSize: 14, borderRadius: 8, border: "1px solid #ccc", cursor: "pointer" }}>
-          ← Zurück zur Karte
+          {tx.backToMap}
         </button>
         <span style={{ fontSize: 13, color: "#666", marginLeft: "auto" }}>
-          {projects.length} Projekt{projects.length !== 1 ? "e" : ""} · {new Date().toLocaleDateString("tr-TR")}
+          {tx.projects(projects.length)} · {new Date().toLocaleDateString("tr-TR")}
         </span>
       </div>
 
@@ -115,18 +172,18 @@ function CatalogContent() {
           <img src={brokerLogo} alt="" style={{ height: 60, maxWidth: 200, objectFit: "contain", marginBottom: 24 }} />
         )}
         <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 6, textTransform: "uppercase", marginBottom: 16 }}>
-          YapıMap · Premium Gayrimenkul
+          {tx.subtitle}
         </div>
         <h1 style={{ fontSize: 44, fontWeight: 900, color: "#0F1923", marginBottom: 8, letterSpacing: -1 }}>
-          Proje Kataloğu
+          {tx.catalogTitle}
         </h1>
         <p style={{ color: "#666", fontSize: 15, marginBottom: 40 }}>
-          {projects.length} Seçili Proje · {new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
+          {tx.projects(projects.length)} · {new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
         </p>
 
         {/* Broker Card */}
         <div style={{ display: "inline-block", backgroundColor: "#0F1923", borderRadius: 14, padding: "24px 36px", textAlign: "left", minWidth: 320 }}>
-          <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Hazırlayan Danışman</div>
+          <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>{tx.preparedBy}</div>
           <div style={{ fontWeight: 800, fontSize: 18, color: "#F1F5F9", marginBottom: 4 }}>{brokerName}</div>
           {brokerCompany && <div style={{ fontSize: 14, color: "#E8B84B", marginBottom: 8 }}>{brokerCompany}</div>}
           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
@@ -138,7 +195,7 @@ function CatalogContent() {
         {/* TOC */}
         {projects.length > 1 && (
           <div style={{ marginTop: 48, textAlign: "left" }}>
-            <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 14 }}>İçindekiler</div>
+            <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 14 }}>{tx.toc}</div>
             {projects.map((p, i) => (
               <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #F1F5F9", fontSize: 14 }}>
                 <span style={{ color: "#0F1923" }}>{i + 1}. <strong>{p.title}</strong> — {p.city}</span>
@@ -155,7 +212,7 @@ function CatalogContent() {
 
           {/* Project Counter */}
           <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 4, textTransform: "uppercase", marginBottom: 12 }}>
-            Proje {i + 1} / {projects.length}
+            {tx.projectOf(i + 1, projects.length)}
           </div>
 
           {/* Cover Image */}
@@ -181,10 +238,10 @@ function CatalogContent() {
             <span style={{ fontSize: 28, fontWeight: 900, color: "#E8B84B" }}>{formatPrice(p.max_price)}</span>
             <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
               {p.ikamet_eligible && (
-                <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 999, backgroundColor: "#10B98120", color: "#10B981", border: "1px solid #10B981", fontWeight: 700 }}>✓ İkamet İzni</span>
+                <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 999, backgroundColor: "#10B98120", color: "#10B981", border: "1px solid #10B981", fontWeight: 700 }}>{tx.residence}</span>
               )}
               {p.citizenship_eligible && (
-                <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 999, backgroundColor: "#3B82F620", color: "#3B82F6", border: "1px solid #3B82F6", fontWeight: 700 }}>✓ Vatandaşlık</span>
+                <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 999, backgroundColor: "#3B82F620", color: "#3B82F6", border: "1px solid #3B82F6", fontWeight: 700 }}>{tx.citizenship}</span>
               )}
             </div>
           </div>
@@ -209,7 +266,7 @@ function CatalogContent() {
           {p.amenities && p.amenities.length > 0 && (
             <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "#0F1923", marginBottom: 14, textTransform: "uppercase", letterSpacing: 3, borderBottom: "2px solid #E8B84B", paddingBottom: 6 }}>
-                Sosyal Olanaklar
+                {tx.amenities}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                 {p.amenities.map((a, j) => (
@@ -225,7 +282,7 @@ function CatalogContent() {
           {/* Payment Plan */}
           {p.payment_plan && (
             <div style={{ marginBottom: 24, padding: "16px 20px", backgroundColor: "#0F1923", borderRadius: 10 }}>
-              <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>Ödeme Seçenekleri</div>
+              <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>{tx.payment}</div>
               {p.payment_plan.split("\n").filter(Boolean).map((line, j) => (
                 <div key={j} style={{ fontSize: 13, color: "#F1F5F9", lineHeight: 1.8, display: "flex", gap: 8 }}>
                   <span style={{ color: "#E8B84B" }}>›</span> {line}
@@ -237,7 +294,7 @@ function CatalogContent() {
           {/* Broker Contact at bottom of each project */}
           <div style={{ marginTop: 24, padding: "16px 20px", backgroundColor: "#F8F9FA", borderRadius: 10, border: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>Danışmanınız</div>
+              <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>{tx.advisor}</div>
               <div style={{ fontWeight: 700, fontSize: 15, color: "#0F1923" }}>{brokerName}</div>
               {brokerCompany && <div style={{ fontSize: 12, color: "#E8B84B" }}>{brokerCompany}</div>}
             </div>
@@ -253,7 +310,7 @@ function CatalogContent() {
       {/* Footer */}
       <div style={{ textAlign: "center", marginTop: 48, paddingTop: 24, borderTop: "2px solid #E8B84B" }}>
         <p style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 2 }}>
-          Bu katalog YapıMap tarafından oluşturulmuştur · yapimap.com · {new Date().toLocaleDateString("tr-TR")}
+          {tx.footer(new Date().toLocaleDateString("tr-TR"))}
         </p>
       </div>
 
@@ -270,7 +327,7 @@ function CatalogContent() {
 
 export default function CatalogPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 60, textAlign: "center" }}>Yükleniyor...</div>}>
+    <Suspense fallback={<div style={{ padding: 60, textAlign: "center" }}>Loading...</div>}>
       <CatalogContent />
     </Suspense>
   );
