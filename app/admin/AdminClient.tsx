@@ -18,6 +18,11 @@ type Profile = {
   role: string;
   status: string;
   created_at: string;
+  tax_number: string | null;
+  country: string | null;
+  city: string | null;
+  iban: string | null;
+  referral_code: string | null;
 };
 
 type Commission = {
@@ -150,9 +155,16 @@ export default function AdminClient({ initialProfiles }: { initialProfiles: Prof
                           {p.role === "broker" ? "🏠 Emlakçı" : "🏗️ Geliştirici"}
                         </span>
                       </div>
-                      <p style={{ color: textMuted, fontSize: 14, marginBottom: 2 }}>{p.company_name}</p>
-                      <p style={{ color: textMuted, fontSize: 13 }}>{p.email} · {p.phone}</p>
-                      <p style={{ color: textMuted, fontSize: 12, marginTop: 4 }}>
+                      <p style={{ color: "#F1F5F9", fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{p.company_name}</p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 2, fontSize: 13, color: textMuted }}>
+                        <span>📧 {p.email}</span>
+                        <span>📞 {p.phone}</span>
+                        {(p.country || p.city) && <span>📍 {[p.city, p.country].filter(Boolean).join(", ")}</span>}
+                        {p.tax_number && <span>🧾 Vergi No: <span style={{ color: "#F1F5F9" }}>{p.tax_number}</span></span>}
+                        {p.iban && <span>🏦 IBAN: <span style={{ color: accent, fontFamily: "monospace" }}>{p.iban}</span></span>}
+                        {p.referral_code && <span>🔗 Ref: <span style={{ color: accent }}>{p.referral_code}</span></span>}
+                      </div>
+                      <p style={{ color: textMuted, fontSize: 11, marginTop: 6 }}>
                         {new Date(p.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                       </p>
                     </div>

@@ -13,7 +13,7 @@ export async function GET() {
 
   const { data: profiles, error } = await supabase
     .from("profiles")
-    .select("id, full_name, company_name, phone, email, role, status, created_at")
+    .select("id, full_name, company_name, phone, email, role, status, created_at, tax_number, country, city, iban, referral_code")
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
