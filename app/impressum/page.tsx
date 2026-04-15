@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useLang } from "@/app/i18n/LanguageContext";
 
 const accent = "#E8B84B";
 const bgPrimary = "#0F1923";
@@ -7,7 +8,43 @@ const bgCard = "#1E2D3D";
 const textMuted = "#94A3B8";
 const borderColor = "#2A3F55";
 
+const t = {
+  tr: {
+    title: "Künye",
+    subtitle: "Yasal Bilgiler",
+    operator: "İşletici / Firma",
+    office: "Türkiye Merkez Ofis",
+    contact: "İletişim",
+    platform: "Platform Hakkında",
+    platformText: "YapıMap, Türkiye'deki inşaat firmalarını ve emlak danışmanlarını birbirine bağlayan bir B2B platformdur. Platformda gösterilen tüm projeler ve bilgiler ilgili inşaat firmaları tarafından sağlanmaktadır.",
+    back: "← Ana Sayfaya Dön",
+  },
+  en: {
+    title: "Imprint",
+    subtitle: "Legal Notice",
+    operator: "Operator / Company",
+    office: "Central Office in Turkey",
+    contact: "Contact",
+    platform: "About Platform",
+    platformText: "YapıMap is a B2B platform connecting real estate developers and brokers in Turkey. All projects and information displayed on the platform are provided by the respective developers.",
+    back: "← Back to Home",
+  },
+  ru: {
+    title: "Импрессум",
+    subtitle: "Правовая информация",
+    operator: "Оператор / Компания",
+    office: "Центральный офис в Турции",
+    contact: "Контакты",
+    platform: "О платформе",
+    platformText: "YapıMap — B2B-платформа, соединяющая застройщиков и агентов по недвижимости в Турции. Все проекты и информация на платформе предоставлены соответствующими застройщиками.",
+    back: "← На главную",
+  },
+};
+
 export default function ImpressumPage() {
+  const { lang } = useLang();
+  const tx = t[lang as keyof typeof t] ?? t.en;
+
   return (
     <div style={{ backgroundColor: bgPrimary, minHeight: "100vh", color: "#F1F5F9", fontFamily: "system-ui, sans-serif" }}>
 
@@ -16,11 +53,11 @@ export default function ImpressumPage() {
       </nav>
 
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "60px 24px" }}>
-        <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8 }}>Impressum</h1>
-        <p style={{ color: textMuted, fontSize: 14, marginBottom: 48 }}>Angaben gemäß § 5 TMG / Legal Notice</p>
+        <h1 style={{ fontSize: 32, fontWeight: 900, marginBottom: 8 }}>{tx.title}</h1>
+        <p style={{ color: textMuted, fontSize: 14, marginBottom: 48 }}>{tx.subtitle}</p>
 
         <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 16, padding: 32, marginBottom: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: accent, marginBottom: 20 }}>Betreiber / Operator</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: accent, marginBottom: 20 }}>{tx.operator}</h2>
           <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>Global Trade Real Estate / Emlak / Недвижимость</p>
           <p style={{ color: textMuted, fontSize: 14, lineHeight: 1.8 }}>
             Şehit Astsubay Ömer Halis Demir Cad.<br />
@@ -30,7 +67,7 @@ export default function ImpressumPage() {
         </div>
 
         <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 16, padding: 32, marginBottom: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: accent, marginBottom: 20 }}>Central Office in Turkey</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: accent, marginBottom: 20 }}>{tx.office}</h2>
           <p style={{ color: textMuted, fontSize: 14, lineHeight: 1.8 }}>
             Ekpa 1207, Güneş Mahallesi<br />
             4409 Sokak, A3 Blok 163<br />
@@ -39,7 +76,7 @@ export default function ImpressumPage() {
         </div>
 
         <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 16, padding: 32, marginBottom: 24 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: accent, marginBottom: 20 }}>Kontakt / Contact</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: accent, marginBottom: 20 }}>{tx.contact}</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
               <span style={{ color: textMuted, fontSize: 13, minWidth: 60 }}>Tel 1</span>
@@ -57,15 +94,12 @@ export default function ImpressumPage() {
         </div>
 
         <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 16, padding: 32 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 800, color: accent, marginBottom: 12 }}>Plattform</h2>
-          <p style={{ color: textMuted, fontSize: 14, lineHeight: 1.8 }}>
-            YapıMap ist eine B2B-Plattform, die Bauträger und Immobilienmakler in der Türkei verbindet.<br />
-            Alle auf der Plattform angezeigten Projekte und Informationen werden von den jeweiligen Bauträgern bereitgestellt.
-          </p>
+          <h2 style={{ fontSize: 18, fontWeight: 800, color: accent, marginBottom: 12 }}>{tx.platform}</h2>
+          <p style={{ color: textMuted, fontSize: 14, lineHeight: 1.8 }}>{tx.platformText}</p>
         </div>
 
         <p style={{ color: textMuted, fontSize: 13, marginTop: 40, textAlign: "center" }}>
-          <Link href="/" style={{ color: textMuted }}>← Zurück zur Startseite</Link>
+          <Link href="/" style={{ color: textMuted }}>{tx.back}</Link>
         </p>
       </div>
     </div>
