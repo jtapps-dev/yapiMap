@@ -93,8 +93,10 @@ const AMENITY_ICONS: Record<string, string> = {
 function CatalogContent() {
   const params = useSearchParams();
   const router = useRouter();
-  const { lang } = useLang();
-  const tx = ct[lang as keyof typeof ct] ?? ct.en;
+  const { lang: ctxLang } = useLang();
+  const urlLang = params.get("lang") as keyof typeof ct | null;
+  const lang = (urlLang && ct[urlLang]) ? urlLang : ctxLang;
+  const tx = ct[lang] ?? ct.en;
   const [projects, setProjects] = useState<Project[]>([]);
   const [images, setImages] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
@@ -171,9 +173,6 @@ function CatalogContent() {
         {brokerLogo && (
           <img src={brokerLogo} alt="" style={{ height: 60, maxWidth: 200, objectFit: "contain", marginBottom: 24 }} />
         )}
-        <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 6, textTransform: "uppercase", marginBottom: 16 }}>
-          {tx.subtitle}
-        </div>
         <h1 style={{ fontSize: 44, fontWeight: 900, color: "#0F1923", marginBottom: 8, letterSpacing: -1 }}>
           {tx.catalogTitle}
         </h1>

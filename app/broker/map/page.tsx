@@ -160,7 +160,7 @@ export default function BrokerMapPage() {
   function generatePDF() {
     if (!subscribed) { setShowPaywall(true); return; }
     const ids = Array.from(selectedIds).join(",");
-    router.push(`/broker/catalog?projects=${ids}`);
+    router.push(`/broker/catalog?projects=${ids}&lang=${lang}`);
   }
 
   function handleSelectToggle(id: string) {
