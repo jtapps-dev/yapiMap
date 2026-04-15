@@ -72,7 +72,8 @@ function RegisterForm() {
       broker: "Emlakçı",
       developer: "Geliştirici",
       name: "Ad Soyad",
-      company: "Firma / Ajans Adı",
+      companyDeveloper: "Şirket Adı",
+      companyBroker: "Acenta / Ajans Adı",
       phone: "Telefon",
       email: "E-posta",
       taxNumber: "Vergi Numarası",
@@ -93,7 +94,8 @@ function RegisterForm() {
       broker: "Broker",
       developer: "Developer",
       name: "Full Name",
-      company: "Company / Agency Name",
+      companyDeveloper: "Company Name",
+      companyBroker: "Agency Name",
       phone: "Phone Number",
       email: "Email",
       taxNumber: "Tax Number",
@@ -114,7 +116,8 @@ function RegisterForm() {
       broker: "Риелтор",
       developer: "Застройщик",
       name: "Имя и фамилия",
-      company: "Название компании / агентства",
+      companyDeveloper: "Название компании",
+      companyBroker: "Название агентства",
       phone: "Номер телефона",
       email: "Эл. почта",
       taxNumber: "ИНН / Налоговый номер",
@@ -138,6 +141,9 @@ function RegisterForm() {
     if (!form.company_name.trim() || form.company_name.trim().length < 2) return lang === "tr" ? "Şirket adı en az 2 karakter olmalıdır." : lang === "ru" ? "Название компании должно содержать не менее 2 символов." : "Company name must be at least 2 characters.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return lang === "tr" ? "Geçerli bir e-posta adresi girin." : lang === "ru" ? "Введите корректный адрес эл. почты." : "Enter a valid email address.";
     if (!/^\+?[\d\s\-()]{7,20}$/.test(form.phone)) return lang === "tr" ? "Geçerli bir telefon numarası girin (sadece rakam)." : lang === "ru" ? "Введите корректный номер телефона (только цифры)." : "Enter a valid phone number (digits only).";
+    if (!form.country.trim()) return lang === "tr" ? "Ülke gereklidir." : lang === "ru" ? "Укажите страну." : "Country is required.";
+    if (!form.city.trim()) return lang === "tr" ? "Şehir gereklidir." : lang === "ru" ? "Укажите город." : "City is required.";
+    if (!form.tax_number.trim()) return lang === "tr" ? "Vergi numarası gereklidir." : lang === "ru" ? "Укажите налоговый номер." : "Tax number is required.";
     return null;
   }
 
@@ -283,7 +289,7 @@ function RegisterForm() {
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", fontSize: 13, color: textMuted, marginBottom: 6 }}>{t.company}</label>
+            <label style={{ display: "block", fontSize: 13, color: textMuted, marginBottom: 6 }}>{role === "developer" ? t.companyDeveloper : t.companyBroker}</label>
             <input
               style={inputStyle}
               value={form.company_name}
@@ -331,17 +337,17 @@ function RegisterForm() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
             <div>
               <label style={{ display: "block", fontSize: 13, color: textMuted, marginBottom: 6 }}>{t.country}</label>
-              <input style={inputStyle} value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} placeholder="Türkiye" />
+              <input style={inputStyle} value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} placeholder="Türkiye" required />
             </div>
             <div>
               <label style={{ display: "block", fontSize: 13, color: textMuted, marginBottom: 6 }}>{t.city}</label>
-              <input style={inputStyle} value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="İstanbul" />
+              <input style={inputStyle} value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="İstanbul" required />
             </div>
           </div>
 
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: "block", fontSize: 13, color: textMuted, marginBottom: 6 }}>{t.taxNumber}</label>
-            <input style={inputStyle} value={form.tax_number} onChange={e => setForm({ ...form, tax_number: e.target.value })} placeholder="1234567890" />
+            <input style={inputStyle} value={form.tax_number} onChange={e => setForm({ ...form, tax_number: e.target.value })} placeholder="1234567890" required />
           </div>
 
           <div style={{ marginBottom: 24, backgroundColor: "#0F1923", borderRadius: 10, padding: 14, border: `1px solid ${borderColor}` }}>
