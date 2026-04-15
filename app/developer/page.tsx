@@ -40,6 +40,7 @@ export default function DeveloperPage() {
   const [filterType, setFilterType] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [logoUploading, setLogoUploading] = useState(false);
+  const [brokerCount, setBrokerCount] = useState<number | null>(null);
 
   const tLabels = {
     tr: {
@@ -111,6 +112,10 @@ export default function DeveloperPage() {
           }
           setProfile(data);
           loadProjects(data.id);
+          // Makler-Anzahl laden
+          supabase.from("profiles").select("id", { count: "exact", head: true })
+            .eq("role", "broker").eq("status", "active")
+            .then(({ count }) => setBrokerCount(count ?? 0));
         });
     });
   }, []);
@@ -261,6 +266,18 @@ export default function DeveloperPage() {
 
       {/* Referral Banner */}
       {profile.referral_code && <ReferralBox referralCode={profile.referral_code} lang={lang} />}
+
+      {/* Stat Banner */}
+      {brokerCount !== null && brokerCount > 0 && (
+        <div style={{ backgroundColor: "#0F2336", borderBottom: `1px solid ${borderColor}`, padding: "8px 24px", display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 16 }}>👥</span>
+          <span style={{ fontSize: 13, color: textMuted }}>
+            {lang === "tr" ? `Platformda şu an ` : lang === "ru" ? `На платформе ` : `Platform has `}
+            <span style={{ color: accent, fontWeight: 700 }}>{brokerCount}</span>
+            {lang === "tr" ? ` aktif emlakçı var` : lang === "ru" ? ` активных маклеров` : ` active brokers`}
+          </span>
+        </div>
+      )}
 
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
 

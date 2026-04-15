@@ -72,6 +72,10 @@ export default function AdminClient({ initialProfiles }: { initialProfiles: Prof
   }
 
   useEffect(() => {
+    loadCommissions();
+  }, []);
+
+  useEffect(() => {
     if (tab === "commissions") loadCommissions();
   }, [tab]);
 
