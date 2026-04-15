@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLang } from "./i18n/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 
@@ -13,8 +14,19 @@ const borderColor = "#2A3F55";
 
 export default function Home() {
   const { lang, setLang, t } = useLang();
+  const router = useRouter();
   const [tryRate, setTryRate] = useState(51);
   const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Implicit flow: access_token im Hash → zu reset-password weiterleiten
+  useEffect(() => {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    if (params.get("type") === "recovery" && params.get("access_token")) {
+      router.replace(`/reset-password${window.location.hash}`);
+      return;
+    }
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
