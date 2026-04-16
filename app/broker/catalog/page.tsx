@@ -137,24 +137,27 @@ function CatalogContent() {
     const ids = params.get("projects")?.split(",").filter(Boolean) || [];
     if (ids.length === 0) { router.push("/broker/map"); return; }
     const supabase = createClient();
+    (async () => {
+    // getSession() reads from local storage — never fails even if network is down
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
+    const userEmail = session?.user?.email || "";
+
     Promise.all([
-      supabase.auth.getUser(),
       supabase.from("projects")
         .select("id, title, city, district, project_type, min_price, max_price, description, ikamet_eligible, citizenship_eligible, cover_image_url, amenities, payment_plan, handover_date")
         .in("id", ids).eq("status", "published"),
       supabase.from("project_images").select("project_id, url").in("project_id", ids),
-    ]).then(async ([{ data: { user } }, { data: projs }, { data: imgs }]) => {
-      if (user) {
-        setBrokerEmail(user.email || "");
-        const { data: profile } = await supabase.from("profiles")
-          .select("full_name, phone, company_name, logo_url")
-          .eq("id", user.id).single();
-        if (profile) {
-          setBrokerName((profile as any).full_name || "");
-          setBrokerPhone((profile as any).phone || "");
-          setBrokerCompany((profile as any).company_name || "");
-          setBrokerLogo((profile as any).logo_url || "");
-        }
+      userId
+        ? supabase.from("profiles").select("full_name, phone, company_name, logo_url").eq("id", userId).single()
+        : Promise.resolve({ data: null }),
+    ]).then(async ([{ data: projs }, { data: imgs }, { data: profile }]) => {
+      setBrokerEmail(userEmail);
+      if (profile) {
+        setBrokerName((profile as any).full_name || "");
+        setBrokerPhone((profile as any).phone || "");
+        setBrokerCompany((profile as any).company_name || "");
+        setBrokerLogo((profile as any).logo_url || "");
       }
       const ordered = ids.map(id => (projs as Project[])?.find(p => p.id === id)).filter(Boolean) as Project[];
       setProjects(ordered);
@@ -166,6 +169,7 @@ function CatalogContent() {
       setImages(imgMap);
       setLoading(false);
     }).catch(() => { setLoading(false); setError(true); });
+    })();
   }, []); // eslint-disable-line
 
   const locale = lang === "ru" ? "ru-RU" : lang === "en" ? "en-GB" : "tr-TR";
