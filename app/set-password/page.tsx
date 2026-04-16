@@ -20,9 +20,9 @@ export default function SetPasswordPage() {
   const [ready, setReady] = useState(false);
 
   const tLabels = {
-    tr: { title: "Şifrenizi Belirleyin", pw: "Şifre", confirm: "Şifre Tekrar", btn: "Kaydet ve Giriş Yap", mismatch: "Şifreler eşleşmiyor", short: "Şifre en az 8 karakter olmalı", invalid: "Geçersiz veya süresi dolmuş link." },
-    en: { title: "Set Your Password", pw: "Password", confirm: "Confirm Password", btn: "Save & Login", mismatch: "Passwords don't match", short: "Password must be at least 8 characters", invalid: "Invalid or expired link." },
-    ru: { title: "Установите пароль", pw: "Пароль", confirm: "Подтвердите пароль", btn: "Сохранить и войти", mismatch: "Пароли не совпадают", short: "Пароль должен содержать не менее 8 символов", invalid: "Неверная или устаревшая ссылка." },
+    tr: { title: "Şifrenizi Belirleyin", pw: "Şifre", confirm: "Şifre Tekrar", btn: "Kaydet ve Giriş Yap", mismatch: "Şifreler eşleşmiyor", short: "Şifre en az 8 karakter olmalı", invalid: "Geçersiz veya süresi dolmuş link.", loading: "Yükleniyor..." },
+    en: { title: "Set Your Password", pw: "Password", confirm: "Confirm Password", btn: "Save & Login", mismatch: "Passwords don't match", short: "Password must be at least 8 characters", invalid: "Invalid or expired link.", loading: "Loading..." },
+    ru: { title: "Установите пароль", pw: "Пароль", confirm: "Подтвердите пароль", btn: "Сохранить и войти", mismatch: "Пароли не совпадают", short: "Пароль должен содержать не менее 8 символов", invalid: "Неверная или устаревшая ссылка.", loading: "Загрузка..." },
   };
   const t = tLabels[lang as keyof typeof tLabels] ?? tLabels.en;
 
@@ -98,7 +98,7 @@ export default function SetPasswordPage() {
               {error}
             </div>
           ) : (
-            <p style={{ textAlign: "center", color: textMuted }}>Yükleniyor...</p>
+            <p style={{ textAlign: "center", color: textMuted }}>{t.loading}</p>
           )
         ) : (
           <form onSubmit={handleSubmit}>

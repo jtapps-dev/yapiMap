@@ -54,6 +54,8 @@ export default function DeveloperPage() {
       trialDays: (d: number) => `🎁 Ücretsiz deneme süreniz: ${d} gün kaldı`,
       trialLastDay: "⚠️ Ücretsiz deneme süreniz bugün bitiyor!",
       trialSubscribe: "Abone Ol",
+      profile: "Profil",
+      brokerBanner: (n: number) => `👥 ${n} aktif emlakçı / active brokers / активных маклеров`,
     },
     en: {
       title: "My Projects", add: "+ New Project", signout: "Sign Out", loading: "Loading...",
@@ -66,6 +68,8 @@ export default function DeveloperPage() {
       trialDays: (d: number) => `🎁 Free trial: ${d} days remaining`,
       trialLastDay: "⚠️ Your free trial ends today!",
       trialSubscribe: "Subscribe",
+      profile: "Profile",
+      brokerBanner: (n: number) => `👥 ${n} active brokers`,
     },
     ru: {
       title: "Мои проекты", add: "+ Новый проект", signout: "Выйти", loading: "Загрузка...",
@@ -78,6 +82,8 @@ export default function DeveloperPage() {
       trialDays: (d: number) => `🎁 Пробный период: осталось ${d} дней`,
       trialLastDay: "⚠️ Пробный период заканчивается сегодня!",
       trialSubscribe: "Подписаться",
+      profile: "Профиль",
+      brokerBanner: (n: number) => `👥 ${n} активных маклеров`,
     },
   };
   const t = tLabels[lang as keyof typeof tLabels] ?? tLabels.en;
@@ -256,7 +262,7 @@ export default function DeveloperPage() {
           <span style={{ color: textMuted, fontSize: 13 }}>{profile.full_name}</span>
           <button onClick={() => router.push("/profile")}
             style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
-            {lang === "tr" ? "Profil" : "Profile"}
+            {t.profile}
           </button>
           <button onClick={() => createClient().auth.signOut().then(() => { window.location.href = "/"; })}
             style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
@@ -271,12 +277,7 @@ export default function DeveloperPage() {
       {/* Stat Banner */}
       {brokerCount !== null && brokerCount > 0 && (
         <div style={{ backgroundColor: "#0F2336", borderBottom: `1px solid ${borderColor}`, padding: "8px 24px", display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 16 }}>👥</span>
-          <span style={{ fontSize: 13, color: textMuted }}>
-            {lang === "tr" ? `Platformda şu an ` : lang === "ru" ? `На платформе ` : `Platform has `}
-            <span style={{ color: accent, fontWeight: 700 }}>{brokerCount}</span>
-            {lang === "tr" ? ` aktif emlakçı var` : lang === "ru" ? ` активных маклеров` : ` active brokers`}
-          </span>
+          <span style={{ fontSize: 13, color: textMuted }}>{t.brokerBanner(brokerCount)}</span>
         </div>
       )}
 

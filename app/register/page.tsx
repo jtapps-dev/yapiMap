@@ -158,11 +158,15 @@ function RegisterForm() {
       const supabase = createClient();
 
       // Temporäres Passwort – User setzt es später selbst
-      const tempPassword = Math.random().toString(36).slice(-12) + "Aa1!";
+      const tempArr = new Uint8Array(24);
+      crypto.getRandomValues(tempArr);
+      const tempPassword = Array.from(tempArr).map(b => b.toString(36)).join("").slice(0, 16) + "Aa1!";
 
       // Referral Code generieren
       const nameSlug = form.full_name.split(" ")[0].toUpperCase().replace(/[^A-Z]/g, "").slice(0, 6);
-      const referralCode = `${nameSlug}-${Math.random().toString(36).toUpperCase().slice(2, 6)}`;
+      const refArr = new Uint8Array(4);
+      crypto.getRandomValues(refArr);
+      const referralCode = `${nameSlug}-${Array.from(refArr).map(b => b.toString(36).toUpperCase()).join("").slice(0, 4)}`;
 
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: form.email,

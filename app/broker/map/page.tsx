@@ -45,29 +45,32 @@ export default function BrokerMapPage() {
   const tLabels = {
     tr: {
       signout: "Çıkış", showProjects: "Detayları Gör", filter: "Filtrele",
-      city: "Şehir", type: "Proje Tipi", minPrice: "Min Fiyat", maxPrice: "Max Fiyat",
+      city: "Şehir", district: "İlçe", type: "Proje Tipi", minPrice: "Min Fiyat", maxPrice: "Max Fiyat",
       apply: "Uygula", reset: "Sıfırla", allTypes: "Tüm Tipler",
       paywallTitle: "Premium Özellik", paywallText: "Detayları görmek için abonelik gereklidir.",
       subscribe: "Abone Ol", cancel: "Vazgeç", ikamet: "İkamet İzni Uygun",
-      loading: "Yükleniyor...", projects: "proje",
+      loading: "Yükleniyor...", projectsFound: "proje bulundu", noProjects: "Proje bulunamadı",
+      profile: "Profil",
       types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"],
     },
     en: {
       signout: "Sign Out", showProjects: "View Details", filter: "Filter",
-      city: "City", type: "Project Type", minPrice: "Min Price", maxPrice: "Max Price",
+      city: "City", district: "District", type: "Project Type", minPrice: "Min Price", maxPrice: "Max Price",
       apply: "Apply", reset: "Reset", allTypes: "All Types",
       paywallTitle: "Premium Feature", paywallText: "A subscription is required to view project details.",
       subscribe: "Subscribe", cancel: "Cancel", ikamet: "Residence Permit Eligible",
-      loading: "Loading...", projects: "projects",
+      loading: "Loading...", projectsFound: "projects found", noProjects: "No projects found",
+      profile: "Profile",
       types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"],
     },
     ru: {
       signout: "Выйти", showProjects: "Подробнее", filter: "Фильтр",
-      city: "Город", type: "Тип проекта", minPrice: "Мин. цена", maxPrice: "Макс. цена",
+      city: "Город", district: "Район", type: "Тип проекта", minPrice: "Мин. цена", maxPrice: "Макс. цена",
       apply: "Применить", reset: "Сбросить", allTypes: "Все типы",
       paywallTitle: "Премиум функция", paywallText: "Для просмотра деталей требуется подписка.",
       subscribe: "Подписаться", cancel: "Отмена", ikamet: "Подходит для ВНЖ",
-      loading: "Загрузка...", projects: "проектов",
+      loading: "Загрузка...", projectsFound: "проектов найдено", noProjects: "Проекты не найдены",
+      profile: "Профиль",
       types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"],
     },
   } as const;
@@ -212,7 +215,7 @@ export default function BrokerMapPage() {
           <span style={{ color: textMuted, fontSize: 13 }}>{profile.full_name}</span>
           <button onClick={() => router.push("/profile")}
             style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
-            {lang === "tr" ? "Profil" : "Profile"}
+            {t.profile}
           </button>
           <button onClick={() => createClient().auth.signOut().then(() => { window.location.href = "/"; })}
             style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
@@ -272,7 +275,7 @@ export default function BrokerMapPage() {
 
           {/* Anzahl */}
           <div style={{ fontSize: 12, color: textMuted, textAlign: "center", padding: "6px 0", backgroundColor: `${accent}11`, borderRadius: 6 }}>
-            <span style={{ color: accent, fontWeight: 700 }}>{projects.length}</span> {lang === "tr" ? "proje bulundu" : "projects found"}
+            <span style={{ color: accent, fontWeight: 700 }}>{projects.length}</span> {t.projectsFound}
           </div>
 
           {/* City */}
@@ -283,7 +286,7 @@ export default function BrokerMapPage() {
 
           {/* District */}
           <div>
-            <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{lang === "tr" ? "İlçe" : "District"}</label>
+            <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.district}</label>
             <input style={inputStyle} value={filters.district} onChange={e => setFilters(f => ({ ...f, district: e.target.value }))} />
           </div>
 
@@ -378,7 +381,7 @@ export default function BrokerMapPage() {
               ))}
               {projects.length === 0 && (
                 <div style={{ padding: 32, textAlign: "center", color: textMuted, fontSize: 13 }}>
-                  {lang === "tr" ? "Proje bulunamadı" : "No projects found"}
+                  {t.noProjects}
                 </div>
               )}
             </div>

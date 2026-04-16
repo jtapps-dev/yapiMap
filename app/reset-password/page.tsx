@@ -28,7 +28,7 @@ export default function ResetPasswordPage() {
       submit: "Şifreyi Güncelle",
       loading: "Güncelleniyor...",
       mismatch: "Şifreler eşleşmiyor.",
-      short: "Şifre en az 6 karakter olmalıdır.",
+      short: "Şifre en az 8 karakter olmalıdır.",
       noSession: "Geçersiz veya süresi dolmuş bağlantı.",
       doneTitle: "Şifre Güncellendi!",
       doneText: "Şifreniz başarıyla güncellendi.",
@@ -41,7 +41,7 @@ export default function ResetPasswordPage() {
       submit: "Update Password",
       loading: "Updating...",
       mismatch: "Passwords do not match.",
-      short: "Password must be at least 6 characters.",
+      short: "Password must be at least 8 characters.",
       noSession: "Invalid or expired link.",
       doneTitle: "Password Updated!",
       doneText: "Your password has been successfully updated.",
@@ -54,7 +54,7 @@ export default function ResetPasswordPage() {
       submit: "Обновить пароль",
       loading: "Обновление...",
       mismatch: "Пароли не совпадают.",
-      short: "Пароль должен содержать не менее 6 символов.",
+      short: "Пароль должен содержать не менее 8 символов.",
       noSession: "Неверная или устаревшая ссылка.",
       doneTitle: "Пароль обновлён!",
       doneText: "Ваш пароль успешно обновлён.",
@@ -84,7 +84,7 @@ export default function ResetPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (password.length < 6) { setError(t.short); return; }
+    if (password.length < 8) { setError(t.short); return; }
     if (password !== confirm) { setError(t.mismatch); return; }
 
     setLoading(true);

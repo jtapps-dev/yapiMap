@@ -7,6 +7,20 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Simple in-memory rate limit: max 3 requests per email per 15 minutes
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+function isRateLimited(key: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + 15 * 60 * 1000 });
+    return false;
+  }
+  if (entry.count >= 3) return true;
+  entry.count++;
+  return false;
+}
+
 const schema = z.object({
   email: z.string().email().max(255),
   redirectTo: z.string().url().optional(),
@@ -17,6 +31,10 @@ export async function POST(req: NextRequest) {
   const result = schema.safeParse(body);
   if (!result.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   const { email, redirectTo } = result.data;
+
+  if (isRateLimited(email.toLowerCase())) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
 
   // Status prüfen – nur aktive User dürfen Reset-Email erhalten
   const { data: profile } = await supabase

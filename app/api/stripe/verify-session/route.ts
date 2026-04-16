@@ -18,6 +18,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Not paid" }, { status: 400 });
   }
 
+  // Verify session belongs to this user
+  if (session.metadata?.userId !== user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const admin = createAdminClient();
   await admin.from("profiles").update({
     subscription_status: "active",
