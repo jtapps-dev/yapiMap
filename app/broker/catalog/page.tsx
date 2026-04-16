@@ -264,9 +264,9 @@ function CatalogContent() {
           <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>{tx.preparedBy}</div>
           <div style={{ fontWeight: 800, fontSize: 18, color: "#F1F5F9", marginBottom: 4 }}>{brokerName}</div>
           {brokerCompany && <div style={{ fontSize: 14, color: "#E8B84B", marginBottom: 8 }}>{brokerCompany}</div>}
-          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
-            {brokerPhone && <div style={{ fontSize: 13, color: "#94A3B8" }}>{brokerPhone}</div>}
-            {brokerEmail && <div style={{ fontSize: 13, color: "#94A3B8" }}>{brokerEmail}</div>}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
+            {brokerPhone && <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", alignItems: "center", gap: 6 }}><span>📞</span>{brokerPhone}</div>}
+            {brokerEmail && <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", alignItems: "center", gap: 6 }}><span>✉️</span>{brokerEmail}</div>}
           </div>
         </div>
         {projects.length > 1 && (
@@ -350,9 +350,9 @@ function CatalogContent() {
               <div style={{ fontWeight: 700, fontSize: 15, color: "#F1F5F9" }}>{brokerName}</div>
               {brokerCompany && <div style={{ fontSize: 12, color: "#E8B84B" }}>{brokerCompany}</div>}
             </div>
-            <div style={{ textAlign: "right" }}>
-              {brokerPhone && <div style={{ fontSize: 13, color: "#CBD5E1" }}>{brokerPhone}</div>}
-              {brokerEmail && <div style={{ fontSize: 13, color: "#CBD5E1" }}>{brokerEmail}</div>}
+            <div style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 4 }}>
+              {brokerPhone && <div style={{ fontSize: 13, color: "#CBD5E1", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}><span>📞</span>{brokerPhone}</div>}
+              {brokerEmail && <div style={{ fontSize: 13, color: "#CBD5E1", display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}><span>✉️</span>{brokerEmail}</div>}
             </div>
           </div>
         </div>
