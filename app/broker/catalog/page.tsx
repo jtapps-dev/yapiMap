@@ -246,7 +246,7 @@ function CatalogContent() {
 
           {/* Cover Image */}
           {p.cover_image_url
-            ? <img src={p.cover_image_url} alt="" style={{ width: "100%", height: 280, objectFit: "cover", borderRadius: 12, marginBottom: 24, display: "block" }} />
+            ? <img src={p.cover_image_url} alt="" style={{ width: "100%", height: 280, objectFit: "contain", borderRadius: 12, marginBottom: 24, display: "block", backgroundColor: "#0F1923" }} />
             : <div style={{ width: "100%", height: 200, backgroundColor: "#F8F9FA", borderRadius: 12, marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 56, border: "1px solid #E2E8F0" }}>🏢</div>
           }
 
