@@ -169,100 +169,90 @@ function CatalogContent() {
     try {
       const { pdf, Document, Page, Text, View, Image: PdfImage, StyleSheet } = await import("@react-pdf/renderer");
 
-      const NAV = "#0F1923";
-      const GOLD = "#E8B84B";
+      const NAV   = "#0F1923";
+      const DARK  = "#0A131C";
+      const CARD  = "#152032";
+      const GOLD  = "#E8B84B";
       const WHITE = "#FFFFFF";
       const MUTED = "#94A3B8";
-      const CARD = "#1A2B3C";
 
       const s = StyleSheet.create({
-        // ── COVER PAGE ──
-        coverPage: { backgroundColor: NAV, padding: 0, fontFamily: "Helvetica" },
-        coverBg: { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" },
-        coverOverlay: { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: NAV, opacity: 0.78 },
-        coverTopBar: { position: "absolute", top: 0, left: 0, right: 0, flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "18 32", borderBottomWidth: 1, borderBottomColor: GOLD },
-        coverBrand: { fontSize: 13, fontWeight: "bold", color: GOLD, letterSpacing: 2 },
-        coverDate: { fontSize: 10, color: MUTED },
-        coverBody: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 60, paddingTop: 80 },
-        coverLogoWrap: { width: 100, height: 50, marginBottom: 20 },
-        coverLogo: { width: "100%", height: "100%", objectFit: "contain" },
-        coverTitle: { fontSize: 38, fontWeight: "bold", color: WHITE, textAlign: "center", letterSpacing: 1, marginBottom: 6 },
-        coverSubtitle: { fontSize: 13, color: MUTED, textAlign: "center", marginBottom: 0 },
-        coverDivider: { width: 60, height: 3, backgroundColor: GOLD, marginVertical: 20 },
-        coverBottomBar: { position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "#0A131C", borderTopWidth: 2, borderTopColor: GOLD, padding: "16 32", flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-        coverAgentName: { fontSize: 14, fontWeight: "bold", color: WHITE, marginBottom: 2 },
-        coverAgentCompany: { fontSize: 11, color: GOLD },
-        coverAgentContact: { fontSize: 10, color: MUTED, textAlign: "right", marginBottom: 2 },
-        // ── TOC PAGE ──
-        tocPage: { backgroundColor: NAV, padding: "48 40", fontFamily: "Helvetica" },
-        tocHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 32, borderBottomWidth: 2, borderBottomColor: GOLD, paddingBottom: 12 },
-        tocBrand: { fontSize: 11, fontWeight: "bold", color: GOLD, letterSpacing: 2 },
-        tocPageNum: { fontSize: 10, color: MUTED },
-        tocTitle: { fontSize: 22, fontWeight: "bold", color: WHITE, marginBottom: 24 },
-        tocRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#1E3048" },
-        tocNum: { fontSize: 11, color: GOLD, fontWeight: "bold", width: 24 },
-        tocName: { fontSize: 13, color: WHITE, flex: 1, fontWeight: "bold" },
-        tocCity: { fontSize: 11, color: MUTED, flex: 1 },
-        tocPrice: { fontSize: 13, color: GOLD, fontWeight: "bold" },
+        // ── SHARED ──
+        page:        { backgroundColor: NAV, fontFamily: "Helvetica", flexDirection: "column" },
+        topBar:      { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 28, paddingVertical: 12, backgroundColor: DARK, borderBottomWidth: 1, borderBottomColor: GOLD },
+        brand:       { fontSize: 10, fontWeight: "bold", color: GOLD, letterSpacing: 2 },
+        barRight:    { fontSize: 9, color: MUTED },
+        footer:      { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 28, paddingVertical: 12, backgroundColor: DARK, borderTopWidth: 1, borderTopColor: GOLD, marginTop: "auto" },
+        footerName:  { fontSize: 11, fontWeight: "bold", color: WHITE, marginBottom: 2 },
+        footerSub:   { fontSize: 9, color: GOLD },
+        footerRight: { fontSize: 9, color: MUTED, textAlign: "right", marginBottom: 2 },
+        // ── COVER ──
+        coverBody:   { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 60, paddingVertical: 40 },
+        coverLogo:   { width: 120, height: 56, objectFit: "contain", marginBottom: 28 },
+        coverTitle:  { fontSize: 36, fontWeight: "bold", color: WHITE, textAlign: "center", letterSpacing: 1, marginBottom: 4 },
+        coverSub:    { fontSize: 12, color: MUTED, textAlign: "center" },
+        coverLine:   { width: 56, height: 3, backgroundColor: GOLD, marginVertical: 18 },
+        coverDate:   { fontSize: 10, color: MUTED, textAlign: "center", marginBottom: 32 },
+        // ── TOC ──
+        tocRow:      { flexDirection: "row", alignItems: "center", paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: CARD },
+        tocNum:      { fontSize: 11, color: GOLD, fontWeight: "bold", width: 26 },
+        tocName:     { fontSize: 12, color: WHITE, fontWeight: "bold", flex: 1 },
+        tocCity:     { fontSize: 11, color: MUTED, width: 80 },
+        tocPrice:    { fontSize: 12, color: GOLD, fontWeight: "bold", textAlign: "right", width: 90 },
         // ── PROJECT PAGE ──
-        projPage: { backgroundColor: NAV, padding: 0, fontFamily: "Helvetica" },
-        projTopBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "10 24", backgroundColor: "#0A131C", borderBottomWidth: 1, borderBottomColor: "#1E3048" },
-        projBrand: { fontSize: 9, fontWeight: "bold", color: GOLD, letterSpacing: 2 },
-        projCounter: { fontSize: 9, color: MUTED },
-        projHero: { width: "100%", height: 220, objectFit: "cover" },
-        projHeroPlaceholder: { width: "100%", height: 220, backgroundColor: CARD },
-        projTitleBar: { backgroundColor: "#0A131C", padding: "14 24", borderBottomWidth: 2, borderBottomColor: GOLD },
-        projTitle: { fontSize: 22, fontWeight: "bold", color: WHITE, marginBottom: 4 },
-        projLocation: { fontSize: 11, color: MUTED },
-        projChipRow: { flexDirection: "row", padding: "10 24", backgroundColor: "#0D1E2E", gap: 6 },
-        projChip: { flex: 1, backgroundColor: CARD, borderRadius: 5, padding: "8 10", borderTopWidth: 2, borderTopColor: GOLD },
-        projChipLabel: { fontSize: 7, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 3 },
-        projChipValue: { fontSize: 11, fontWeight: "bold", color: WHITE },
-        projBody: { padding: "16 24", flex: 1 },
-        projDesc: { fontSize: 10, color: "#B0C0D0", lineHeight: 1.7, marginBottom: 14 },
-        projGallery: { flexDirection: "row", gap: 5, marginBottom: 14 },
-        projGalleryImg: { flex: 1, height: 80, objectFit: "cover", borderRadius: 4 },
-        projSectionLabel: { fontSize: 9, fontWeight: "bold", color: GOLD, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: "#1E3048", paddingBottom: 4 },
-        projAmenityGrid: { flexDirection: "row", flexWrap: "wrap", gap: 5, marginBottom: 14 },
-        projAmenityItem: { backgroundColor: CARD, borderRadius: 4, paddingHorizontal: 9, paddingVertical: 5, borderLeftWidth: 2, borderLeftColor: GOLD },
-        projAmenityText: { fontSize: 9, color: WHITE },
-        projPayBox: { backgroundColor: CARD, borderRadius: 5, padding: 10, marginBottom: 14, borderLeftWidth: 3, borderLeftColor: GOLD },
-        projPayLine: { fontSize: 10, color: "#B0C0D0", lineHeight: 1.6 },
-        projBadgeRow: { flexDirection: "row", gap: 6, marginTop: 2 },
-        projBadge: { fontSize: 9, color: "#10B981", borderWidth: 1, borderColor: "#10B981", borderRadius: 4, paddingHorizontal: 7, paddingVertical: 3 },
-        projBadgeBlue: { fontSize: 9, color: "#60A5FA", borderWidth: 1, borderColor: "#60A5FA", borderRadius: 4, paddingHorizontal: 7, paddingVertical: 3 },
-        // ── FOOTER BAR (absolute bottom) ──
-        projFooter: { position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "#0A131C", borderTopWidth: 1, borderTopColor: GOLD, padding: "10 24", flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-        projFooterName: { fontSize: 11, fontWeight: "bold", color: WHITE },
-        projFooterCompany: { fontSize: 9, color: GOLD },
-        projFooterContact: { fontSize: 9, color: MUTED, textAlign: "right", marginBottom: 1 },
+        hero:        { width: "100%", height: 200, objectFit: "cover" },
+        heroEmpty:   { width: "100%", height: 200, backgroundColor: CARD },
+        titleBar:    { paddingHorizontal: 28, paddingTop: 14, paddingBottom: 10, backgroundColor: DARK, borderBottomWidth: 2, borderBottomColor: GOLD },
+        projTitle:   { fontSize: 20, fontWeight: "bold", color: WHITE, marginBottom: 3 },
+        projLoc:     { fontSize: 10, color: MUTED },
+        chipRow:     { flexDirection: "row", paddingHorizontal: 28, paddingVertical: 10, gap: 7, backgroundColor: "#0D1C2C" },
+        chip:        { flex: 1, backgroundColor: CARD, borderRadius: 5, paddingHorizontal: 9, paddingVertical: 7, borderTopWidth: 2, borderTopColor: GOLD },
+        chipLabel:   { fontSize: 7, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 3 },
+        chipValue:   { fontSize: 10, fontWeight: "bold", color: WHITE },
+        body:        { paddingHorizontal: 28, paddingTop: 14, paddingBottom: 8 },
+        desc:        { fontSize: 10, color: "#A8BCCF", lineHeight: 1.65, marginBottom: 13 },
+        gallery:     { flexDirection: "row", gap: 5, marginBottom: 13 },
+        galleryImg:  { flex: 1, height: 75, objectFit: "cover", borderRadius: 4 },
+        secLabel:    { fontSize: 8, fontWeight: "bold", color: GOLD, textTransform: "uppercase", letterSpacing: 2, paddingBottom: 4, marginBottom: 7, borderBottomWidth: 1, borderBottomColor: CARD },
+        amenGrid:    { flexDirection: "row", flexWrap: "wrap", gap: 5, marginBottom: 13 },
+        amenItem:    { backgroundColor: CARD, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 5, borderLeftWidth: 2, borderLeftColor: GOLD },
+        amenText:    { fontSize: 8, color: WHITE },
+        payBox:      { backgroundColor: CARD, borderRadius: 4, padding: 10, marginBottom: 13, borderLeftWidth: 3, borderLeftColor: GOLD },
+        payLine:     { fontSize: 9, color: "#A8BCCF", lineHeight: 1.6 },
       });
 
       const dateStr = new Date().toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
-      const firstCover = projects[0]?.cover_image_url;
+
+      const FooterBar = () => (
+        <View style={s.footer}>
+          <View>
+            <Text style={s.footerName}>{brokerName}</Text>
+            {brokerCompany ? <Text style={s.footerSub}>{brokerCompany}</Text> : null}
+          </View>
+          <View>
+            {brokerPhone ? <Text style={s.footerRight}>{brokerPhone}</Text> : null}
+            {brokerEmail ? <Text style={s.footerRight}>{brokerEmail}</Text> : null}
+          </View>
+        </View>
+      );
 
       const doc = (
         <Document title={tx.catalogTitle} author={brokerName}>
 
           {/* ── COVER PAGE ── */}
-          <Page size="A4" style={s.coverPage}>
-            {firstCover ? <PdfImage src={firstCover} style={s.coverBg} /> : null}
-            <View style={s.coverOverlay} />
-            <View style={s.coverTopBar}>
-              <Text style={s.coverBrand}>YAPIMAP</Text>
-              <Text style={s.coverDate}>{dateStr}</Text>
+          <Page size="A4" style={s.page}>
+            <View style={s.topBar}>
+              <Text style={s.brand}>YAPIMAP</Text>
+              <Text style={s.barRight}>{dateStr}</Text>
             </View>
             <View style={s.coverBody}>
-              {brokerLogo ? (
-                <View style={s.coverLogoWrap}>
-                  <PdfImage src={brokerLogo} style={s.coverLogo} />
-                </View>
-              ) : null}
+              {brokerLogo ? <PdfImage src={brokerLogo} style={s.coverLogo} /> : null}
               <Text style={s.coverTitle}>{brokerCompany || brokerName}</Text>
-              <View style={s.coverDivider} />
-              <Text style={s.coverSubtitle}>{tx.catalogTitle} · {tx.projects(projects.length)}</Text>
-              {projects.length > 1 && (
-                <View style={{ marginTop: 36, width: "100%" }}>
+              <View style={s.coverLine} />
+              <Text style={s.coverSub}>{tx.catalogTitle}</Text>
+              <Text style={s.coverDate}>{tx.projects(projects.length)} · {dateStr}</Text>
+              {projects.length > 0 && (
+                <View style={{ width: "100%" }}>
                   {projects.map((p, i) => (
                     <View key={p.id} style={s.tocRow}>
                       <Text style={s.tocNum}>{i + 1}</Text>
@@ -274,108 +264,83 @@ function CatalogContent() {
                 </View>
               )}
             </View>
-            <View style={s.coverBottomBar}>
-              <View>
-                <Text style={s.coverAgentName}>{brokerName}</Text>
-                {brokerCompany ? <Text style={s.coverAgentCompany}>{brokerCompany}</Text> : null}
-              </View>
-              <View>
-                {brokerPhone ? <Text style={s.coverAgentContact}>{brokerPhone}</Text> : null}
-                {brokerEmail ? <Text style={s.coverAgentContact}>{brokerEmail}</Text> : null}
-              </View>
-            </View>
+            <FooterBar />
           </Page>
 
           {/* ── PROJECT PAGES ── */}
           {projects.map((p, i) => (
-            <Page key={p.id} size="A4" style={s.projPage}>
-              {/* Top brand bar */}
-              <View style={s.projTopBar}>
-                <Text style={s.projBrand}>YAPIMAP</Text>
-                <Text style={s.projCounter}>{tx.projectOf(i + 1, projects.length)}</Text>
+            <Page key={p.id} size="A4" style={s.page}>
+              <View style={s.topBar}>
+                <Text style={s.brand}>YAPIMAP</Text>
+                <Text style={s.barRight}>{tx.projectOf(i + 1, projects.length)}</Text>
               </View>
 
-              {/* Hero image */}
               {p.cover_image_url
-                ? <PdfImage src={p.cover_image_url} style={s.projHero} />
-                : <View style={s.projHeroPlaceholder} />}
+                ? <PdfImage src={p.cover_image_url} style={s.hero} />
+                : <View style={s.heroEmpty} />}
 
-              {/* Title bar */}
-              <View style={s.projTitleBar}>
+              <View style={s.titleBar}>
                 <Text style={s.projTitle}>{p.title}</Text>
-                <Text style={s.projLocation}>{p.district ? `${p.district}, ` : ""}{p.city}  ·  {translateType(p.project_type, lang)}{p.handover_date ? `  ·  ${formatDate(p.handover_date)}` : ""}</Text>
+                <Text style={s.projLoc}>
+                  {p.district ? `${p.district}, ` : ""}{p.city}{"  ·  "}{translateType(p.project_type, lang)}{p.handover_date ? `${"  ·  "}${formatDate(p.handover_date)}` : ""}
+                </Text>
               </View>
 
-              {/* Info chips */}
-              <View style={s.projChipRow}>
-                <View style={s.projChip}>
-                  <Text style={s.projChipLabel}>{lang === "tr" ? "Fiyat" : lang === "ru" ? "Цена" : "Price"}</Text>
-                  <Text style={s.projChipValue}>{formatPrice(p.min_price)}</Text>
+              <View style={s.chipRow}>
+                <View style={s.chip}>
+                  <Text style={s.chipLabel}>{lang === "tr" ? "Min Fiyat" : lang === "ru" ? "Мин цена" : "Min Price"}</Text>
+                  <Text style={s.chipValue}>{formatPrice(p.min_price)}</Text>
                 </View>
-                <View style={s.projChip}>
-                  <Text style={s.projChipLabel}>{lang === "tr" ? "Max" : "Max"}</Text>
-                  <Text style={s.projChipValue}>{formatPrice(p.max_price)}</Text>
+                <View style={s.chip}>
+                  <Text style={s.chipLabel}>{lang === "tr" ? "Max Fiyat" : lang === "ru" ? "Макс цена" : "Max Price"}</Text>
+                  <Text style={s.chipValue}>{formatPrice(p.max_price)}</Text>
                 </View>
                 {p.ikamet_eligible && (
-                  <View style={[s.projChip, { borderTopColor: "#10B981" }]}>
-                    <Text style={s.projChipLabel}>{tx.residence}</Text>
-                    <Text style={[s.projChipValue, { color: "#10B981", fontSize: 9 }]}>✓</Text>
+                  <View style={[s.chip, { borderTopColor: "#10B981" }]}>
+                    <Text style={s.chipLabel}>{tx.residence}</Text>
+                    <Text style={[s.chipValue, { color: "#10B981" }]}>Evet</Text>
                   </View>
                 )}
                 {p.citizenship_eligible && (
-                  <View style={[s.projChip, { borderTopColor: "#60A5FA" }]}>
-                    <Text style={s.projChipLabel}>{tx.citizenship}</Text>
-                    <Text style={[s.projChipValue, { color: "#60A5FA", fontSize: 9 }]}>✓</Text>
+                  <View style={[s.chip, { borderTopColor: "#60A5FA" }]}>
+                    <Text style={s.chipLabel}>{tx.citizenship}</Text>
+                    <Text style={[s.chipValue, { color: "#60A5FA" }]}>Evet</Text>
                   </View>
                 )}
               </View>
 
-              {/* Body */}
-              <View style={s.projBody}>
-                {p.description ? <Text style={s.projDesc}>{p.description}</Text> : null}
-
+              <View style={s.body}>
+                {p.description ? <Text style={s.desc}>{p.description}</Text> : null}
                 {images[p.id]?.length > 0 && (
-                  <View style={s.projGallery}>
+                  <View style={s.gallery}>
                     {images[p.id].slice(0, 4).map((url, j) => (
-                      <PdfImage key={j} src={url} style={s.projGalleryImg} />
+                      <PdfImage key={j} src={url} style={s.galleryImg} />
                     ))}
                   </View>
                 )}
-
                 {p.amenities && p.amenities.length > 0 && (
-                  <View style={{ marginBottom: 14 }}>
-                    <Text style={s.projSectionLabel}>{tx.amenities}</Text>
-                    <View style={s.projAmenityGrid}>
+                  <View style={{ marginBottom: 13 }}>
+                    <Text style={s.secLabel}>{tx.amenities}</Text>
+                    <View style={s.amenGrid}>
                       {p.amenities.map((a, j) => (
-                        <View key={j} style={s.projAmenityItem}>
-                          <Text style={s.projAmenityText}>{translateAmenity(a, lang)}</Text>
+                        <View key={j} style={s.amenItem}>
+                          <Text style={s.amenText}>{translateAmenity(a, lang)}</Text>
                         </View>
                       ))}
                     </View>
                   </View>
                 )}
-
                 {p.payment_plan ? (
-                  <View style={s.projPayBox}>
-                    <Text style={[s.projSectionLabel, { marginBottom: 6 }]}>{tx.payment}</Text>
+                  <View style={s.payBox}>
+                    <Text style={[s.secLabel, { marginBottom: 6 }]}>{tx.payment}</Text>
                     {p.payment_plan.split("\n").filter(Boolean).map((line, j) => (
-                      <Text key={j} style={s.projPayLine}>› {line}</Text>
+                      <Text key={j} style={s.payLine}>› {line}</Text>
                     ))}
                   </View>
                 ) : null}
               </View>
 
-              {/* Footer contact bar */}
-              <View style={s.projFooter}>
-                <View>
-                  <Text style={s.projFooterName}>{brokerName}</Text>
-                  {brokerCompany ? <Text style={s.projFooterCompany}>{brokerCompany}</Text> : null}
-                </View>
-                <View>
-                  {brokerPhone ? <Text style={s.projFooterContact}>{brokerPhone}</Text> : null}
-                  {brokerEmail ? <Text style={s.projFooterContact}>{brokerEmail}</Text> : null}
-                </View>
-              </View>
+              <FooterBar />
             </Page>
           ))}
         </Document>
