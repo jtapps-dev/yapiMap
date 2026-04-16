@@ -268,13 +268,13 @@ function CatalogContent() {
         <p style={{ color: "#94A3B8", fontSize: 15, marginBottom: 40 }}>
           {tx.projects(projects.length)} · {new Date().toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}
         </p>
-        <div style={{ display: "inline-block", backgroundColor: "#0F1923", borderRadius: 14, padding: "24px 36px", textAlign: "left", minWidth: 320 }}>
+        <div style={{ backgroundColor: "#0F1923", borderRadius: 14, padding: "24px 36px", textAlign: "left", maxWidth: 400, margin: "0 auto" }}>
           <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>{tx.preparedBy}</div>
-          <div style={{ fontWeight: 800, fontSize: 18, color: "#F1F5F9", marginBottom: 4 }}>{brokerName}</div>
+          <div style={{ fontWeight: 800, fontSize: 18, color: "#F1F5F9", marginBottom: 4 }}>{brokerName || "—"}</div>
           {brokerCompany && <div style={{ fontSize: 14, color: "#E8B84B", marginBottom: 8 }}>{brokerCompany}</div>}
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 8 }}>
-            {brokerPhone && <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", alignItems: "center", gap: 6 }}><span>📞</span>{brokerPhone}</div>}
-            {brokerEmail && <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", alignItems: "center", gap: 6 }}><span>✉️</span>{brokerEmail}</div>}
+            {brokerPhone && <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", alignItems: "center", gap: 6 }}><span>📞</span><span>{brokerPhone}</span></div>}
+            {brokerEmail && <div style={{ fontSize: 13, color: "#94A3B8", display: "flex", alignItems: "center", gap: 6 }}><span>✉️</span><span>{brokerEmail}</span></div>}
           </div>
         </div>
         {projects.length > 1 && (
