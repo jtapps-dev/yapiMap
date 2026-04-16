@@ -90,6 +90,7 @@ export default function BrokerMapPage() {
       supabase.from("profiles").select("full_name, status, role, subscription_status, referral_code").eq("id", user.id).single()
         .then(({ data }) => {
           if (!data || data.status !== "active") { router.push("/pending"); return; }
+          if (data.role === "admin") { router.push("/admin"); return; }
           if (data.role !== "broker") { router.push("/developer"); return; }
           setProfile(data);
         });

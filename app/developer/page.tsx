@@ -101,6 +101,7 @@ export default function DeveloperPage() {
       supabase.from("profiles").select("id, full_name, role, status, logo_url, subscription_status, created_at, referral_code").eq("id", user.id).single()
         .then(({ data }) => {
           if (!data || data.status !== "active") { router.push("/pending"); return; }
+          if (data.role === "admin") { router.push("/admin"); return; }
           if (data.role !== "developer") { router.push("/broker/map"); return; }
           // 3 Monate Gratis-Testphase prüfen
           const trialEnd = new Date(data.created_at);
