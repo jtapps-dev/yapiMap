@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/app/i18n/LanguageContext";
@@ -18,6 +18,7 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const passwordUpdated = useRef(false);
 
   const tReset = {
     tr: {
@@ -63,16 +64,21 @@ export default function ResetPasswordPage() {
   const t = (tReset as any)[lang] ?? tReset.en;
 
   useEffect(() => {
+    const supabase = createClient();
     // Implicit flow: tokens im URL-Hash
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     const access_token = params.get("access_token");
     const refresh_token = params.get("refresh_token");
     if (access_token && refresh_token) {
-      const supabase = createClient();
       supabase.auth.setSession({ access_token, refresh_token });
     }
-    // PKCE flow: Session ist bereits gesetzt via auth/callback → nichts zu tun
+    // Beim Verlassen ohne Passwort setzen → ausloggen
+    return () => {
+      if (!passwordUpdated.current) {
+        supabase.auth.signOut();
+      }
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -86,6 +92,7 @@ export default function ResetPasswordPage() {
     const { error: err } = await supabase.auth.updateUser({ password });
     setLoading(false);
     if (err) { setError(err.message); return; }
+    passwordUpdated.current = true;
     setDone(true);
   }
 
