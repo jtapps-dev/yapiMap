@@ -184,10 +184,25 @@ function CatalogContent() {
       ]);
 
       const el = catalogRef.current;
+
+      // Convert all external images to data URLs so html2canvas can capture them
+      const allImgs = Array.from(el.querySelectorAll("img")) as HTMLImageElement[];
+      await Promise.all(allImgs.map(img => new Promise<void>(resolve => {
+        if (!img.src || img.src.startsWith("data:")) { resolve(); return; }
+        fetch(img.src)
+          .then(r => r.blob())
+          .then(blob => {
+            const reader = new FileReader();
+            reader.onloadend = () => { img.src = reader.result as string; resolve(); };
+            reader.readAsDataURL(blob);
+          })
+          .catch(() => resolve()); // skip on error, don't block
+      })));
+
       const canvas = await html2canvas(el, {
         scale: 2,
         useCORS: true,
-        allowTaint: false,
+        allowTaint: true,
         backgroundColor: "#0F1923",
         logging: false,
         windowWidth: el.scrollWidth,
