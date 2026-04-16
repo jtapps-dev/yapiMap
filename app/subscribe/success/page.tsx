@@ -1,18 +1,29 @@
 "use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLang } from "@/app/i18n/LanguageContext";
 
 const accent = "#E8B84B";
 const bgPrimary = "#0F1923";
 
-export default function SubscribeSuccessPage() {
+function SuccessContent() {
   const router = useRouter();
   const { lang } = useLang();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const timer = setTimeout(() => router.push("/broker/map"), 4000);
-    return () => clearTimeout(timer);
+    const sessionId = searchParams.get("session_id");
+    const activate = async () => {
+      if (sessionId) {
+        await fetch("/api/stripe/verify-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+      }
+      setTimeout(() => router.push("/broker/map"), 2000);
+    };
+    activate();
   }, []);
 
   const tSuccess = {
@@ -31,5 +42,13 @@ export default function SubscribeSuccessPage() {
         <p style={{ color: "#4A5568", fontSize: 13 }}>{t.redirect}</p>
       </div>
     </div>
+  );
+}
+
+export default function SubscribeSuccessPage() {
+  return (
+    <Suspense>
+      <SuccessContent />
+    </Suspense>
   );
 }
