@@ -34,7 +34,7 @@ export default function BrokerMapPage() {
   const [selected, setSelected] = useState<Project | null>(null);
   const [currency, setCurrency] = useState<"TRY" | "USD" | "EUR">("TRY");
   const [rates, setRates] = useState(DEFAULT_RATES);
-  const [filters, setFilters] = useState({ city: "", district: "", type: "", minPrice: "", maxPrice: "", ikamet: false });
+  const [filters, setFilters] = useState({ city: "", district: "", type: "", minPrice: "", maxPrice: "", ikamet: false, citizenship: false });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sidebarTab, setSidebarTab] = useState<"filter" | "list">("filter");
   const [showPaywall, setShowPaywall] = useState(false);
@@ -48,7 +48,7 @@ export default function BrokerMapPage() {
       city: "Şehir", district: "İlçe", type: "Proje Tipi", minPrice: "Min Fiyat", maxPrice: "Max Fiyat",
       apply: "Uygula", reset: "Sıfırla", allTypes: "Tüm Tipler",
       paywallTitle: "Premium Özellik", paywallText: "Detayları görmek için abonelik gereklidir.",
-      subscribe: "Abone Ol", cancel: "Vazgeç", ikamet: "İkamet İzni Uygun",
+      subscribe: "Abone Ol", cancel: "Vazgeç", ikamet: "İkamet İzni Uygun", citizenship: "Vatandaşlık Yatırımı Uygun",
       loading: "Yükleniyor...", projectsFound: "proje bulundu", noProjects: "Proje bulunamadı",
       profile: "Profil",
       types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"],
@@ -58,7 +58,7 @@ export default function BrokerMapPage() {
       city: "City", district: "District", type: "Project Type", minPrice: "Min Price", maxPrice: "Max Price",
       apply: "Apply", reset: "Reset", allTypes: "All Types",
       paywallTitle: "Premium Feature", paywallText: "A subscription is required to view project details.",
-      subscribe: "Subscribe", cancel: "Cancel", ikamet: "Residence Permit Eligible",
+      subscribe: "Subscribe", cancel: "Cancel", ikamet: "Residence Permit Eligible", citizenship: "Eligible for Citizenship by Investment",
       loading: "Loading...", projectsFound: "projects found", noProjects: "No projects found",
       profile: "Profile",
       types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"],
@@ -68,7 +68,7 @@ export default function BrokerMapPage() {
       city: "Город", district: "Район", type: "Тип проекта", minPrice: "Мин. цена", maxPrice: "Макс. цена",
       apply: "Применить", reset: "Сбросить", allTypes: "Все типы",
       paywallTitle: "Премиум функция", paywallText: "Для просмотра деталей требуется подписка.",
-      subscribe: "Подписаться", cancel: "Отмена", ikamet: "Подходит для ВНЖ",
+      subscribe: "Подписаться", cancel: "Отмена", ikamet: "Подходит для ВНЖ", citizenship: "Подходит для гражданства через инвестиции",
       loading: "Загрузка...", projectsFound: "проектов найдено", noProjects: "Проекты не найдены",
       profile: "Профиль",
       types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"],
@@ -102,7 +102,7 @@ export default function BrokerMapPage() {
 
   useEffect(() => {
     if (!profile) return;
-    loadProjects({ city: "", district: "", type: "", minPrice: "", maxPrice: "", ikamet: false });
+    loadProjects({ city: "", district: "", type: "", minPrice: "", maxPrice: "", ikamet: false, citizenship: false });
   }, [profile]);
 
   function loadProjects(f: typeof filters, currentRates = rates, currentCurrency = currency) {
@@ -118,6 +118,7 @@ export default function BrokerMapPage() {
     if (minTRY) q = q.gte("max_price", minTRY);
     if (maxTRY) q = q.lte("min_price", maxTRY);
     if (f.ikamet) q = q.eq("ikamet_eligible", true);
+    if (f.citizenship) q = q.eq("citizenship_eligible", true);
     q.then(({ data, error }) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const results: Project[] = ((data as any[]) || []).map((p: any) => ({
@@ -142,7 +143,7 @@ export default function BrokerMapPage() {
 
   function applyFilters() { loadProjects(filters, rates, currency); }
   function resetFilters() {
-    const empty = { city: "", district: "", type: "", minPrice: "", maxPrice: "", ikamet: false };
+    const empty = { city: "", district: "", type: "", minPrice: "", maxPrice: "", ikamet: false, citizenship: false };
     setFilters(empty);
     loadProjects(empty, rates, currency);
   }
@@ -318,6 +319,13 @@ export default function BrokerMapPage() {
             <input type="checkbox" checked={filters.ikamet} onChange={e => setFilters(f => ({ ...f, ikamet: e.target.checked }))}
               style={{ width: 15, height: 15, accentColor: accent }} />
             <span style={{ fontSize: 13, color: "#F1F5F9" }}>{t.ikamet}</span>
+          </label>
+
+          {/* Citizenship */}
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+            <input type="checkbox" checked={filters.citizenship} onChange={e => setFilters(f => ({ ...f, citizenship: e.target.checked }))}
+              style={{ width: 15, height: 15, accentColor: accent }} />
+            <span style={{ fontSize: 13, color: "#F1F5F9" }}>{t.citizenship}</span>
           </label>
 
           {/* Buttons */}
