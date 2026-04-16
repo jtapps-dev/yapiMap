@@ -180,19 +180,19 @@ function CatalogContent() {
   if (loading) return <div style={{ padding: 60, textAlign: "center", fontFamily: "Georgia, serif", color: "#666" }}>{tx.loading}</div>;
 
   return (
-    <div style={{ fontFamily: "'Georgia', serif", backgroundColor: "#fff", color: "#1a1a1a", maxWidth: 860, margin: "0 auto", padding: "40px 40px 60px" }}>
+    <div style={{ fontFamily: "'Georgia', serif", background: "linear-gradient(135deg, #1a1a2e 0%, #232323 50%, #1a1a2e 100%)", color: "#F1F5F9", maxWidth: 860, margin: "0 auto", padding: "40px 40px 60px" }}>
 
       {/* Print Toolbar */}
-      <div className="no-print" style={{ marginBottom: 32, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: "16px 20px", backgroundColor: "#F8F9FA", borderRadius: 10, border: "1px solid #E2E8F0" }}>
+      <div className="no-print" style={{ marginBottom: 32, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: "16px 20px", backgroundColor: "#ffffff10", borderRadius: 10, border: "1px solid #ffffff20" }}>
         <button onClick={() => window.print()}
           style={{ padding: "10px 24px", backgroundColor: "#E8B84B", color: "#0F1923", fontWeight: 700, fontSize: 14, borderRadius: 8, border: "none", cursor: "pointer" }}>
           {tx.savePdf}
         </button>
         <button onClick={() => router.push("/broker/map")}
-          style={{ padding: "10px 20px", backgroundColor: "transparent", color: "#666", fontSize: 14, borderRadius: 8, border: "1px solid #ccc", cursor: "pointer" }}>
+          style={{ padding: "10px 20px", backgroundColor: "transparent", color: "#94A3B8", fontSize: 14, borderRadius: 8, border: "1px solid #ffffff30", cursor: "pointer" }}>
           {tx.backToMap}
         </button>
-        <span style={{ fontSize: 13, color: "#666", marginLeft: "auto" }}>
+        <span style={{ fontSize: 13, color: "#94A3B8", marginLeft: "auto" }}>
           {tx.projects(projects.length)} · {new Date().toLocaleDateString(locale)}
         </span>
       </div>
@@ -203,7 +203,7 @@ function CatalogContent() {
         {brokerLogo && (
           <img src={brokerLogo} alt="" style={{ height: 60, maxWidth: 200, objectFit: "contain", marginBottom: 24 }} />
         )}
-        <h1 style={{ fontSize: 44, fontWeight: 900, color: "#0F1923", marginBottom: 8, letterSpacing: -1 }}>
+        <h1 style={{ fontSize: 44, fontWeight: 900, color: "#F1F5F9", marginBottom: 8, letterSpacing: -1 }}>
           {tx.catalogTitle}
         </h1>
         <p style={{ color: "#666", fontSize: 15, marginBottom: 40 }}>
@@ -226,8 +226,8 @@ function CatalogContent() {
           <div style={{ marginTop: 48, textAlign: "left" }}>
             <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 14 }}>{tx.toc}</div>
             {projects.map((p, i) => (
-              <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #F1F5F9", fontSize: 14 }}>
-                <span style={{ color: "#0F1923" }}>{i + 1}. <strong>{p.title}</strong> — {p.city}</span>
+              <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #ffffff20", fontSize: 14 }}>
+                <span style={{ color: "#F1F5F9" }}>{i + 1}. <strong>{p.title}</strong> — {p.city}</span>
                 <span style={{ color: "#E8B84B", fontWeight: 700 }}>{formatPrice(p.min_price)}</span>
               </div>
             ))}
@@ -237,7 +237,7 @@ function CatalogContent() {
 
       {/* ===== PROJECTS ===== */}
       {projects.map((p, i) => (
-        <div key={p.id} style={{ pageBreakBefore: i === 0 ? "auto" : "always", paddingBottom: 40 }}>
+        <div key={p.id} style={{ pageBreakBefore: i === 0 ? "auto" : "always" }}>
 
           {/* Project Counter */}
           <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 4, textTransform: "uppercase", marginBottom: 12 }}>
@@ -251,7 +251,7 @@ function CatalogContent() {
           }
 
           {/* Title + Location */}
-          <h2 style={{ fontSize: 32, fontWeight: 900, color: "#0F1923", margin: "0 0 6px" }}>{p.title}</h2>
+          <h2 style={{ fontSize: 32, fontWeight: 900, color: "#F1F5F9", margin: "0 0 6px" }}>{p.title}</h2>
           <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", marginBottom: 20 }}>
             <span style={{ color: "#666", fontSize: 14 }}>📍 {p.district ? `${p.district}, ` : ""}{p.city}</span>
             <span style={{ color: "#666", fontSize: 14 }}>🏠 {translateType(p.project_type, lang)}</span>
@@ -277,8 +277,8 @@ function CatalogContent() {
 
           {/* Description */}
           {p.description && (
-            <div style={{ marginBottom: 24, padding: "16px 20px", borderLeft: "4px solid #E8B84B", backgroundColor: "#FFFBF0" }}>
-              <p style={{ fontSize: 14, lineHeight: 1.9, color: "#444", margin: 0 }}>{p.description}</p>
+            <div style={{ marginBottom: 24, padding: "16px 20px", borderLeft: "4px solid #E8B84B", backgroundColor: "#ffffff12" }}>
+              <p style={{ fontSize: 14, lineHeight: 1.9, color: "#CBD5E1", margin: 0 }}>{p.description}</p>
             </div>
           )}
 
@@ -294,12 +294,12 @@ function CatalogContent() {
           {/* Amenities with Icons */}
           {p.amenities && p.amenities.length > 0 && (
             <div style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#0F1923", marginBottom: 14, textTransform: "uppercase", letterSpacing: 3, borderBottom: "2px solid #E8B84B", paddingBottom: 6 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#E8B84B", marginBottom: 14, textTransform: "uppercase", letterSpacing: 3, borderBottom: "2px solid #E8B84B", paddingBottom: 6 }}>
                 {tx.amenities}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                 {p.amenities.map((a, j) => (
-                  <div key={j} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#333", padding: "8px 10px", backgroundColor: "#F8F9FA", borderRadius: 8, border: "1px solid #E2E8F0" }}>
+                  <div key={j} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#F1F5F9", padding: "8px 10px", backgroundColor: "#ffffff10", borderRadius: 8, border: "1px solid #ffffff20" }}>
                     <span style={{ fontSize: 16 }}>{AMENITY_ICONS[a] || "✓"}</span>
                     <span>{translateAmenity(a, lang)}</span>
                   </div>
@@ -321,27 +321,20 @@ function CatalogContent() {
           )}
 
           {/* Broker Contact at bottom of each project */}
-          <div style={{ marginTop: 24, padding: "16px 20px", backgroundColor: "#F8F9FA", borderRadius: 10, border: "1px solid #E2E8F0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ marginTop: 24, padding: "16px 20px", backgroundColor: "#ffffff10", borderRadius: 10, border: "1px solid #ffffff20", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>{tx.advisor}</div>
-              <div style={{ fontWeight: 700, fontSize: 15, color: "#0F1923" }}>{brokerName}</div>
+              <div style={{ fontWeight: 700, fontSize: 15, color: "#F1F5F9" }}>{brokerName}</div>
               {brokerCompany && <div style={{ fontSize: 12, color: "#E8B84B" }}>{brokerCompany}</div>}
             </div>
             <div style={{ textAlign: "right" }}>
-              {brokerPhone && <div style={{ fontSize: 13, color: "#444" }}>📞 {brokerPhone}</div>}
-              {brokerEmail && <div style={{ fontSize: 13, color: "#444" }}>✉️ {brokerEmail}</div>}
+              {brokerPhone && <div style={{ fontSize: 13, color: "#CBD5E1" }}>📞 {brokerPhone}</div>}
+              {brokerEmail && <div style={{ fontSize: 13, color: "#CBD5E1" }}>✉️ {brokerEmail}</div>}
             </div>
           </div>
 
         </div>
       ))}
-
-      {/* Footer */}
-      <div style={{ textAlign: "center", marginTop: 48, paddingTop: 24, borderTop: "2px solid #E8B84B" }}>
-        <p style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 2 }}>
-          {tx.footer(new Date().toLocaleDateString(locale))}
-        </p>
-      </div>
 
       <style>{`
         @media print {

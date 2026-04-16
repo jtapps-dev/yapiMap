@@ -2,7 +2,7 @@ export const translations = {
   tr: {
     nav: {
       login: "Giriş Yap",
-      try: "Ücretsiz Dene",
+      try: "Kayıt Ol",
     },
     hero: {
       badge: "🇹🇷 Türkiye'nin #1 Emlak Proje Platformu",
@@ -76,7 +76,7 @@ export const translations = {
   en: {
     nav: {
       login: "Login",
-      try: "Try for Free",
+      try: "Register",
     },
     hero: {
       badge: "🇹🇷 Turkey's #1 Real Estate Project Platform",
@@ -150,7 +150,7 @@ export const translations = {
   ru: {
     nav: {
       login: "Войти",
-      try: "Попробовать бесплатно",
+      try: "Регистрация",
     },
     hero: {
       badge: "🇹🇷 Платформа №1 для недвижимости в Турции",

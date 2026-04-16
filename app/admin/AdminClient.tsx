@@ -16,7 +16,7 @@ const t = {
     logout: "Çıkış",
     waiting: "bekliyor",
     tabs: { users: "👥 Kullanıcılar", commissions: "💰 Komisyonlar" },
-    filters: { pending: "Bekliyor", active: "Aktif", rejected: "Reddedildi", all: "Tümü" },
+    filters: { pending: "Bekliyor", active: "Aktif", rejected: "Reddedildi", agents: "Ajanlar", developer: "Geliştirici" },
     search: "Ad, e-posta veya telefon ile ara...",
     noUsers: "Kullanıcı bulunamadı",
     role: { broker: "🏠 Emlakçı", developer: "🏗️ Geliştirici" },
@@ -43,7 +43,7 @@ const t = {
     logout: "Logout",
     waiting: "waiting",
     tabs: { users: "👥 Users", commissions: "💰 Commissions" },
-    filters: { pending: "Pending", active: "Active", rejected: "Rejected", all: "All" },
+    filters: { pending: "Pending", active: "Active", rejected: "Rejected", agents: "Agents", developer: "Developer" },
     search: "Search by name, email or phone...",
     noUsers: "No users found",
     role: { broker: "🏠 Broker", developer: "🏗️ Developer" },
@@ -70,7 +70,7 @@ const t = {
     logout: "Выход",
     waiting: "ожидает",
     tabs: { users: "👥 Пользователи", commissions: "💰 Комиссии" },
-    filters: { pending: "Ожидает", active: "Активен", rejected: "Отклонён", all: "Все" },
+    filters: { pending: "Ожидает", active: "Активен", rejected: "Отклонён", agents: "Агенты", developer: "Застройщики" },
     search: "Поиск по имени, e-mail или телефону...",
     noUsers: "Пользователи не найдены",
     role: { broker: "🏠 Маклер", developer: "🏗️ Застройщик" },
@@ -127,7 +127,7 @@ export default function AdminClient({ initialProfiles }: { initialProfiles: Prof
   const l = t[(lang as Lang) in t ? (lang as Lang) : "en"];
 
   const [profiles, setProfiles] = useState<Profile[]>(initialProfiles);
-  const [filter, setFilter] = useState<"pending" | "active" | "rejected" | "all">("pending");
+  const [filter, setFilter] = useState<"pending" | "active" | "rejected" | "agents" | "developer">("pending");
   const [search, setSearch] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [tab, setTab] = useState<"users" | "commissions">("users");
@@ -173,9 +173,15 @@ export default function AdminClient({ initialProfiles }: { initialProfiles: Prof
 
   const pendingCount = profiles.filter(p => p.status === "pending").length;
   const pendingCommissions = commissions.filter(c => c.status === "pending").length;
+  const agentsCount = profiles.filter(p => p.role === "broker").length;
+  const developerCount = profiles.filter(p => p.role === "developer").length;
   const statusColor = (s: string) => ({ pending: "#F59E0B", active: "#10B981", rejected: "#EF4444" }[s] || textMuted);
 
-  const filtered = (filter === "all" ? profiles : profiles.filter(p => p.status === filter)).filter(p => {
+  const filtered = (
+    filter === "agents" ? profiles.filter(p => p.role === "broker") :
+    filter === "developer" ? profiles.filter(p => p.role === "developer") :
+    profiles.filter(p => p.status === filter)
+  ).filter(p => {
     if (!search) return true;
     const q = search.toLowerCase();
     return (p.full_name?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q) || p.phone?.toLowerCase().includes(q) || p.company_name?.toLowerCase().includes(q));
@@ -228,10 +234,13 @@ export default function AdminClient({ initialProfiles }: { initialProfiles: Prof
         {tab === "users" && (
           <>
             <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-              {(["pending", "active", "rejected", "all"] as const).map(f => (
+              {(["pending", "active", "rejected", "agents", "developer"] as const).map(f => (
                 <button key={f} onClick={() => setFilter(f)}
                   style={{ padding: "8px 18px", borderRadius: 8, border: `1px solid ${filter === f ? accent : borderColor}`, backgroundColor: filter === f ? `${accent}18` : "transparent", color: filter === f ? accent : textMuted, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
-                  {l.filters[f]}{f === "pending" ? ` (${pendingCount})` : ""}
+                  {l.filters[f]}
+                  {f === "pending" ? ` (${pendingCount})` : ""}
+                  {f === "agents" ? ` (${agentsCount})` : ""}
+                  {f === "developer" ? ` (${developerCount})` : ""}
                 </button>
               ))}
             </div>
