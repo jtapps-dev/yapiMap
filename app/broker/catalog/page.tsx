@@ -129,6 +129,7 @@ function CatalogContent() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [images, setImages] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [brokerName, setBrokerName] = useState("");
   const [brokerPhone, setBrokerPhone] = useState("");
   const [brokerCompany, setBrokerCompany] = useState("");
@@ -168,7 +169,7 @@ function CatalogContent() {
       });
       setImages(imgMap);
       setLoading(false);
-    });
+    }).catch(() => { setLoading(false); setError(true); });
   }, []); // eslint-disable-line
 
   const locale = lang === "ru" ? "ru-RU" : lang === "en" ? "en-GB" : "tr-TR";
@@ -178,6 +179,7 @@ function CatalogContent() {
   }
 
   if (loading) return <div style={{ padding: 60, textAlign: "center", fontFamily: "Georgia, serif", color: "#666" }}>{tx.loading}</div>;
+  if (error) return <div style={{ padding: 60, textAlign: "center", fontFamily: "Georgia, serif", color: "#666" }}>Fehler beim Laden. <button onClick={() => router.push("/broker/map")} style={{ color: "#E8B84B", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>Zurück zur Karte</button></div>;
 
   return (
     <div style={{ fontFamily: "'Georgia', serif", background: "linear-gradient(135deg, #1a1a2e 0%, #232323 50%, #1a1a2e 100%)", color: "#F1F5F9", maxWidth: 860, margin: "0 auto", padding: "40px 40px 60px" }}>
@@ -246,8 +248,8 @@ function CatalogContent() {
 
           {/* Cover Image */}
           {p.cover_image_url
-            ? <img src={p.cover_image_url} alt="" style={{ width: "100%", height: 280, objectFit: "contain", borderRadius: 12, marginBottom: 24, display: "block", backgroundColor: "#0F1923" }} />
-            : <div style={{ width: "100%", height: 200, backgroundColor: "#F8F9FA", borderRadius: 12, marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 56, border: "1px solid #E2E8F0" }}>🏢</div>
+            ? <img src={p.cover_image_url} alt="" loading="lazy" style={{ width: "100%", height: 280, objectFit: "contain", borderRadius: 12, marginBottom: 24, display: "block", backgroundColor: "#0F1923" }} />
+            : <div style={{ width: "100%", height: 200, backgroundColor: "#ffffff10", borderRadius: 12, marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 56 }}>🏢</div>
           }
 
           {/* Title + Location */}
@@ -286,7 +288,7 @@ function CatalogContent() {
           {images[p.id]?.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 24 }}>
               {images[p.id].slice(0, 6).map((url, j) => (
-                <img key={j} src={url} alt="" style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8 }} />
+                <img key={j} src={url} alt="" loading="lazy" style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 8 }} />
               ))}
             </div>
           )}
