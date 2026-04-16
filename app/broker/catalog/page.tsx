@@ -67,6 +67,15 @@ type Project = {
 };
 type Image = { project_id: string; url: string };
 
+const AMENITY_ICONS: Record<string, string> = {
+  "Yüzme Havuzu": "🏊", "Fitness Merkezi": "💪", "SPA & Sauna": "🧖",
+  "Hamam": "♨️", "Kapalı Otopark": "🅿️", "7/24 Güvenlik": "🔒",
+  "Resepsiyon": "🛎️", "Çocuk Oyun Parkı": "🎠", "Restoran & Kafe": "☕",
+  "Tenis Kortu": "🎾", "Bahçe & Peyzaj": "🌿", "Jeneratör": "⚡",
+  "Akıllı Ev Sistemi": "🏠", "Deniz Manzarası": "🌊", "Dağ Manzarası": "⛰️",
+  "Asansör": "🛗", "BBQ Alanı": "🔥",
+};
+
 const AMENITY_TR: Record<string, { en: string; ru: string }> = {
   "Yüzme Havuzu":    { en: "Swimming Pool",       ru: "Бассейн" },
   "Fitness Merkezi": { en: "Fitness Center",       ru: "Фитнес-центр" },
@@ -323,7 +332,7 @@ function CatalogContent() {
                     <View style={s.amenGrid}>
                       {p.amenities.map((a, j) => (
                         <View key={j} style={s.amenItem}>
-                          <Text style={s.amenText}>{translateAmenity(a, lang)}</Text>
+                          <Text style={s.amenText}>+ {translateAmenity(a, lang)}</Text>
                         </View>
                       ))}
                     </View>
@@ -462,6 +471,7 @@ function CatalogContent() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                 {p.amenities.map((a, j) => (
                   <div key={j} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#F1F5F9", padding: "8px 10px", backgroundColor: "#ffffff10", borderRadius: 8, border: "1px solid #ffffff20" }}>
+                    <span style={{ fontSize: 16 }}>{AMENITY_ICONS[a] || "✓"}</span>
                     <span>{translateAmenity(a, lang)}</span>
                   </div>
                 ))}
