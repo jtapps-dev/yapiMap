@@ -17,6 +17,7 @@ export default function Home() {
   const router = useRouter();
   const [tryRate, setTryRate] = useState(51);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [eurPrice, setEurPrice] = useState<number>(249);
 
   // Implicit flow: access_token im Hash → zu reset-password weiterleiten
   useEffect(() => {
@@ -44,10 +45,18 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    fetch("/api/stripe/prices")
+      .then(r => r.json())
+      .then(d => { if (d.amountEur) setEurPrice(d.amountEur); })
+      .catch(() => {});
+  }, []);
+
   function formatPrice(eur: number) {
     if (lang === "tr") return "₺" + Math.round(eur * tryRate).toLocaleString("tr-TR");
     return "€" + eur;
   }
+  const price = formatPrice(eurPrice);
 
   return (
     <div style={{ backgroundColor: bgPrimary, color: "#F1F5F9", minHeight: "100vh", fontFamily: "system-ui, sans-serif" }}>
@@ -183,7 +192,7 @@ export default function Home() {
             <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 20, padding: 32 }}>
               <p style={{ color: accent, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t.pricing.broker.label}</p>
               <div style={{ marginBottom: 8 }}>
-                <span style={{ fontSize: 42, fontWeight: 900 }}>{formatPrice(249)}</span>
+                <span style={{ fontSize: 42, fontWeight: 900 }}>{price}</span>
                 <span style={{ color: textMuted, fontSize: 16 }}>{t.pricing.broker.period}</span>
               </div>
               <p style={{ color: textMuted, fontSize: 14, marginBottom: 28 }}>{t.pricing.broker.desc}</p>
@@ -204,7 +213,7 @@ export default function Home() {
               </div>
               <p style={{ color: accent, fontSize: 13, fontWeight: 600, marginBottom: 8 }}>{t.pricing.developer.label}</p>
               <div style={{ marginBottom: 8 }}>
-                <span style={{ fontSize: 42, fontWeight: 900 }}>{formatPrice(249)}</span>
+                <span style={{ fontSize: 42, fontWeight: 900 }}>{price}</span>
                 <span style={{ color: textMuted, fontSize: 16 }}>{t.pricing.developer.period}</span>
               </div>
               <p style={{ color: textMuted, fontSize: 14, marginBottom: 28 }}>{t.pricing.developer.desc}</p>

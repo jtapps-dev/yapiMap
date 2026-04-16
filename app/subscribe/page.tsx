@@ -13,7 +13,6 @@ const borderColor = "#2A3F55";
 const YEARLY_PLAN = {
   id: "yearly",
   priceId: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID || "",
-  eurPrice: 249,
   tr: { name: "Yıllık Plan", period: "/ yıl", badge: "En İyi Değer" },
   en: { name: "Yearly Plan", period: "/ year", badge: "Best Value" },
   ru: { name: "Годовой план", period: "/ год", badge: "Лучшее предложение" },
@@ -35,6 +34,7 @@ export default function SubscribePage() {
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [tryRate, setTryRate] = useState<number>(51);
+  const [eurPrice, setEurPrice] = useState<number>(249);
   const [referralCode, setReferralCode] = useState("");
   const [referralStatus, setReferralStatus] = useState<"idle" | "valid" | "invalid" | "checking">("idle");
   const [referralName, setReferralName] = useState("");
@@ -67,6 +67,13 @@ export default function SubscribePage() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    fetch("/api/stripe/prices")
+      .then(r => r.json())
+      .then(d => { if (d.amountEur) setEurPrice(d.amountEur); })
+      .catch(() => {});
+  }, []);
+
   function formatPrice(eurPrice: number) {
     if (lang === "tr") {
       const try_ = Math.round(eurPrice * tryRate);
@@ -76,7 +83,7 @@ export default function SubscribePage() {
   }
 
   const DISCOUNT = 20; // €20 Rabatt
-  const discountedPrice = YEARLY_PLAN.eurPrice - DISCOUNT;
+  const discountedPrice = eurPrice - DISCOUNT;
 
   async function applyReferralCode(code?: string) {
     const val = (code ?? referralCode).trim();
@@ -108,10 +115,10 @@ export default function SubscribePage() {
   }
 
   function yearlyDesc() {
-    const monthlyTry = Math.round((YEARLY_PLAN.eurPrice / 12) * tryRate);
+    const monthlyTry = Math.round((eurPrice / 12) * tryRate);
     if (lang === "tr") return `≈ ₺${monthlyTry.toLocaleString("tr-TR")}/ay — 2 ay ücretsiz.`;
     if (lang === "ru") return `≈ ₺${monthlyTry.toLocaleString("tr-TR")}/мес — 2 месяца бесплатно.`;
-    return `≈ €${Math.round(YEARLY_PLAN.eurPrice / 12)}/mo — 2 months free.`;
+    return `≈ €${Math.round(eurPrice / 12)}/mo — 2 months free.`;
   }
 
   const tSub = {
@@ -260,11 +267,11 @@ export default function SubscribePage() {
             <div style={{ marginBottom: 8 }}>
               {referralStatus === "valid" ? (
                 <>
-                  <span style={{ fontSize: 32, fontWeight: 800, color: textMuted, textDecoration: "line-through", marginRight: 10 }}>{formatPrice(YEARLY_PLAN.eurPrice)}</span>
+                  <span style={{ fontSize: 32, fontWeight: 800, color: textMuted, textDecoration: "line-through", marginRight: 10 }}>{formatPrice(eurPrice)}</span>
                   <span style={{ fontSize: 42, fontWeight: 800, color: accent }}>{formatPrice(discountedPrice)}</span>
                 </>
               ) : (
-                <span style={{ fontSize: 42, fontWeight: 800, color: accent }}>{formatPrice(YEARLY_PLAN.eurPrice)}</span>
+                <span style={{ fontSize: 42, fontWeight: 800, color: accent }}>{formatPrice(eurPrice)}</span>
               )}
               <span style={{ color: textMuted, fontSize: 14, marginLeft: 6 }}>{YEARLY_PLAN[lang as "tr" | "en" | "ru"].period}</span>
             </div>
