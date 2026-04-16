@@ -200,8 +200,8 @@ function CatalogContent() {
         tocCity:     { fontSize: 11, color: MUTED, width: 80 },
         tocPrice:    { fontSize: 12, color: GOLD, fontWeight: "bold", textAlign: "right", width: 90 },
         // ── PROJECT PAGE ──
-        hero:        { width: "100%", height: 200, objectFit: "cover" },
-        heroEmpty:   { width: "100%", height: 200, backgroundColor: CARD },
+        hero:        { width: "100%", height: 190, objectFit: "cover", maxHeight: 190 },
+        heroEmpty:   { width: "100%", height: 190, backgroundColor: CARD },
         titleBar:    { paddingHorizontal: 28, paddingTop: 14, paddingBottom: 10, backgroundColor: DARK, borderBottomWidth: 2, borderBottomColor: GOLD },
         projTitle:   { fontSize: 20, fontWeight: "bold", color: WHITE, marginBottom: 3 },
         projLoc:     { fontSize: 10, color: MUTED },
@@ -212,7 +212,7 @@ function CatalogContent() {
         body:        { paddingHorizontal: 28, paddingTop: 14, paddingBottom: 8 },
         desc:        { fontSize: 10, color: "#A8BCCF", lineHeight: 1.65, marginBottom: 13 },
         gallery:     { flexDirection: "row", gap: 5, marginBottom: 13 },
-        galleryImg:  { flex: 1, height: 75, objectFit: "cover", borderRadius: 4 },
+        galleryImg:  { flex: 1, height: 70, maxHeight: 70, objectFit: "cover", borderRadius: 4 },
         secLabel:    { fontSize: 8, fontWeight: "bold", color: GOLD, textTransform: "uppercase", letterSpacing: 2, paddingBottom: 4, marginBottom: 7, borderBottomWidth: 1, borderBottomColor: CARD },
         amenGrid:    { flexDirection: "row", flexWrap: "wrap", gap: 5, marginBottom: 13 },
         amenItem:    { backgroundColor: CARD, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 5, borderLeftWidth: 2, borderLeftColor: GOLD },
@@ -246,7 +246,6 @@ function CatalogContent() {
               <Text style={s.barRight}>{dateStr}</Text>
             </View>
             <View style={s.coverBody}>
-              {brokerLogo ? <PdfImage src={brokerLogo} style={s.coverLogo} /> : null}
               <Text style={s.coverTitle}>{brokerCompany || brokerName}</Text>
               <View style={s.coverLine} />
               <Text style={s.coverSub}>{tx.catalogTitle}</Text>
