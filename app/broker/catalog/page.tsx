@@ -169,134 +169,211 @@ function CatalogContent() {
     try {
       const { pdf, Document, Page, Text, View, Image: PdfImage, StyleSheet } = await import("@react-pdf/renderer");
 
+      const NAV = "#0F1923";
+      const GOLD = "#E8B84B";
+      const WHITE = "#FFFFFF";
+      const MUTED = "#94A3B8";
+      const CARD = "#1A2B3C";
+
       const s = StyleSheet.create({
-        page: { backgroundColor: "#1a1a2e", padding: 40, fontFamily: "Helvetica" },
-        coverTitle: { fontSize: 36, fontWeight: "bold", color: "#F1F5F9", marginBottom: 8 },
-        coverSub: { fontSize: 13, color: "#94A3B8", marginBottom: 36 },
-        brokerCard: { backgroundColor: "#0F1923", borderRadius: 10, padding: 20, marginTop: 8 },
-        brokerLabel: { fontSize: 9, color: "#94A3B8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 },
-        brokerName: { fontSize: 16, fontWeight: "bold", color: "#F1F5F9", marginBottom: 3 },
-        brokerCompany: { fontSize: 12, color: "#E8B84B", marginBottom: 6 },
-        brokerContact: { fontSize: 11, color: "#94A3B8", marginBottom: 2 },
-        divider: { borderBottomWidth: 3, borderBottomColor: "#E8B84B", marginVertical: 24 },
-        tocLabel: { fontSize: 9, color: "#94A3B8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 },
-        tocRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "#ffffff20" },
-        tocTitle: { fontSize: 13, color: "#F1F5F9", flex: 1 },
-        tocPrice: { fontSize: 13, color: "#E8B84B", fontWeight: "bold" },
-        counter: { fontSize: 9, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 },
-        projectTitle: { fontSize: 26, fontWeight: "bold", color: "#F1F5F9", marginBottom: 6 },
-        metaRow: { flexDirection: "row", gap: 16, marginBottom: 16, flexWrap: "wrap" },
-        metaText: { fontSize: 12, color: "#94A3B8" },
-        priceBox: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#0F1923", borderRadius: 8, padding: 14, marginBottom: 18 },
-        price: { fontSize: 24, fontWeight: "bold", color: "#E8B84B" },
-        priceDash: { fontSize: 18, color: "#94A3B8" },
-        badge: { fontSize: 10, color: "#10B981", borderWidth: 1, borderColor: "#10B981", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, marginLeft: "auto" },
-        badgeBlue: { fontSize: 10, color: "#3B82F6", borderWidth: 1, borderColor: "#3B82F6", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, marginLeft: 4 },
-        descBox: { borderLeftWidth: 3, borderLeftColor: "#E8B84B", backgroundColor: "#ffffff0a", padding: 12, marginBottom: 18 },
-        descText: { fontSize: 11, color: "#CBD5E1", lineHeight: 1.7 },
-        sectionLabel: { fontSize: 9, fontWeight: "bold", color: "#E8B84B", textTransform: "uppercase", letterSpacing: 2, borderBottomWidth: 2, borderBottomColor: "#E8B84B", paddingBottom: 5, marginBottom: 10 },
-        amenityGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 18 },
-        amenityItem: { fontSize: 11, color: "#F1F5F9", backgroundColor: "#ffffff0a", borderWidth: 1, borderColor: "#ffffff20", borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5 },
-        paymentBox: { backgroundColor: "#0F1923", borderRadius: 8, padding: 14, marginBottom: 18 },
-        paymentLine: { fontSize: 11, color: "#F1F5F9", lineHeight: 1.7 },
-        contactBar: { flexDirection: "row", justifyContent: "space-between", backgroundColor: "#ffffff0a", borderRadius: 8, padding: 14, marginTop: 20, borderWidth: 1, borderColor: "#ffffff15" },
-        contactLeft: { flexDirection: "column" },
-        contactRight: { flexDirection: "column", alignItems: "flex-end" },
-        contactName: { fontSize: 13, fontWeight: "bold", color: "#F1F5F9", marginBottom: 2 },
-        contactSmall: { fontSize: 11, color: "#94A3B8" },
-        coverImage: { width: "100%", height: 200, objectFit: "cover", borderRadius: 8, marginBottom: 18 },
-        gallery: { flexDirection: "row", gap: 5, marginBottom: 18 },
-        galleryImg: { flex: 1, height: 90, objectFit: "cover", borderRadius: 5 },
-        logoImg: { height: 48, maxWidth: 160, objectFit: "contain", marginBottom: 20 },
+        // ── COVER PAGE ──
+        coverPage: { backgroundColor: NAV, padding: 0, fontFamily: "Helvetica" },
+        coverBg: { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" },
+        coverOverlay: { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", backgroundColor: NAV, opacity: 0.78 },
+        coverTopBar: { position: "absolute", top: 0, left: 0, right: 0, flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "18 32", borderBottomWidth: 1, borderBottomColor: GOLD },
+        coverBrand: { fontSize: 13, fontWeight: "bold", color: GOLD, letterSpacing: 2 },
+        coverDate: { fontSize: 10, color: MUTED },
+        coverBody: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 60, paddingTop: 80 },
+        coverLogoWrap: { width: 100, height: 50, marginBottom: 20 },
+        coverLogo: { width: "100%", height: "100%", objectFit: "contain" },
+        coverTitle: { fontSize: 38, fontWeight: "bold", color: WHITE, textAlign: "center", letterSpacing: 1, marginBottom: 6 },
+        coverSubtitle: { fontSize: 13, color: MUTED, textAlign: "center", marginBottom: 0 },
+        coverDivider: { width: 60, height: 3, backgroundColor: GOLD, marginVertical: 20 },
+        coverBottomBar: { position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "#0A131C", borderTopWidth: 2, borderTopColor: GOLD, padding: "16 32", flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+        coverAgentName: { fontSize: 14, fontWeight: "bold", color: WHITE, marginBottom: 2 },
+        coverAgentCompany: { fontSize: 11, color: GOLD },
+        coverAgentContact: { fontSize: 10, color: MUTED, textAlign: "right", marginBottom: 2 },
+        // ── TOC PAGE ──
+        tocPage: { backgroundColor: NAV, padding: "48 40", fontFamily: "Helvetica" },
+        tocHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 32, borderBottomWidth: 2, borderBottomColor: GOLD, paddingBottom: 12 },
+        tocBrand: { fontSize: 11, fontWeight: "bold", color: GOLD, letterSpacing: 2 },
+        tocPageNum: { fontSize: 10, color: MUTED },
+        tocTitle: { fontSize: 22, fontWeight: "bold", color: WHITE, marginBottom: 24 },
+        tocRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#1E3048" },
+        tocNum: { fontSize: 11, color: GOLD, fontWeight: "bold", width: 24 },
+        tocName: { fontSize: 13, color: WHITE, flex: 1, fontWeight: "bold" },
+        tocCity: { fontSize: 11, color: MUTED, flex: 1 },
+        tocPrice: { fontSize: 13, color: GOLD, fontWeight: "bold" },
+        // ── PROJECT PAGE ──
+        projPage: { backgroundColor: NAV, padding: 0, fontFamily: "Helvetica" },
+        projTopBar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: "10 24", backgroundColor: "#0A131C", borderBottomWidth: 1, borderBottomColor: "#1E3048" },
+        projBrand: { fontSize: 9, fontWeight: "bold", color: GOLD, letterSpacing: 2 },
+        projCounter: { fontSize: 9, color: MUTED },
+        projHero: { width: "100%", height: 220, objectFit: "cover" },
+        projHeroPlaceholder: { width: "100%", height: 220, backgroundColor: CARD },
+        projTitleBar: { backgroundColor: "#0A131C", padding: "14 24", borderBottomWidth: 2, borderBottomColor: GOLD },
+        projTitle: { fontSize: 22, fontWeight: "bold", color: WHITE, marginBottom: 4 },
+        projLocation: { fontSize: 11, color: MUTED },
+        projChipRow: { flexDirection: "row", padding: "10 24", backgroundColor: "#0D1E2E", gap: 6 },
+        projChip: { flex: 1, backgroundColor: CARD, borderRadius: 5, padding: "8 10", borderTopWidth: 2, borderTopColor: GOLD },
+        projChipLabel: { fontSize: 7, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 3 },
+        projChipValue: { fontSize: 11, fontWeight: "bold", color: WHITE },
+        projBody: { padding: "16 24", flex: 1 },
+        projDesc: { fontSize: 10, color: "#B0C0D0", lineHeight: 1.7, marginBottom: 14 },
+        projGallery: { flexDirection: "row", gap: 5, marginBottom: 14 },
+        projGalleryImg: { flex: 1, height: 80, objectFit: "cover", borderRadius: 4 },
+        projSectionLabel: { fontSize: 9, fontWeight: "bold", color: GOLD, textTransform: "uppercase", letterSpacing: 2, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: "#1E3048", paddingBottom: 4 },
+        projAmenityGrid: { flexDirection: "row", flexWrap: "wrap", gap: 5, marginBottom: 14 },
+        projAmenityItem: { backgroundColor: CARD, borderRadius: 4, paddingHorizontal: 9, paddingVertical: 5, borderLeftWidth: 2, borderLeftColor: GOLD },
+        projAmenityText: { fontSize: 9, color: WHITE },
+        projPayBox: { backgroundColor: CARD, borderRadius: 5, padding: 10, marginBottom: 14, borderLeftWidth: 3, borderLeftColor: GOLD },
+        projPayLine: { fontSize: 10, color: "#B0C0D0", lineHeight: 1.6 },
+        projBadgeRow: { flexDirection: "row", gap: 6, marginTop: 2 },
+        projBadge: { fontSize: 9, color: "#10B981", borderWidth: 1, borderColor: "#10B981", borderRadius: 4, paddingHorizontal: 7, paddingVertical: 3 },
+        projBadgeBlue: { fontSize: 9, color: "#60A5FA", borderWidth: 1, borderColor: "#60A5FA", borderRadius: 4, paddingHorizontal: 7, paddingVertical: 3 },
+        // ── FOOTER BAR (absolute bottom) ──
+        projFooter: { position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "#0A131C", borderTopWidth: 1, borderTopColor: GOLD, padding: "10 24", flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+        projFooterName: { fontSize: 11, fontWeight: "bold", color: WHITE },
+        projFooterCompany: { fontSize: 9, color: GOLD },
+        projFooterContact: { fontSize: 9, color: MUTED, textAlign: "right", marginBottom: 1 },
       });
+
+      const dateStr = new Date().toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
+      const firstCover = projects[0]?.cover_image_url;
 
       const doc = (
         <Document title={tx.catalogTitle} author={brokerName}>
-          {/* Cover Page */}
-          <Page size="A4" style={s.page}>
-            {brokerLogo ? <PdfImage src={brokerLogo} style={s.logoImg} /> : null}
-            <Text style={s.coverTitle}>{tx.catalogTitle}</Text>
-            <Text style={s.coverSub}>{tx.projects(projects.length)} · {new Date().toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}</Text>
-            <View style={s.divider} />
-            <View style={s.brokerCard}>
-              <Text style={s.brokerLabel}>{tx.preparedBy}</Text>
-              <Text style={s.brokerName}>{brokerName}</Text>
-              {brokerCompany ? <Text style={s.brokerCompany}>{brokerCompany}</Text> : null}
-              {brokerPhone ? <Text style={s.brokerContact}>{brokerPhone}</Text> : null}
-              {brokerEmail ? <Text style={s.brokerContact}>{brokerEmail}</Text> : null}
+
+          {/* ── COVER PAGE ── */}
+          <Page size="A4" style={s.coverPage}>
+            {firstCover ? <PdfImage src={firstCover} style={s.coverBg} /> : null}
+            <View style={s.coverOverlay} />
+            <View style={s.coverTopBar}>
+              <Text style={s.coverBrand}>YAPIMAP</Text>
+              <Text style={s.coverDate}>{dateStr}</Text>
             </View>
-            {projects.length > 1 && (
-              <View style={{ marginTop: 32 }}>
-                <Text style={s.tocLabel}>{tx.toc}</Text>
-                {projects.map((p, i) => (
-                  <View key={p.id} style={s.tocRow}>
-                    <Text style={s.tocTitle}>{i + 1}. {p.title} — {p.city}</Text>
-                    <Text style={s.tocPrice}>{formatPrice(p.min_price)}</Text>
-                  </View>
-                ))}
+            <View style={s.coverBody}>
+              {brokerLogo ? (
+                <View style={s.coverLogoWrap}>
+                  <PdfImage src={brokerLogo} style={s.coverLogo} />
+                </View>
+              ) : null}
+              <Text style={s.coverTitle}>{brokerCompany || brokerName}</Text>
+              <View style={s.coverDivider} />
+              <Text style={s.coverSubtitle}>{tx.catalogTitle} · {tx.projects(projects.length)}</Text>
+              {projects.length > 1 && (
+                <View style={{ marginTop: 36, width: "100%" }}>
+                  {projects.map((p, i) => (
+                    <View key={p.id} style={s.tocRow}>
+                      <Text style={s.tocNum}>{i + 1}</Text>
+                      <Text style={s.tocName}>{p.title}</Text>
+                      <Text style={s.tocCity}>{p.city}</Text>
+                      <Text style={s.tocPrice}>{formatPrice(p.min_price)}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+            <View style={s.coverBottomBar}>
+              <View>
+                <Text style={s.coverAgentName}>{brokerName}</Text>
+                {brokerCompany ? <Text style={s.coverAgentCompany}>{brokerCompany}</Text> : null}
               </View>
-            )}
+              <View>
+                {brokerPhone ? <Text style={s.coverAgentContact}>{brokerPhone}</Text> : null}
+                {brokerEmail ? <Text style={s.coverAgentContact}>{brokerEmail}</Text> : null}
+              </View>
+            </View>
           </Page>
 
-          {/* Project Pages */}
+          {/* ── PROJECT PAGES ── */}
           {projects.map((p, i) => (
-            <Page key={p.id} size="A4" style={s.page}>
-              <Text style={s.counter}>{tx.projectOf(i + 1, projects.length)}</Text>
-              {p.cover_image_url ? <PdfImage src={p.cover_image_url} style={s.coverImage} /> : null}
-              <Text style={s.projectTitle}>{p.title}</Text>
-              <View style={s.metaRow}>
-                <Text style={s.metaText}>{p.district ? `${p.district}, ` : ""}{p.city}</Text>
-                <Text style={s.metaText}>{translateType(p.project_type, lang)}</Text>
-                {p.handover_date ? <Text style={s.metaText}>{formatDate(p.handover_date)}</Text> : null}
+            <Page key={p.id} size="A4" style={s.projPage}>
+              {/* Top brand bar */}
+              <View style={s.projTopBar}>
+                <Text style={s.projBrand}>YAPIMAP</Text>
+                <Text style={s.projCounter}>{tx.projectOf(i + 1, projects.length)}</Text>
               </View>
-              <View style={s.priceBox}>
-                <Text style={s.price}>{formatPrice(p.min_price)}</Text>
-                <Text style={s.priceDash}>—</Text>
-                <Text style={s.price}>{formatPrice(p.max_price)}</Text>
-                <View style={{ flexDirection: "row", marginLeft: "auto" }}>
-                  {p.ikamet_eligible ? <Text style={s.badge}>{tx.residence}</Text> : null}
-                  {p.citizenship_eligible ? <Text style={s.badgeBlue}>{tx.citizenship}</Text> : null}
-                </View>
+
+              {/* Hero image */}
+              {p.cover_image_url
+                ? <PdfImage src={p.cover_image_url} style={s.projHero} />
+                : <View style={s.projHeroPlaceholder} />}
+
+              {/* Title bar */}
+              <View style={s.projTitleBar}>
+                <Text style={s.projTitle}>{p.title}</Text>
+                <Text style={s.projLocation}>{p.district ? `${p.district}, ` : ""}{p.city}  ·  {translateType(p.project_type, lang)}{p.handover_date ? `  ·  ${formatDate(p.handover_date)}` : ""}</Text>
               </View>
-              {p.description ? (
-                <View style={s.descBox}>
-                  <Text style={s.descText}>{p.description}</Text>
+
+              {/* Info chips */}
+              <View style={s.projChipRow}>
+                <View style={s.projChip}>
+                  <Text style={s.projChipLabel}>{lang === "tr" ? "Fiyat" : lang === "ru" ? "Цена" : "Price"}</Text>
+                  <Text style={s.projChipValue}>{formatPrice(p.min_price)}</Text>
                 </View>
-              ) : null}
-              {images[p.id]?.length > 0 && (
-                <View style={s.gallery}>
-                  {images[p.id].slice(0, 3).map((url, j) => (
-                    <PdfImage key={j} src={url} style={s.galleryImg} />
-                  ))}
+                <View style={s.projChip}>
+                  <Text style={s.projChipLabel}>{lang === "tr" ? "Max" : "Max"}</Text>
+                  <Text style={s.projChipValue}>{formatPrice(p.max_price)}</Text>
                 </View>
-              )}
-              {p.amenities && p.amenities.length > 0 && (
-                <View style={{ marginBottom: 18 }}>
-                  <Text style={s.sectionLabel}>{tx.amenities}</Text>
-                  <View style={s.amenityGrid}>
-                    {p.amenities.map((a, j) => (
-                      <Text key={j} style={s.amenityItem}>{translateAmenity(a, lang)}</Text>
+                {p.ikamet_eligible && (
+                  <View style={[s.projChip, { borderTopColor: "#10B981" }]}>
+                    <Text style={s.projChipLabel}>{tx.residence}</Text>
+                    <Text style={[s.projChipValue, { color: "#10B981", fontSize: 9 }]}>✓</Text>
+                  </View>
+                )}
+                {p.citizenship_eligible && (
+                  <View style={[s.projChip, { borderTopColor: "#60A5FA" }]}>
+                    <Text style={s.projChipLabel}>{tx.citizenship}</Text>
+                    <Text style={[s.projChipValue, { color: "#60A5FA", fontSize: 9 }]}>✓</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Body */}
+              <View style={s.projBody}>
+                {p.description ? <Text style={s.projDesc}>{p.description}</Text> : null}
+
+                {images[p.id]?.length > 0 && (
+                  <View style={s.projGallery}>
+                    {images[p.id].slice(0, 4).map((url, j) => (
+                      <PdfImage key={j} src={url} style={s.projGalleryImg} />
                     ))}
                   </View>
+                )}
+
+                {p.amenities && p.amenities.length > 0 && (
+                  <View style={{ marginBottom: 14 }}>
+                    <Text style={s.projSectionLabel}>{tx.amenities}</Text>
+                    <View style={s.projAmenityGrid}>
+                      {p.amenities.map((a, j) => (
+                        <View key={j} style={s.projAmenityItem}>
+                          <Text style={s.projAmenityText}>{translateAmenity(a, lang)}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                {p.payment_plan ? (
+                  <View style={s.projPayBox}>
+                    <Text style={[s.projSectionLabel, { marginBottom: 6 }]}>{tx.payment}</Text>
+                    {p.payment_plan.split("\n").filter(Boolean).map((line, j) => (
+                      <Text key={j} style={s.projPayLine}>› {line}</Text>
+                    ))}
+                  </View>
+                ) : null}
+              </View>
+
+              {/* Footer contact bar */}
+              <View style={s.projFooter}>
+                <View>
+                  <Text style={s.projFooterName}>{brokerName}</Text>
+                  {brokerCompany ? <Text style={s.projFooterCompany}>{brokerCompany}</Text> : null}
                 </View>
-              )}
-              {p.payment_plan ? (
-                <View style={s.paymentBox}>
-                  <Text style={[s.sectionLabel, { marginBottom: 8 }]}>{tx.payment}</Text>
-                  {p.payment_plan.split("\n").filter(Boolean).map((line, j) => (
-                    <Text key={j} style={s.paymentLine}>› {line}</Text>
-                  ))}
-                </View>
-              ) : null}
-              <View style={s.contactBar}>
-                <View style={s.contactLeft}>
-                  <Text style={s.contactSmall}>{tx.advisor}</Text>
-                  <Text style={s.contactName}>{brokerName}</Text>
-                  {brokerCompany ? <Text style={{ fontSize: 11, color: "#E8B84B" }}>{brokerCompany}</Text> : null}
-                </View>
-                <View style={s.contactRight}>
-                  {brokerPhone ? <Text style={s.contactSmall}>{brokerPhone}</Text> : null}
-                  {brokerEmail ? <Text style={s.contactSmall}>{brokerEmail}</Text> : null}
+                <View>
+                  {brokerPhone ? <Text style={s.projFooterContact}>{brokerPhone}</Text> : null}
+                  {brokerEmail ? <Text style={s.projFooterContact}>{brokerEmail}</Text> : null}
                 </View>
               </View>
             </Page>
