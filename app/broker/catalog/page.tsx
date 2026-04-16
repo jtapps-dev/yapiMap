@@ -189,6 +189,10 @@ function CatalogContent() {
 
       const el = catalogRef.current;
 
+      // Scroll to top so html2canvas captures the full element (incl. broker card above viewport)
+      window.scrollTo(0, 0);
+      await new Promise(r => setTimeout(r, 150));
+
       // Convert all external images to data URLs so html2canvas can capture them
       const allImgs = Array.from(el.querySelectorAll("img")) as HTMLImageElement[];
       await Promise.all(allImgs.map(img => new Promise<void>(resolve => {
