@@ -12,8 +12,9 @@ export async function POST(req: NextRequest) {
 
   const { priceId, referralCode } = await req.json();
 
-  const allowedPrices = [process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID];
-  if (!allowedPrices.includes(priceId)) {
+  // Validate: priceId must belong to our product
+  const stripePrice = await stripe.prices.retrieve(priceId).catch(() => null);
+  if (!stripePrice || stripePrice.product !== process.env.STRIPE_PRODUCT_ID) {
     return NextResponse.json({ error: "Invalid price" }, { status: 400 });
   }
 

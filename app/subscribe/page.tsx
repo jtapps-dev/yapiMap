@@ -35,6 +35,7 @@ export default function SubscribePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [tryRate, setTryRate] = useState<number>(51);
   const [eurPrice, setEurPrice] = useState<number>(249);
+  const [activePriceId, setActivePriceId] = useState<string>(YEARLY_PLAN.priceId);
   const [referralCode, setReferralCode] = useState("");
   const [referralStatus, setReferralStatus] = useState<"idle" | "valid" | "invalid" | "checking">("idle");
   const [referralName, setReferralName] = useState("");
@@ -70,7 +71,7 @@ export default function SubscribePage() {
   useEffect(() => {
     fetch("/api/stripe/prices")
       .then(r => r.json())
-      .then(d => { if (d.amountEur) setEurPrice(d.amountEur); })
+      .then(d => { if (d.amountEur) setEurPrice(d.amountEur); if (d.priceId) setActivePriceId(d.priceId); })
       .catch(() => {});
   }, []);
 
@@ -174,13 +175,13 @@ export default function SubscribePage() {
   }, []);  // eslint-disable-line
 
   async function handleCheckout() {
-    if (!YEARLY_PLAN.priceId) { alert("Stripe Price ID not configured"); return; }
+    if (!activePriceId) { alert("Stripe Price ID not configured"); return; }
     setLoading(true);
     const res = await fetch("/api/stripe/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        priceId: YEARLY_PLAN.priceId,
+        priceId: activePriceId,
         ...(referralStatus === "valid" && { referralCode: referralCode.trim() }),
       }),
     });
