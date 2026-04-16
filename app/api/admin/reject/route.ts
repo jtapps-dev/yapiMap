@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   if (profile?.email && process.env.RESEND_API_KEY) {
     const resend = new Resend(process.env.RESEND_API_KEY);
     await resend.emails.send({
-      from: "YapıMap <onboarding@resend.dev>",
+      from: "YapıMap <noreply@yapimap.com>",
       to: profile.email,
       subject: "YapıMap – Başvurunuz Hakkında / About Your Application",
       html: `
