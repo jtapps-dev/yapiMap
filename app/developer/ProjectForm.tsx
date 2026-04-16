@@ -13,7 +13,7 @@ const textMuted = "#94A3B8";
 const borderColor = "#2A3F55";
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
-const PROJECT_TYPES = ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"];
+const PROJECT_TYPES = ["daire", "villa", "rezidans", "ofis", "townhouse", "loft"];
 
 const AMENITIES: { tr: string; en: string; ru: string }[] = [
   { tr: "Yüzme Havuzu", en: "Swimming Pool", ru: "Бассейн" },

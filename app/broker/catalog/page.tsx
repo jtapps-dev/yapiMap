@@ -94,7 +94,6 @@ const PROJECT_TYPE_TR: Record<string, { en: string; ru: string }> = {
   "ofis":      { en: "Office",     ru: "Офис" },
   "townhouse": { en: "Townhouse",  ru: "Таунхаус" },
   "loft":      { en: "Loft",       ru: "Лофт" },
-  "karma":     { en: "Mixed Use",  ru: "Многофункциональный" },
 };
 
 function translateAmenity(a: string, lang: string) {

@@ -51,7 +51,7 @@ export default function BrokerMapPage() {
       subscribe: "Abone Ol", cancel: "Vazgeç", ikamet: "İkamet İzni Uygun", citizenship: "Vatandaşlık Yatırımı Uygun",
       loading: "Yükleniyor...", projectsFound: "proje bulundu", noProjects: "Proje bulunamadı",
       profile: "Profil",
-      types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"],
+      types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft"],
     },
     en: {
       signout: "Sign Out", showProjects: "View Details", filter: "Filter",
@@ -61,7 +61,7 @@ export default function BrokerMapPage() {
       subscribe: "Subscribe", cancel: "Cancel", ikamet: "Residence Permit Eligible", citizenship: "Eligible for Citizenship by Investment",
       loading: "Loading...", projectsFound: "projects found", noProjects: "No projects found",
       profile: "Profile",
-      types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"],
+      types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft"],
     },
     ru: {
       signout: "Выйти", showProjects: "Подробнее", filter: "Фильтр",
@@ -71,7 +71,7 @@ export default function BrokerMapPage() {
       subscribe: "Подписаться", cancel: "Отмена", ikamet: "Подходит для ВНЖ", citizenship: "Подходит для гражданства через инвестиции",
       loading: "Загрузка...", projectsFound: "проектов найдено", noProjects: "Проекты не найдены",
       profile: "Профиль",
-      types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"],
+      types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft"],
     },
   } as const;
   const t = (tLabels as any)[lang] ?? tLabels.en;

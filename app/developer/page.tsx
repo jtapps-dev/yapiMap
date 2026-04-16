@@ -46,9 +46,9 @@ export default function DeveloperPage() {
     tr: {
       title: "Projelerim", add: "+ Yeni Proje", signout: "Çıkış", loading: "Yükleniyor...",
       noProjects: "Henüz proje eklemediniz.",
-      draft: "Taslak", published: "Yayında", archived: "Arşiv",
-      ikamet: "İkamet İzni", edit: "Düzenle", publish: "Yayınla", archive: "Arşivle",
-      unarchive: "Arşivden Çıkar",
+      draft: "Taslak", published: "Yayında", archived: "Duraklatıldı",
+      ikamet: "İkamet İzni", edit: "Düzenle", publish: "Yayınla", archive: "Duraklat",
+      unarchive: "Yeniden Yayınla",
       unpublish: "Taslağa Al", delete: "Sil",
       confirmDelete: "Bu projeyi silmek istediğinizden emin misiniz?",
       allTypes: "Tüm Tipler", allStatus: "Tüm Durumlar",
@@ -61,9 +61,9 @@ export default function DeveloperPage() {
     en: {
       title: "My Projects", add: "+ New Project", signout: "Sign Out", loading: "Loading...",
       noProjects: "No projects yet.",
-      draft: "Draft", published: "Published", archived: "Archived",
-      ikamet: "Residence Permit", edit: "Edit", publish: "Publish", archive: "Archive",
-      unarchive: "Unarchive",
+      draft: "Draft", published: "Published", archived: "Paused",
+      ikamet: "Residence Permit", edit: "Edit", publish: "Publish", archive: "Pause",
+      unarchive: "Resume",
       unpublish: "Unpublish", delete: "Delete",
       confirmDelete: "Are you sure you want to delete this project?",
       allTypes: "All Types", allStatus: "All Status",
@@ -76,9 +76,9 @@ export default function DeveloperPage() {
     ru: {
       title: "Мои проекты", add: "+ Новый проект", signout: "Выйти", loading: "Загрузка...",
       noProjects: "Проектов пока нет.",
-      draft: "Черновик", published: "Опубликован", archived: "Архив",
-      ikamet: "ВНЖ", edit: "Изменить", publish: "Опубликовать", archive: "В архив",
-      unarchive: "Из архива",
+      draft: "Черновик", published: "Опубликован", archived: "Приостановлен",
+      ikamet: "ВНЖ", edit: "Изменить", publish: "Опубликовать", archive: "Приостановить",
+      unarchive: "Возобновить",
       unpublish: "Снять с публикации", delete: "Удалить",
       confirmDelete: "Вы уверены, что хотите удалить этот проект?",
       allTypes: "Все типы", allStatus: "Все статусы",
@@ -91,7 +91,7 @@ export default function DeveloperPage() {
   };
   const t = tLabels[lang as keyof typeof tLabels] ?? tLabels.en;
 
-  const PROJECT_TYPES = ["daire", "villa", "rezidans", "ofis", "townhouse", "loft", "karma"];
+  const PROJECT_TYPES = ["daire", "villa", "rezidans", "ofis", "townhouse", "loft"];
 
   useEffect(() => {
     fetch("https://api.frankfurter.app/latest?from=TRY&to=USD,EUR")
