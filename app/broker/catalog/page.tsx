@@ -145,14 +145,14 @@ function CatalogContent() {
       supabase.from("project_images").select("project_id, url").in("project_id", ids),
     ]).then(async ([{ data: { user } }, { data: projs }, { data: imgs }]) => {
       if (user) {
+        setBrokerEmail(user.email || "");
         const { data: profile } = await supabase.from("profiles")
-          .select("full_name, phone, company_name, email, logo_url")
+          .select("full_name, phone, company_name, logo_url")
           .eq("id", user.id).single();
         if (profile) {
-          setBrokerName(profile.full_name || "");
+          setBrokerName((profile as any).full_name || "");
           setBrokerPhone((profile as any).phone || "");
           setBrokerCompany((profile as any).company_name || "");
-          setBrokerEmail((profile as any).email || "");
           setBrokerLogo((profile as any).logo_url || "");
         }
       }
