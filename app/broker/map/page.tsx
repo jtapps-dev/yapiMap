@@ -349,7 +349,7 @@ export default function BrokerMapPage() {
                   {/* Cover thumb — gesperrt wenn nicht subscribed */}
                   {subscribed ? (
                     p.cover_image_url
-                      ? <img src={p.cover_image_url} alt="" style={{ width: 48, height: 48, objectFit: "cover", borderRadius: 6, flexShrink: 0 }} />
+                      ? <div style={{ width: 48, height: 48, backgroundColor: "#0F1923", borderRadius: 6, flexShrink: 0, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: 3 }}><img src={p.cover_image_url} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} /></div>
                       : <div style={{ width: 48, height: 48, backgroundColor: bgPrimary, borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🏢</div>
                   ) : (
                     <div style={{ width: 48, height: 48, backgroundColor: bgPrimary, borderRadius: 6, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, filter: "blur(0px)" }}>🔒</div>
@@ -418,7 +418,7 @@ export default function BrokerMapPage() {
                 onClose={() => setSelected(null)} closeButton closeOnClick={false} maxWidth="260px">
                 <div style={{ backgroundColor: bgCard, borderRadius: 10, padding: 14, width: 230, color: "#F1F5F9", fontFamily: "system-ui, sans-serif" }}>
                   {selected.developer_logo_url && (
-                    <div style={{ width: "100%", height: 60, backgroundColor: "#0F1923", borderRadius: 7, marginBottom: 10, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: "100%", height: 80, backgroundColor: "#0F1923", borderRadius: 7, marginBottom: 10, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: "6px" }}>
                       <img src={selected.developer_logo_url} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
                     </div>
                   )}
