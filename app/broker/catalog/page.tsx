@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/app/i18n/LanguageContext";
@@ -126,6 +126,7 @@ function CatalogContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const catalogRef = useRef<HTMLDivElement>(null);
   const [brokerName, setBrokerName] = useState("");
   const [brokerPhone, setBrokerPhone] = useState("");
   const [brokerCompany, setBrokerCompany] = useState("");
@@ -174,195 +175,40 @@ function CatalogContent() {
   }
 
   async function downloadPDF() {
+    if (!catalogRef.current) return;
     setPdfLoading(true);
     try {
-      const { pdf, Document, Page, Text, View, Image: PdfImage, StyleSheet } = await import("@react-pdf/renderer");
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
 
-      const NAV   = "#0F1923";
-      const DARK  = "#0A131C";
-      const CARD  = "#152032";
-      const GOLD  = "#E8B84B";
-      const WHITE = "#FFFFFF";
-      const MUTED = "#94A3B8";
-
-      const s = StyleSheet.create({
-        // ── SHARED ──
-        page:        { backgroundColor: NAV, fontFamily: "Helvetica", flexDirection: "column" },
-        topBar:      { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 28, paddingVertical: 12, backgroundColor: DARK, borderBottomWidth: 1, borderBottomColor: GOLD },
-        brand:       { fontSize: 10, fontWeight: "bold", color: GOLD, letterSpacing: 2 },
-        barRight:    { fontSize: 9, color: MUTED },
-        footer:      { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 28, paddingVertical: 12, backgroundColor: DARK, borderTopWidth: 1, borderTopColor: GOLD, marginTop: "auto" },
-        footerName:  { fontSize: 11, fontWeight: "bold", color: WHITE, marginBottom: 2 },
-        footerSub:   { fontSize: 9, color: GOLD },
-        footerRight: { fontSize: 9, color: MUTED, textAlign: "right", marginBottom: 2 },
-        // ── COVER ──
-        coverBody:   { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 60, paddingVertical: 40 },
-        coverLogo:   { width: 120, height: 56, objectFit: "contain", marginBottom: 28 },
-        coverTitle:  { fontSize: 36, fontWeight: "bold", color: WHITE, textAlign: "center", letterSpacing: 1, marginBottom: 4 },
-        coverSub:    { fontSize: 12, color: MUTED, textAlign: "center" },
-        coverLine:   { width: 56, height: 3, backgroundColor: GOLD, marginVertical: 18 },
-        coverDate:   { fontSize: 10, color: MUTED, textAlign: "center", marginBottom: 32 },
-        // ── TOC ──
-        tocRow:      { flexDirection: "row", alignItems: "center", paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: CARD },
-        tocNum:      { fontSize: 11, color: GOLD, fontWeight: "bold", width: 26 },
-        tocName:     { fontSize: 12, color: WHITE, fontWeight: "bold", flex: 1 },
-        tocCity:     { fontSize: 11, color: MUTED, width: 80 },
-        tocPrice:    { fontSize: 12, color: GOLD, fontWeight: "bold", textAlign: "right", width: 90 },
-        // ── PROJECT PAGE ──
-        hero:        { width: "100%", height: 190, objectFit: "cover", maxHeight: 190 },
-        heroEmpty:   { width: "100%", height: 190, backgroundColor: CARD },
-        titleBar:    { paddingHorizontal: 28, paddingTop: 14, paddingBottom: 10, backgroundColor: DARK, borderBottomWidth: 2, borderBottomColor: GOLD },
-        projTitle:   { fontSize: 20, fontWeight: "bold", color: WHITE, marginBottom: 3 },
-        projLoc:     { fontSize: 10, color: MUTED },
-        chipRow:     { flexDirection: "row", paddingHorizontal: 28, paddingVertical: 10, gap: 7, backgroundColor: "#0D1C2C" },
-        chip:        { flex: 1, backgroundColor: CARD, borderRadius: 5, paddingHorizontal: 9, paddingVertical: 7, borderTopWidth: 2, borderTopColor: GOLD },
-        chipLabel:   { fontSize: 7, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 3 },
-        chipValue:   { fontSize: 10, fontWeight: "bold", color: WHITE },
-        body:        { paddingHorizontal: 28, paddingTop: 14, paddingBottom: 8 },
-        desc:        { fontSize: 10, color: "#A8BCCF", lineHeight: 1.65, marginBottom: 13 },
-        gallery:     { flexDirection: "row", gap: 5, marginBottom: 13 },
-        galleryImg:  { flex: 1, height: 70, maxHeight: 70, objectFit: "cover", borderRadius: 4 },
-        secLabel:    { fontSize: 8, fontWeight: "bold", color: GOLD, textTransform: "uppercase", letterSpacing: 2, paddingBottom: 4, marginBottom: 7, borderBottomWidth: 1, borderBottomColor: CARD },
-        amenGrid:    { flexDirection: "row", flexWrap: "wrap", gap: 5, marginBottom: 13 },
-        amenItem:    { backgroundColor: CARD, borderRadius: 4, paddingHorizontal: 8, paddingVertical: 5, borderLeftWidth: 2, borderLeftColor: GOLD },
-        amenText:    { fontSize: 8, color: WHITE },
-        payBox:      { backgroundColor: CARD, borderRadius: 4, padding: 10, marginBottom: 13, borderLeftWidth: 3, borderLeftColor: GOLD },
-        payLine:     { fontSize: 9, color: "#A8BCCF", lineHeight: 1.6 },
+      const el = catalogRef.current;
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: "#0F1923",
+        logging: false,
+        windowWidth: el.scrollWidth,
+        windowHeight: el.scrollHeight,
       });
 
-      const dateStr = new Date().toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
-
-      const FooterBar = () => (
-        <View style={s.footer}>
-          <View>
-            <Text style={s.footerName}>{brokerName}</Text>
-            {brokerCompany ? <Text style={s.footerSub}>{brokerCompany}</Text> : null}
-          </View>
-          <View>
-            {brokerPhone ? <Text style={s.footerRight}>{brokerPhone}</Text> : null}
-            {brokerEmail ? <Text style={s.footerRight}>{brokerEmail}</Text> : null}
-          </View>
-        </View>
-      );
-
-      const doc = (
-        <Document title={tx.catalogTitle} author={brokerName}>
-
-          {/* ── COVER PAGE ── */}
-          <Page size="A4" style={s.page}>
-            <View style={s.topBar}>
-              <Text style={s.brand}>YAPIMAP</Text>
-              <Text style={s.barRight}>{dateStr}</Text>
-            </View>
-            <View style={s.coverBody}>
-              <Text style={s.coverTitle}>{brokerCompany || brokerName}</Text>
-              <View style={s.coverLine} />
-              <Text style={s.coverSub}>{tx.catalogTitle}</Text>
-              <Text style={s.coverDate}>{tx.projects(projects.length)} · {dateStr}</Text>
-              {projects.length > 0 && (
-                <View style={{ width: "100%" }}>
-                  {projects.map((p, i) => (
-                    <View key={p.id} style={s.tocRow}>
-                      <Text style={s.tocNum}>{i + 1}</Text>
-                      <Text style={s.tocName}>{p.title}</Text>
-                      <Text style={s.tocCity}>{p.city}</Text>
-                      <Text style={s.tocPrice}>{formatPrice(p.min_price)}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-            <FooterBar />
-          </Page>
-
-          {/* ── PROJECT PAGES ── */}
-          {projects.map((p, i) => (
-            <Page key={p.id} size="A4" style={s.page}>
-              <View style={s.topBar}>
-                <Text style={s.brand}>YAPIMAP</Text>
-                <Text style={s.barRight}>{tx.projectOf(i + 1, projects.length)}</Text>
-              </View>
-
-              {p.cover_image_url
-                ? <PdfImage src={p.cover_image_url} style={s.hero} />
-                : <View style={s.heroEmpty} />}
-
-              <View style={s.titleBar}>
-                <Text style={s.projTitle}>{p.title}</Text>
-                <Text style={s.projLoc}>
-                  {p.district ? `${p.district}, ` : ""}{p.city}{"  ·  "}{translateType(p.project_type, lang)}{p.handover_date ? `${"  ·  "}${formatDate(p.handover_date)}` : ""}
-                </Text>
-              </View>
-
-              <View style={s.chipRow}>
-                <View style={s.chip}>
-                  <Text style={s.chipLabel}>{lang === "tr" ? "Min Fiyat" : lang === "ru" ? "Мин цена" : "Min Price"}</Text>
-                  <Text style={s.chipValue}>{formatPrice(p.min_price)}</Text>
-                </View>
-                <View style={s.chip}>
-                  <Text style={s.chipLabel}>{lang === "tr" ? "Max Fiyat" : lang === "ru" ? "Макс цена" : "Max Price"}</Text>
-                  <Text style={s.chipValue}>{formatPrice(p.max_price)}</Text>
-                </View>
-                {p.ikamet_eligible && (
-                  <View style={[s.chip, { borderTopColor: "#10B981" }]}>
-                    <Text style={s.chipLabel}>{tx.residence}</Text>
-                    <Text style={[s.chipValue, { color: "#10B981" }]}>Evet</Text>
-                  </View>
-                )}
-                {p.citizenship_eligible && (
-                  <View style={[s.chip, { borderTopColor: "#60A5FA" }]}>
-                    <Text style={s.chipLabel}>{tx.citizenship}</Text>
-                    <Text style={[s.chipValue, { color: "#60A5FA" }]}>Evet</Text>
-                  </View>
-                )}
-              </View>
-
-              <View style={s.body}>
-                {p.description ? <Text style={s.desc}>{p.description}</Text> : null}
-                {images[p.id]?.length > 0 && (
-                  <View style={s.gallery}>
-                    {images[p.id].slice(0, 4).map((url, j) => (
-                      <PdfImage key={j} src={url} style={s.galleryImg} />
-                    ))}
-                  </View>
-                )}
-                {p.amenities && p.amenities.length > 0 && (
-                  <View style={{ marginBottom: 13 }}>
-                    <Text style={s.secLabel}>{tx.amenities}</Text>
-                    <View style={s.amenGrid}>
-                      {p.amenities.map((a, j) => (
-                        <View key={j} style={s.amenItem}>
-                          <Text style={s.amenText}>+ {translateAmenity(a, lang)}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                )}
-                {p.payment_plan ? (
-                  <View style={s.payBox}>
-                    <Text style={[s.secLabel, { marginBottom: 6 }]}>{tx.payment}</Text>
-                    {p.payment_plan.split("\n").filter(Boolean).map((line, j) => (
-                      <Text key={j} style={s.payLine}>› {line}</Text>
-                    ))}
-                  </View>
-                ) : null}
-              </View>
-
-              <FooterBar />
-            </Page>
-          ))}
-        </Document>
-      );
-
-      const blob = await pdf(doc).toBlob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = canvas.width;
+      const imgH = canvas.height;
+      const ratio = pageW / (imgW / 2); // scale=2 → divide by 2 to get mm
+      const totalH = (imgH / 2) * ratio;
+      let yPos = 0;
+      while (yPos < totalH) {
+        if (yPos > 0) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, -yPos, pageW, totalH);
+        yPos += pageH;
+      }
+      pdf.save(`yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`);
     } catch (e) {
       console.error("PDF error:", e);
     } finally {
@@ -392,6 +238,9 @@ function CatalogContent() {
           {tx.projects(projects.length)} · {new Date().toLocaleDateString(locale)}
         </span>
       </div>
+
+      {/* ===== CATALOG CONTENT (captured by html2canvas) ===== */}
+      <div ref={catalogRef} style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #232323 50%, #1a1a2e 100%)", padding: "40px 40px 60px" }}>
 
       {/* ===== COVER PAGE ===== */}
       <div style={{ textAlign: "center", padding: "70px 0 60px", borderBottom: "4px solid #E8B84B", marginBottom: 60 }}>
@@ -501,6 +350,7 @@ function CatalogContent() {
           </div>
         </div>
       ))}
+      </div>{/* end catalogRef */}
     </div>
   );
 }
