@@ -48,6 +48,7 @@ export default function DeveloperPage() {
       noProjects: "Henüz proje eklemediniz.",
       draft: "Taslak", published: "Yayında", archived: "Arşiv",
       ikamet: "İkamet İzni", edit: "Düzenle", publish: "Yayınla", archive: "Arşivle",
+      unarchive: "Arşivden Çıkar",
       unpublish: "Taslağa Al", delete: "Sil",
       confirmDelete: "Bu projeyi silmek istediğinizden emin misiniz?",
       allTypes: "Tüm Tipler", allStatus: "Tüm Durumlar",
@@ -62,6 +63,7 @@ export default function DeveloperPage() {
       noProjects: "No projects yet.",
       draft: "Draft", published: "Published", archived: "Archived",
       ikamet: "Residence Permit", edit: "Edit", publish: "Publish", archive: "Archive",
+      unarchive: "Unarchive",
       unpublish: "Unpublish", delete: "Delete",
       confirmDelete: "Are you sure you want to delete this project?",
       allTypes: "All Types", allStatus: "All Status",
@@ -76,6 +78,7 @@ export default function DeveloperPage() {
       noProjects: "Проектов пока нет.",
       draft: "Черновик", published: "Опубликован", archived: "Архив",
       ikamet: "ВНЖ", edit: "Изменить", publish: "Опубликовать", archive: "В архив",
+      unarchive: "Из архива",
       unpublish: "Снять с публикации", delete: "Удалить",
       confirmDelete: "Вы уверены, что хотите удалить этот проект?",
       allTypes: "Все типы", allStatus: "Все статусы",
@@ -377,6 +380,12 @@ export default function DeveloperPage() {
                     <button onClick={() => toggleStatus(p, "archived")}
                       style={{ padding: "4px 10px", backgroundColor: "transparent", color: textMuted, fontSize: 11, borderRadius: 5, border: `1px solid ${borderColor}`, cursor: "pointer" }}>
                       {t.archive}
+                    </button>
+                  )}
+                  {p.status === "archived" && (
+                    <button onClick={() => toggleStatus(p, "draft")}
+                      style={{ padding: "4px 10px", backgroundColor: "#F59E0B20", color: "#F59E0B", fontSize: 11, fontWeight: 600, borderRadius: 5, border: "1px solid #F59E0B", cursor: "pointer" }}>
+                      {t.unarchive}
                     </button>
                   )}
                   <button onClick={() => deleteProject(p.id)}

@@ -6,28 +6,27 @@ import { useLang } from "@/app/i18n/LanguageContext";
 
 const ct = {
   tr: {
-    savePdf: "🖨️ PDF Olarak Kaydet",
+    savePdf: "PDF İndir",
     backToMap: "← Haritaya Dön",
     loading: "Yükleniyor...",
+    generating: "PDF oluşturuluyor...",
     projects: (n: number) => `${n} Proje`,
-    subtitle: "YapıMap · Premium Gayrimenkul",
-    catalogTitle: "Proje Kataloğu",
+    catalogTitle: "Proje Katalogü",
     preparedBy: "Hazırlayan Danışman",
     toc: "İçindekiler",
     projectOf: (i: number, n: number) => `Proje ${i} / ${n}`,
     amenities: "Sosyal Olanaklar",
     payment: "Ödeme Seçenekleri",
     advisor: "Danışmanınız",
-    footer: (date: string) => `Bu katalog YapıMap tarafından oluşturulmuştur · yapimap.com · ${date}`,
-    residence: "✓ İkamet İzni",
-    citizenship: "✓ Vatandaşlık",
+    residence: "İkamet İzni",
+    citizenship: "Vatandaşlık",
   },
   en: {
-    savePdf: "🖨️ Save as PDF",
+    savePdf: "Download PDF",
     backToMap: "← Back to Map",
     loading: "Loading...",
+    generating: "Generating PDF...",
     projects: (n: number) => `${n} Project${n !== 1 ? "s" : ""}`,
-    subtitle: "YapıMap · Premium Real Estate",
     catalogTitle: "Project Catalog",
     preparedBy: "Prepared by Agent",
     toc: "Table of Contents",
@@ -35,16 +34,15 @@ const ct = {
     amenities: "Amenities",
     payment: "Payment Options",
     advisor: "Your Agent",
-    footer: (date: string) => `This catalog was created by YapıMap · yapimap.com · ${date}`,
-    residence: "✓ Residence Permit",
-    citizenship: "✓ Citizenship",
+    residence: "Residence Permit",
+    citizenship: "Citizenship",
   },
   ru: {
-    savePdf: "🖨️ Сохранить как PDF",
+    savePdf: "Скачать PDF",
     backToMap: "← Вернуться к карте",
     loading: "Загрузка...",
+    generating: "Создание PDF...",
     projects: (n: number) => `${n} Проект${n > 1 ? "а" : ""}`,
-    subtitle: "YapıMap · Премиум Недвижимость",
     catalogTitle: "Каталог проектов",
     preparedBy: "Подготовлено агентом",
     toc: "Содержание",
@@ -52,9 +50,8 @@ const ct = {
     amenities: "Инфраструктура",
     payment: "Варианты оплаты",
     advisor: "Ваш агент",
-    footer: (date: string) => `Каталог создан YapıMap · yapimap.com · ${date}`,
-    residence: "✓ ВНЖ",
-    citizenship: "✓ Гражданство",
+    residence: "ВНЖ",
+    citizenship: "Гражданство",
   },
 };
 
@@ -70,15 +67,6 @@ type Project = {
 };
 type Image = { project_id: string; url: string };
 
-const AMENITY_ICONS: Record<string, string> = {
-  "Yüzme Havuzu": "🏊", "Fitness Merkezi": "💪", "SPA & Sauna": "🧖",
-  "Hamam": "♨️", "Kapalı Otopark": "🅿️", "7/24 Güvenlik": "🔒",
-  "Resepsiyon": "🛎️", "Çocuk Oyun Parkı": "🎠", "Restoran & Kafe": "☕",
-  "Tenis Kortu": "🎾", "Bahçe & Peyzaj": "🌿", "Jeneratör": "⚡",
-  "Akıllı Ev Sistemi": "🏠", "Deniz Manzarası": "🌊", "Dağ Manzarası": "⛰️",
-  "Asansör": "🛗", "BBQ Alanı": "🔥",
-};
-
 const AMENITY_TR: Record<string, { en: string; ru: string }> = {
   "Yüzme Havuzu":    { en: "Swimming Pool",       ru: "Бассейн" },
   "Fitness Merkezi": { en: "Fitness Center",       ru: "Фитнес-центр" },
@@ -88,7 +76,7 @@ const AMENITY_TR: Record<string, { en: string; ru: string }> = {
   "7/24 Güvenlik":   { en: "24/7 Security",        ru: "Охрана 24/7" },
   "Resepsiyon":      { en: "Reception",            ru: "Ресепшн" },
   "Çocuk Oyun Parkı":{ en: "Kids Playground",      ru: "Детская площадка" },
-  "Restoran & Kafe": { en: "Restaurant & Cafe",    ru: "Ресторан и кафе" },
+  "Restoran & Kafe": { en: "Restaurant & Cafe",    ru: "Ресторан und Cafe" },
   "Tenis Kortu":     { en: "Tennis Court",         ru: "Теннисный корт" },
   "Bahçe & Peyzaj":  { en: "Garden & Landscaping", ru: "Сад и ландшафт" },
   "Jeneratör":       { en: "Generator",            ru: "Генератор" },
@@ -113,7 +101,6 @@ function translateAmenity(a: string, lang: string) {
   if (lang === "tr") return a;
   return AMENITY_TR[a]?.[lang as "en" | "ru"] ?? a;
 }
-
 function translateType(t: string, lang: string) {
   if (lang === "tr") return t;
   return PROJECT_TYPE_TR[t]?.[lang as "en" | "ru"] ?? t;
@@ -130,6 +117,7 @@ function CatalogContent() {
   const [images, setImages] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [brokerName, setBrokerName] = useState("");
   const [brokerPhone, setBrokerPhone] = useState("");
   const [brokerCompany, setBrokerCompany] = useState("");
@@ -144,8 +132,7 @@ function CatalogContent() {
       supabase.auth.getUser(),
       supabase.from("projects")
         .select("id, title, city, district, project_type, min_price, max_price, description, ikamet_eligible, citizenship_eligible, cover_image_url, amenities, payment_plan, handover_date")
-        .in("id", ids)
-        .eq("status", "published"),
+        .in("id", ids).eq("status", "published"),
       supabase.from("project_images").select("project_id, url").in("project_id", ids),
     ]).then(async ([{ data: { user } }, { data: projs }, { data: imgs }]) => {
       if (user) {
@@ -173,22 +160,180 @@ function CatalogContent() {
   }, []); // eslint-disable-line
 
   const locale = lang === "ru" ? "ru-RU" : lang === "en" ? "en-GB" : "tr-TR";
-  function formatPrice(n: number) { return "₺" + n.toLocaleString("tr-TR"); }
+  function formatPrice(n: number) { return "TL " + n.toLocaleString("tr-TR"); }
   function formatDate(d: string) {
     return new Date(d).toLocaleDateString(locale, { month: "long", year: "numeric" });
   }
 
-  if (loading) return <div style={{ padding: 60, textAlign: "center", fontFamily: "Georgia, serif", color: "#666" }}>{tx.loading}</div>;
-  if (error) return <div style={{ padding: 60, textAlign: "center", fontFamily: "Georgia, serif", color: "#666" }}>Fehler beim Laden. <button onClick={() => router.push("/broker/map")} style={{ color: "#E8B84B", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>Zurück zur Karte</button></div>;
+  async function downloadPDF() {
+    setPdfLoading(true);
+    try {
+      const { pdf, Document, Page, Text, View, Image: PdfImage, StyleSheet } = await import("@react-pdf/renderer");
+
+      const s = StyleSheet.create({
+        page: { backgroundColor: "#1a1a2e", padding: 40, fontFamily: "Helvetica" },
+        coverTitle: { fontSize: 36, fontWeight: "bold", color: "#F1F5F9", marginBottom: 8 },
+        coverSub: { fontSize: 13, color: "#94A3B8", marginBottom: 36 },
+        brokerCard: { backgroundColor: "#0F1923", borderRadius: 10, padding: 20, marginTop: 8 },
+        brokerLabel: { fontSize: 9, color: "#94A3B8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 },
+        brokerName: { fontSize: 16, fontWeight: "bold", color: "#F1F5F9", marginBottom: 3 },
+        brokerCompany: { fontSize: 12, color: "#E8B84B", marginBottom: 6 },
+        brokerContact: { fontSize: 11, color: "#94A3B8", marginBottom: 2 },
+        divider: { borderBottomWidth: 3, borderBottomColor: "#E8B84B", marginVertical: 24 },
+        tocLabel: { fontSize: 9, color: "#94A3B8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 12 },
+        tocRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "#ffffff20" },
+        tocTitle: { fontSize: 13, color: "#F1F5F9", flex: 1 },
+        tocPrice: { fontSize: 13, color: "#E8B84B", fontWeight: "bold" },
+        counter: { fontSize: 9, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 },
+        projectTitle: { fontSize: 26, fontWeight: "bold", color: "#F1F5F9", marginBottom: 6 },
+        metaRow: { flexDirection: "row", gap: 16, marginBottom: 16, flexWrap: "wrap" },
+        metaText: { fontSize: 12, color: "#94A3B8" },
+        priceBox: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#0F1923", borderRadius: 8, padding: 14, marginBottom: 18 },
+        price: { fontSize: 24, fontWeight: "bold", color: "#E8B84B" },
+        priceDash: { fontSize: 18, color: "#94A3B8" },
+        badge: { fontSize: 10, color: "#10B981", borderWidth: 1, borderColor: "#10B981", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, marginLeft: "auto" },
+        badgeBlue: { fontSize: 10, color: "#3B82F6", borderWidth: 1, borderColor: "#3B82F6", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, marginLeft: 4 },
+        descBox: { borderLeftWidth: 3, borderLeftColor: "#E8B84B", backgroundColor: "#ffffff0a", padding: 12, marginBottom: 18 },
+        descText: { fontSize: 11, color: "#CBD5E1", lineHeight: 1.7 },
+        sectionLabel: { fontSize: 9, fontWeight: "bold", color: "#E8B84B", textTransform: "uppercase", letterSpacing: 2, borderBottomWidth: 2, borderBottomColor: "#E8B84B", paddingBottom: 5, marginBottom: 10 },
+        amenityGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 18 },
+        amenityItem: { fontSize: 11, color: "#F1F5F9", backgroundColor: "#ffffff0a", borderWidth: 1, borderColor: "#ffffff20", borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5 },
+        paymentBox: { backgroundColor: "#0F1923", borderRadius: 8, padding: 14, marginBottom: 18 },
+        paymentLine: { fontSize: 11, color: "#F1F5F9", lineHeight: 1.7 },
+        contactBar: { flexDirection: "row", justifyContent: "space-between", backgroundColor: "#ffffff0a", borderRadius: 8, padding: 14, marginTop: 20, borderWidth: 1, borderColor: "#ffffff15" },
+        contactLeft: { flexDirection: "column" },
+        contactRight: { flexDirection: "column", alignItems: "flex-end" },
+        contactName: { fontSize: 13, fontWeight: "bold", color: "#F1F5F9", marginBottom: 2 },
+        contactSmall: { fontSize: 11, color: "#94A3B8" },
+        coverImage: { width: "100%", height: 200, objectFit: "cover", borderRadius: 8, marginBottom: 18 },
+        gallery: { flexDirection: "row", gap: 5, marginBottom: 18 },
+        galleryImg: { flex: 1, height: 90, objectFit: "cover", borderRadius: 5 },
+        logoImg: { height: 48, maxWidth: 160, objectFit: "contain", marginBottom: 20 },
+      });
+
+      const doc = (
+        <Document title={tx.catalogTitle} author={brokerName}>
+          {/* Cover Page */}
+          <Page size="A4" style={s.page}>
+            {brokerLogo ? <PdfImage src={brokerLogo} style={s.logoImg} /> : null}
+            <Text style={s.coverTitle}>{tx.catalogTitle}</Text>
+            <Text style={s.coverSub}>{tx.projects(projects.length)} · {new Date().toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}</Text>
+            <View style={s.divider} />
+            <View style={s.brokerCard}>
+              <Text style={s.brokerLabel}>{tx.preparedBy}</Text>
+              <Text style={s.brokerName}>{brokerName}</Text>
+              {brokerCompany ? <Text style={s.brokerCompany}>{brokerCompany}</Text> : null}
+              {brokerPhone ? <Text style={s.brokerContact}>{brokerPhone}</Text> : null}
+              {brokerEmail ? <Text style={s.brokerContact}>{brokerEmail}</Text> : null}
+            </View>
+            {projects.length > 1 && (
+              <View style={{ marginTop: 32 }}>
+                <Text style={s.tocLabel}>{tx.toc}</Text>
+                {projects.map((p, i) => (
+                  <View key={p.id} style={s.tocRow}>
+                    <Text style={s.tocTitle}>{i + 1}. {p.title} — {p.city}</Text>
+                    <Text style={s.tocPrice}>{formatPrice(p.min_price)}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </Page>
+
+          {/* Project Pages */}
+          {projects.map((p, i) => (
+            <Page key={p.id} size="A4" style={s.page}>
+              <Text style={s.counter}>{tx.projectOf(i + 1, projects.length)}</Text>
+              {p.cover_image_url ? <PdfImage src={p.cover_image_url} style={s.coverImage} /> : null}
+              <Text style={s.projectTitle}>{p.title}</Text>
+              <View style={s.metaRow}>
+                <Text style={s.metaText}>{p.district ? `${p.district}, ` : ""}{p.city}</Text>
+                <Text style={s.metaText}>{translateType(p.project_type, lang)}</Text>
+                {p.handover_date ? <Text style={s.metaText}>{formatDate(p.handover_date)}</Text> : null}
+              </View>
+              <View style={s.priceBox}>
+                <Text style={s.price}>{formatPrice(p.min_price)}</Text>
+                <Text style={s.priceDash}>—</Text>
+                <Text style={s.price}>{formatPrice(p.max_price)}</Text>
+                <View style={{ flexDirection: "row", marginLeft: "auto" }}>
+                  {p.ikamet_eligible ? <Text style={s.badge}>{tx.residence}</Text> : null}
+                  {p.citizenship_eligible ? <Text style={s.badgeBlue}>{tx.citizenship}</Text> : null}
+                </View>
+              </View>
+              {p.description ? (
+                <View style={s.descBox}>
+                  <Text style={s.descText}>{p.description}</Text>
+                </View>
+              ) : null}
+              {images[p.id]?.length > 0 && (
+                <View style={s.gallery}>
+                  {images[p.id].slice(0, 3).map((url, j) => (
+                    <PdfImage key={j} src={url} style={s.galleryImg} />
+                  ))}
+                </View>
+              )}
+              {p.amenities && p.amenities.length > 0 && (
+                <View style={{ marginBottom: 18 }}>
+                  <Text style={s.sectionLabel}>{tx.amenities}</Text>
+                  <View style={s.amenityGrid}>
+                    {p.amenities.map((a, j) => (
+                      <Text key={j} style={s.amenityItem}>{translateAmenity(a, lang)}</Text>
+                    ))}
+                  </View>
+                </View>
+              )}
+              {p.payment_plan ? (
+                <View style={s.paymentBox}>
+                  <Text style={[s.sectionLabel, { marginBottom: 8 }]}>{tx.payment}</Text>
+                  {p.payment_plan.split("\n").filter(Boolean).map((line, j) => (
+                    <Text key={j} style={s.paymentLine}>› {line}</Text>
+                  ))}
+                </View>
+              ) : null}
+              <View style={s.contactBar}>
+                <View style={s.contactLeft}>
+                  <Text style={s.contactSmall}>{tx.advisor}</Text>
+                  <Text style={s.contactName}>{brokerName}</Text>
+                  {brokerCompany ? <Text style={{ fontSize: 11, color: "#E8B84B" }}>{brokerCompany}</Text> : null}
+                </View>
+                <View style={s.contactRight}>
+                  {brokerPhone ? <Text style={s.contactSmall}>{brokerPhone}</Text> : null}
+                  {brokerEmail ? <Text style={s.contactSmall}>{brokerEmail}</Text> : null}
+                </View>
+              </View>
+            </Page>
+          ))}
+        </Document>
+      );
+
+      const blob = await pdf(doc).toBlob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("PDF error:", e);
+    } finally {
+      setPdfLoading(false);
+    }
+  }
+
+  if (loading) return <div style={{ padding: 60, textAlign: "center", fontFamily: "system-ui", color: "#94A3B8", backgroundColor: "#0F1923", minHeight: "100vh" }}>{tx.loading}</div>;
+  if (error) return <div style={{ padding: 60, textAlign: "center", fontFamily: "system-ui", color: "#94A3B8", backgroundColor: "#0F1923", minHeight: "100vh" }}>
+    Fehler beim Laden. <button onClick={() => router.push("/broker/map")} style={{ color: "#E8B84B", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>Zurück zur Karte</button>
+  </div>;
 
   return (
     <div style={{ fontFamily: "'Georgia', serif", background: "linear-gradient(135deg, #1a1a2e 0%, #232323 50%, #1a1a2e 100%)", color: "#F1F5F9", maxWidth: 860, margin: "0 auto", padding: "40px 40px 60px" }}>
 
-      {/* Print Toolbar */}
-      <div className="no-print" style={{ marginBottom: 32, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: "16px 20px", backgroundColor: "#ffffff10", borderRadius: 10, border: "1px solid #ffffff20" }}>
-        <button onClick={() => window.print()}
-          style={{ padding: "10px 24px", backgroundColor: "#E8B84B", color: "#0F1923", fontWeight: 700, fontSize: 14, borderRadius: 8, border: "none", cursor: "pointer" }}>
-          {tx.savePdf}
+      {/* Toolbar */}
+      <div style={{ marginBottom: 32, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: "16px 20px", backgroundColor: "#ffffff10", borderRadius: 10, border: "1px solid #ffffff20" }}>
+        <button onClick={downloadPDF} disabled={pdfLoading}
+          style={{ padding: "10px 24px", backgroundColor: pdfLoading ? "#888" : "#E8B84B", color: "#0F1923", fontWeight: 700, fontSize: 14, borderRadius: 8, border: "none", cursor: pdfLoading ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+          {pdfLoading ? tx.generating : `⬇ ${tx.savePdf}`}
         </button>
         <button onClick={() => router.push("/broker/map")}
           style={{ padding: "10px 20px", backgroundColor: "transparent", color: "#94A3B8", fontSize: 14, borderRadius: 8, border: "1px solid #ffffff30", cursor: "pointer" }}>
@@ -200,30 +345,25 @@ function CatalogContent() {
       </div>
 
       {/* ===== COVER PAGE ===== */}
-      <div style={{ textAlign: "center", padding: "70px 0 60px", borderBottom: "4px solid #E8B84B", marginBottom: 60, pageBreakAfter: "always" }}>
-        {/* Broker Logo */}
+      <div style={{ textAlign: "center", padding: "70px 0 60px", borderBottom: "4px solid #E8B84B", marginBottom: 60 }}>
         {brokerLogo && (
           <img src={brokerLogo} alt="" style={{ height: 60, maxWidth: 200, objectFit: "contain", marginBottom: 24 }} />
         )}
         <h1 style={{ fontSize: 44, fontWeight: 900, color: "#F1F5F9", marginBottom: 8, letterSpacing: -1 }}>
           {tx.catalogTitle}
         </h1>
-        <p style={{ color: "#666", fontSize: 15, marginBottom: 40 }}>
+        <p style={{ color: "#94A3B8", fontSize: 15, marginBottom: 40 }}>
           {tx.projects(projects.length)} · {new Date().toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}
         </p>
-
-        {/* Broker Card */}
         <div style={{ display: "inline-block", backgroundColor: "#0F1923", borderRadius: 14, padding: "24px 36px", textAlign: "left", minWidth: 320 }}>
           <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>{tx.preparedBy}</div>
           <div style={{ fontWeight: 800, fontSize: 18, color: "#F1F5F9", marginBottom: 4 }}>{brokerName}</div>
           {brokerCompany && <div style={{ fontSize: 14, color: "#E8B84B", marginBottom: 8 }}>{brokerCompany}</div>}
           <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
-            {brokerPhone && <div style={{ fontSize: 13, color: "#94A3B8" }}>📞 {brokerPhone}</div>}
-            {brokerEmail && <div style={{ fontSize: 13, color: "#94A3B8" }}>✉️ {brokerEmail}</div>}
+            {brokerPhone && <div style={{ fontSize: 13, color: "#94A3B8" }}>{brokerPhone}</div>}
+            {brokerEmail && <div style={{ fontSize: 13, color: "#94A3B8" }}>{brokerEmail}</div>}
           </div>
         </div>
-
-        {/* TOC */}
         {projects.length > 1 && (
           <div style={{ marginTop: 48, textAlign: "left" }}>
             <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 14 }}>{tx.toc}</div>
@@ -239,52 +379,34 @@ function CatalogContent() {
 
       {/* ===== PROJECTS ===== */}
       {projects.map((p, i) => (
-        <div key={p.id} style={{ pageBreakBefore: i === 0 ? "auto" : "always" }}>
-
-          {/* Project Counter */}
+        <div key={p.id} style={{ marginTop: i === 0 ? 0 : 60, paddingTop: i === 0 ? 0 : 60, borderTop: i === 0 ? "none" : "2px solid #ffffff15" }}>
           <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 4, textTransform: "uppercase", marginBottom: 12 }}>
             {tx.projectOf(i + 1, projects.length)}
           </div>
-
-          {/* Cover Image */}
           {p.cover_image_url
             ? <img src={p.cover_image_url} alt="" loading="lazy" style={{ width: "100%", height: 280, objectFit: "contain", borderRadius: 12, marginBottom: 24, display: "block", backgroundColor: "#0F1923" }} />
             : <div style={{ width: "100%", height: 200, backgroundColor: "#ffffff10", borderRadius: 12, marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 56 }}>🏢</div>
           }
-
-          {/* Title + Location */}
           <h2 style={{ fontSize: 32, fontWeight: 900, color: "#F1F5F9", margin: "0 0 6px" }}>{p.title}</h2>
           <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", marginBottom: 20 }}>
-            <span style={{ color: "#666", fontSize: 14 }}>📍 {p.district ? `${p.district}, ` : ""}{p.city}</span>
-            <span style={{ color: "#666", fontSize: 14 }}>🏠 {translateType(p.project_type, lang)}</span>
-            {p.handover_date && (
-              <span style={{ color: "#666", fontSize: 14 }}>📅 {formatDate(p.handover_date)}</span>
-            )}
+            <span style={{ color: "#94A3B8", fontSize: 14 }}>📍 {p.district ? `${p.district}, ` : ""}{p.city}</span>
+            <span style={{ color: "#94A3B8", fontSize: 14 }}>🏠 {translateType(p.project_type, lang)}</span>
+            {p.handover_date && <span style={{ color: "#94A3B8", fontSize: 14 }}>📅 {formatDate(p.handover_date)}</span>}
           </div>
-
-          {/* Price + Badges */}
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 24, padding: "16px 20px", backgroundColor: "#0F1923", borderRadius: 10 }}>
             <span style={{ fontSize: 28, fontWeight: 900, color: "#E8B84B" }}>{formatPrice(p.min_price)}</span>
             <span style={{ fontSize: 20, color: "#94A3B8" }}>—</span>
             <span style={{ fontSize: 28, fontWeight: 900, color: "#E8B84B" }}>{formatPrice(p.max_price)}</span>
-            <div style={{ marginLeft: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {p.ikamet_eligible && (
-                <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 999, backgroundColor: "#10B98120", color: "#10B981", border: "1px solid #10B981", fontWeight: 700 }}>{tx.residence}</span>
-              )}
-              {p.citizenship_eligible && (
-                <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 999, backgroundColor: "#3B82F620", color: "#3B82F6", border: "1px solid #3B82F6", fontWeight: 700 }}>{tx.citizenship}</span>
-              )}
+            <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+              {p.ikamet_eligible && <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 999, backgroundColor: "#10B98120", color: "#10B981", border: "1px solid #10B981", fontWeight: 700 }}>✓ {tx.residence}</span>}
+              {p.citizenship_eligible && <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 999, backgroundColor: "#3B82F620", color: "#3B82F6", border: "1px solid #3B82F6", fontWeight: 700 }}>✓ {tx.citizenship}</span>}
             </div>
           </div>
-
-          {/* Description */}
           {p.description && (
             <div style={{ marginBottom: 24, padding: "16px 20px", borderLeft: "4px solid #E8B84B", backgroundColor: "#ffffff12" }}>
               <p style={{ fontSize: 14, lineHeight: 1.9, color: "#CBD5E1", margin: 0 }}>{p.description}</p>
             </div>
           )}
-
-          {/* Gallery */}
           {images[p.id]?.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 24 }}>
               {images[p.id].slice(0, 6).map((url, j) => (
@@ -292,8 +414,6 @@ function CatalogContent() {
               ))}
             </div>
           )}
-
-          {/* Amenities with Icons */}
           {p.amenities && p.amenities.length > 0 && (
             <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "#E8B84B", marginBottom: 14, textTransform: "uppercase", letterSpacing: 3, borderBottom: "2px solid #E8B84B", paddingBottom: 6 }}>
@@ -302,15 +422,12 @@ function CatalogContent() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
                 {p.amenities.map((a, j) => (
                   <div key={j} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#F1F5F9", padding: "8px 10px", backgroundColor: "#ffffff10", borderRadius: 8, border: "1px solid #ffffff20" }}>
-                    <span style={{ fontSize: 16 }}>{AMENITY_ICONS[a] || "✓"}</span>
                     <span>{translateAmenity(a, lang)}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
-
-          {/* Payment Plan */}
           {p.payment_plan && (
             <div style={{ marginBottom: 24, padding: "16px 20px", backgroundColor: "#0F1923", borderRadius: 10 }}>
               <div style={{ fontSize: 11, color: "#94A3B8", letterSpacing: 3, textTransform: "uppercase", marginBottom: 10 }}>{tx.payment}</div>
@@ -321,37 +438,26 @@ function CatalogContent() {
               ))}
             </div>
           )}
-
-          {/* Broker Contact at bottom of each project */}
-          <div style={{ marginTop: 24, padding: "16px 20px", backgroundColor: "#ffffff10", borderRadius: 10, border: "1px solid #ffffff20", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ padding: "16px 20px", backgroundColor: "#ffffff10", borderRadius: 10, border: "1px solid #ffffff20", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <div style={{ fontSize: 10, color: "#94A3B8", letterSpacing: 2, textTransform: "uppercase", marginBottom: 4 }}>{tx.advisor}</div>
               <div style={{ fontWeight: 700, fontSize: 15, color: "#F1F5F9" }}>{brokerName}</div>
               {brokerCompany && <div style={{ fontSize: 12, color: "#E8B84B" }}>{brokerCompany}</div>}
             </div>
             <div style={{ textAlign: "right" }}>
-              {brokerPhone && <div style={{ fontSize: 13, color: "#CBD5E1" }}>📞 {brokerPhone}</div>}
-              {brokerEmail && <div style={{ fontSize: 13, color: "#CBD5E1" }}>✉️ {brokerEmail}</div>}
+              {brokerPhone && <div style={{ fontSize: 13, color: "#CBD5E1" }}>{brokerPhone}</div>}
+              {brokerEmail && <div style={{ fontSize: 13, color: "#CBD5E1" }}>{brokerEmail}</div>}
             </div>
           </div>
-
         </div>
       ))}
-
-      <style>{`
-        @media print {
-          .no-print { display: none !important; }
-          @page { margin: 12mm; size: A4; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
-      `}</style>
     </div>
   );
 }
 
 export default function CatalogPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 60, textAlign: "center" }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ padding: 60, textAlign: "center", backgroundColor: "#0F1923", minHeight: "100vh" }}>Loading...</div>}>
       <CatalogContent />
     </Suspense>
   );
