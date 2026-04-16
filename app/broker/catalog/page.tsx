@@ -195,19 +195,11 @@ function CatalogContent() {
       });
 
       const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const imgW = canvas.width;
-      const imgH = canvas.height;
-      const ratio = pageW / (imgW / 2); // scale=2 → divide by 2 to get mm
-      const totalH = (imgH / 2) * ratio;
-      let yPos = 0;
-      while (yPos < totalH) {
-        if (yPos > 0) pdf.addPage();
-        pdf.addImage(imgData, "JPEG", 0, -yPos, pageW, totalH);
-        yPos += pageH;
-      }
+      // Single tall page — no page-break cuts
+      const pxW = canvas.width / 2;
+      const pxH = canvas.height / 2;
+      const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [pxW, pxH] });
+      pdf.addImage(imgData, "JPEG", 0, 0, pxW, pxH);
       pdf.save(`yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`);
     } catch (e) {
       console.error("PDF error:", e);
