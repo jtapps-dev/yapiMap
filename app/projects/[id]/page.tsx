@@ -131,7 +131,7 @@ export default function ProjectDetailPage() {
         {/* Cover + Logo */}
         <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", marginBottom: 28, backgroundColor: bgCard, height: 280 }}>
           {project.cover_image_url
-            ? <img src={project.cover_image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ? <img src={project.cover_image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             : <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1E2D3D, #0F1923)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <span style={{ color: borderColor, fontSize: 48 }}>🏢</span>
               </div>
