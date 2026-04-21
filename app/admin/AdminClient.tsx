@@ -39,6 +39,8 @@ const t = {
     statusPaid: "✓ ÖDENDİ",
     statusPending: "⏳ BEKLİYOR",
     searchCommissions: "Ad veya e-posta ile ara...",
+    deleteUser: "🗑 Kullanıcıyı Sil",
+    deleteConfirm: "Bu kullanıcıyı kalıcı olarak silmek istediğinizden emin misiniz? Tüm projeleri ve Stripe aboneliği de iptal edilecek.",
   },
   en: {
     title: "YapıMap Admin",
@@ -68,6 +70,8 @@ const t = {
     statusPaid: "✓ PAID",
     statusPending: "⏳ PENDING",
     searchCommissions: "Search by name or email...",
+    deleteUser: "🗑 Delete User",
+    deleteConfirm: "Are you sure you want to permanently delete this user? All their projects and Stripe subscription will be cancelled.",
   },
   ru: {
     title: "YapıMap Админ",
@@ -97,6 +101,8 @@ const t = {
     statusPaid: "✓ ОПЛАЧЕНО",
     statusPending: "⏳ ОЖИДАЕТ",
     searchCommissions: "Поиск по имени или e-mail...",
+    deleteUser: "🗑 Удалить пользователя",
+    deleteConfirm: "Вы уверены, что хотите навсегда удалить этого пользователя? Все его проекты и подписка Stripe будут отменены.",
   },
 } as const;
 
@@ -117,6 +123,9 @@ type Profile = {
   iban: string | null;
   referral_code: string | null;
   privacy_accepted_at: string | null;
+  stripe_subscription_id: string | null;
+  stripe_customer_id: string | null;
+  subscription_status: string | null;
 };
 
 type Commission = {
@@ -154,6 +163,16 @@ export default function AdminClient({ initialProfiles }: { initialProfiles: Prof
   async function reject(userId: string) {
     setActionLoading(userId);
     await fetch("/api/admin/reject", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId }) });
+    const res = await fetch("/api/admin/users");
+    const json = await res.json();
+    setProfiles(json.profiles || []);
+    setActionLoading(null);
+  }
+
+  async function deleteUser(userId: string) {
+    if (!confirm(l.deleteConfirm)) return;
+    setActionLoading(userId);
+    await fetch("/api/admin/delete-user", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId }) });
     const res = await fetch("/api/admin/users");
     const json = await res.json();
     setProfiles(json.profiles || []);
@@ -311,6 +330,13 @@ export default function AdminClient({ initialProfiles }: { initialProfiles: Prof
                         {l.reapprove}
                       </button>
                     )}
+                    <button
+                      onClick={() => deleteUser(p.id)}
+                      disabled={actionLoading === p.id}
+                      style={{ color: "#EF4444", fontSize: 12, background: "none", border: "1px solid #EF444440", padding: "6px 12px", borderRadius: 8, cursor: "pointer", opacity: actionLoading === p.id ? 0.5 : 1 }}
+                    >
+                      {actionLoading === p.id ? "..." : l.deleteUser}
+                    </button>
                   </div>
                 ))}
               </div>
