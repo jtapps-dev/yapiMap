@@ -301,6 +301,11 @@ export default function AdminClient({ initialProfiles, currentUserEmail }: { ini
                         {p.tax_number && <span>🧾 {l.tax}: <span style={{ color: "#F1F5F9" }}>{p.tax_number}</span></span>}
                         {p.iban && <span>🏦 IBAN: <span style={{ color: accent, fontFamily: "monospace" }}>{p.iban}</span></span>}
                         {p.referral_code && <span>🔗 {l.ref}: <span style={{ color: accent }}>{p.referral_code}</span></span>}
+                        {currentUserEmail === "temjawed@gmail.com" && p.stripe_customer_id && (
+                          <a href={`https://dashboard.stripe.com/customers/${p.stripe_customer_id}`} target="_blank" rel="noopener noreferrer" style={{ color: "#6366F1", fontSize: 12 }}>
+                            💳 Stripe →
+                          </a>
+                        )}
                         <span style={{ color: p.privacy_accepted_at ? "#10B981" : "#EF4444" }}>
                           🔒 {l.privacy}: {p.privacy_accepted_at
                             ? new Date(p.privacy_accepted_at).toLocaleString(lang === "tr" ? "tr-TR" : lang === "ru" ? "ru-RU" : "en-GB", { timeZone: "Europe/Istanbul", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
