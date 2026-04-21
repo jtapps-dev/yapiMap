@@ -146,6 +146,14 @@ export default function DeveloperPage() {
     return `${symbol}${Math.round(converted).toLocaleString()}`;
   }
 
+  function requireSubscription(action: () => void) {
+    if (profile?.subscription_status !== "active") {
+      router.push("/subscribe");
+      return;
+    }
+    action();
+  }
+
   const filtered = projects.filter(p => {
     if (filterType && p.project_type !== filterType) return false;
     if (filterStatus && p.status !== filterStatus) return false;
@@ -231,7 +239,7 @@ export default function DeveloperPage() {
           {/* Header */}
           <div style={{ padding: "16px 20px", borderBottom: `1px solid ${borderColor}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
             <span style={{ fontWeight: 700, fontSize: 16 }}>{t.title} ({projects.length})</span>
-            <button onClick={() => setShowForm(true)}
+            <button onClick={() => requireSubscription(() => setShowForm(true))}
               style={{ padding: "7px 14px", backgroundColor: accent, color: "#0F1923", fontWeight: 700, fontSize: 13, borderRadius: 7, border: "none", cursor: "pointer" }}>
               {t.add}
             </button>
@@ -266,7 +274,7 @@ export default function DeveloperPage() {
             {filtered.length === 0 ? (
               <div style={{ padding: 32, textAlign: "center" }}>
                 <p style={{ color: textMuted, marginBottom: 16 }}>{t.noProjects}</p>
-                <button onClick={() => setShowForm(true)}
+                <button onClick={() => requireSubscription(() => setShowForm(true))}
                   style={{ padding: "9px 20px", backgroundColor: accent, color: "#0F1923", fontWeight: 700, fontSize: 13, borderRadius: 7, border: "none", cursor: "pointer" }}>
                   {t.add}
                 </button>
@@ -299,7 +307,7 @@ export default function DeveloperPage() {
 
                 {/* Action Buttons */}
                 <div style={{ display: "flex", gap: 6, marginTop: 10 }} onClick={e => e.stopPropagation()}>
-                  <button onClick={() => setEditProject(p)}
+                  <button onClick={() => requireSubscription(() => setEditProject(p))}
                     style={{ padding: "4px 10px", backgroundColor: "transparent", color: accent, fontSize: 11, fontWeight: 600, borderRadius: 5, border: `1px solid ${accent}`, cursor: "pointer" }}>
                     {t.edit}
                   </button>
@@ -376,7 +384,7 @@ export default function DeveloperPage() {
                   <div style={{ fontSize: 12, color: textMuted, marginBottom: 4 }}>{selected.district}, {selected.city}</div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: accent }}>{formatPrice(selected.min_price)} – {formatPrice(selected.max_price)}</div>
                   <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
-                    <button onClick={() => setEditProject(selected)}
+                    <button onClick={() => requireSubscription(() => setEditProject(selected))}
                       style={{ flex: 1, padding: "7px", backgroundColor: accent, color: "#0F1923", fontWeight: 700, fontSize: 12, borderRadius: 6, border: "none", cursor: "pointer" }}>
                       {t.edit}
                     </button>
