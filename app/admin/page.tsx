@@ -19,5 +19,5 @@ export default async function AdminPage() {
     .neq("role", "admin")
     .order("created_at", { ascending: false });
 
-  return <AdminClient initialProfiles={profiles || []} />;
+  return <AdminClient initialProfiles={profiles || []} currentUserEmail={user.email ?? ""} />;
 }

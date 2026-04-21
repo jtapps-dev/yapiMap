@@ -137,7 +137,7 @@ type Commission = {
   referred: { full_name: string; email: string } | null;
 };
 
-export default function AdminClient({ initialProfiles }: { initialProfiles: Profile[] }) {
+export default function AdminClient({ initialProfiles, currentUserEmail }: { initialProfiles: Profile[], currentUserEmail: string }) {
   const router = useRouter();
   const { lang } = useLang();
   const l = t[(lang as Lang) in t ? (lang as Lang) : "en"];
@@ -330,13 +330,15 @@ export default function AdminClient({ initialProfiles }: { initialProfiles: Prof
                         {l.reapprove}
                       </button>
                     )}
-                    <button
-                      onClick={() => deleteUser(p.id)}
-                      disabled={actionLoading === p.id}
-                      style={{ color: "#EF4444", fontSize: 12, background: "none", border: "1px solid #EF444440", padding: "6px 12px", borderRadius: 8, cursor: "pointer", opacity: actionLoading === p.id ? 0.5 : 1 }}
-                    >
-                      {actionLoading === p.id ? "..." : l.deleteUser}
-                    </button>
+                    {currentUserEmail === "temjawed@gmail.com" && (
+                      <button
+                        onClick={() => deleteUser(p.id)}
+                        disabled={actionLoading === p.id}
+                        style={{ color: "#EF4444", fontSize: 12, background: "none", border: "1px solid #EF444440", padding: "6px 12px", borderRadius: 8, cursor: "pointer", opacity: actionLoading === p.id ? 0.5 : 1 }}
+                      >
+                        {actionLoading === p.id ? "..." : l.deleteUser}
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
