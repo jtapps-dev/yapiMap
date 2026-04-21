@@ -244,7 +244,7 @@ export default function Home() {
       <footer style={{ backgroundColor: bgSecondary, borderTop: `1px solid ${borderColor}`, padding: "24px", textAlign: "center" }}>
         <p style={{ color: textMuted, fontSize: 13 }}>
           © 2026 YapıMap ·{" "}
-          <a href="https://jtapps.dev/datenschutz/yapimap" style={{ color: textMuted }}>{t.footer.privacy}</a>
+          <Link href="/datenschutz" style={{ color: textMuted }}>{t.footer.privacy}</Link>
           {" · "}
           <Link href="/impressum" style={{ color: textMuted }}>{t.footer.imprint}</Link>
         </p>

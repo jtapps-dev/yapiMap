@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/app/i18n/LanguageContext";
+import PrivacyConsentModal from "@/app/components/PrivacyConsentModal";
 
 const accent = "#E8B84B";
 const bgPrimary = "#0F1923";
@@ -17,6 +18,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ email: "", password: "" });
+  const [showConsent, setShowConsent] = useState(false);
+  const [redirectTo, setRedirectTo] = useState("/dashboard");
 
   const labels = {
     tr: {
@@ -85,7 +88,13 @@ export default function LoginPage() {
       if (!profile || profile.status === "pending") { router.push("/pending"); return; }
       if (profile.status === "rejected") { router.push("/pending"); return; }
 
-      router.push("/dashboard");
+      const destination = "/dashboard";
+      if (!localStorage.getItem("privacy_accepted")) {
+        setRedirectTo(destination);
+        setShowConsent(true);
+      } else {
+        router.push(destination);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message.toLowerCase() : "";
       if (msg.includes("invalid login credentials") || msg.includes("invalid_credentials") || msg.includes("email not confirmed")) {
@@ -98,8 +107,15 @@ export default function LoginPage() {
     }
   }
 
+  function handleConsentAccept() {
+    localStorage.setItem("privacy_accepted", "true");
+    setShowConsent(false);
+    router.push(redirectTo);
+  }
+
   return (
     <div style={{ backgroundColor: bgPrimary, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      {showConsent && <PrivacyConsentModal lang={lang} onAccept={handleConsentAccept} />}
       <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 20, padding: 40, maxWidth: 440, width: "100%" }}>
 
         <div style={{ display: "flex", alignItems: "center", marginBottom: 32 }}>
