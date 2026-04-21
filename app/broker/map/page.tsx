@@ -90,11 +90,12 @@ export default function BrokerMapPage() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push("/login"); return; }
-      supabase.from("profiles").select("full_name, status, role, subscription_status, referral_code").eq("id", user.id).single()
-        .then(({ data }) => {
+      supabase.from("profiles").select("full_name, status, role, subscription_status, referral_code, privacy_accepted_at").eq("id", user.id).single()
+        .then(async ({ data }) => {
           if (!data || data.status !== "active") { router.push("/pending"); return; }
           if (data.role === "admin") { router.push("/admin"); return; }
           if (data.role !== "broker") { router.push("/developer"); return; }
+          if (!data.privacy_accepted_at) { await supabase.auth.signOut(); router.push("/login"); return; }
           setProfile(data);
         });
     });

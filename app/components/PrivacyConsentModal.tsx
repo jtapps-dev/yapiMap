@@ -61,7 +61,7 @@ export default function PrivacyConsentModal({ lang, onAccept }: Props) {
         </p>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <Link
-            href="/datenschutz"
+            href="/privacy"
             target="_blank"
             style={{ color: accent, fontSize: 13, textDecoration: "underline" }}
           >

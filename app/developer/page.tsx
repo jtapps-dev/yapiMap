@@ -98,11 +98,12 @@ export default function DeveloperPage() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push("/login"); return; }
-      supabase.from("profiles").select("id, full_name, role, status, logo_url, subscription_status, created_at, referral_code").eq("id", user.id).single()
-        .then(({ data }) => {
+      supabase.from("profiles").select("id, full_name, role, status, logo_url, subscription_status, created_at, referral_code, privacy_accepted_at").eq("id", user.id).single()
+        .then(async ({ data }) => {
           if (!data || data.status !== "active") { router.push("/pending"); return; }
           if (data.role === "admin") { router.push("/admin"); return; }
           if (data.role !== "developer") { router.push("/broker/map"); return; }
+          if (!data.privacy_accepted_at) { await supabase.auth.signOut(); router.push("/login"); return; }
           setProfile(data);
           loadProjects(data.id);
           // Makler-Anzahl laden
