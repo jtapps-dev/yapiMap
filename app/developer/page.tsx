@@ -103,7 +103,7 @@ export default function DeveloperPage() {
           if (!data || data.status !== "active") { router.push("/pending"); return; }
           if (data.role === "admin") { router.push("/admin"); return; }
           if (data.role !== "developer") { router.push("/broker/map"); return; }
-          if (!data.privacy_accepted_at) { await supabase.auth.signOut(); router.push("/login"); return; }
+          if (!data.privacy_accepted_at) { router.replace("/consent"); return; }
           setProfile(data);
           loadProjects(data.id);
           // Makler-Anzahl laden
