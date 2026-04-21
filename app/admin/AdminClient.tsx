@@ -110,6 +110,7 @@ type Profile = {
   city: string | null;
   iban: string | null;
   referral_code: string | null;
+  privacy_accepted_at: string | null;
 };
 
 type Commission = {
@@ -275,6 +276,11 @@ export default function AdminClient({ initialProfiles }: { initialProfiles: Prof
                         {p.tax_number && <span>🧾 {l.tax}: <span style={{ color: "#F1F5F9" }}>{p.tax_number}</span></span>}
                         {p.iban && <span>🏦 IBAN: <span style={{ color: accent, fontFamily: "monospace" }}>{p.iban}</span></span>}
                         {p.referral_code && <span>🔗 {l.ref}: <span style={{ color: accent }}>{p.referral_code}</span></span>}
+                        <span style={{ color: p.privacy_accepted_at ? "#10B981" : "#EF4444" }}>
+                          🔒 DSGVO: {p.privacy_accepted_at
+                            ? new Date(p.privacy_accepted_at).toLocaleString(lang === "tr" ? "tr-TR" : lang === "ru" ? "ru-RU" : "en-GB", { timeZone: "Europe/Istanbul", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                            : "—"}
+                        </span>
                       </div>
                       <p style={{ color: textMuted, fontSize: 11, marginTop: 6 }}>
                         {new Date(p.created_at).toLocaleDateString(lang === "tr" ? "tr-TR" : lang === "ru" ? "ru-RU" : "en-GB", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
