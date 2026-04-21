@@ -5,10 +5,10 @@ export const translations = {
       try: "Kayıt Ol",
     },
     hero: {
-      badge: "🇹🇷 Türkiye'nin #1 Emlak Proje Platformu",
+      badge: "🏆 Türkiye, Kıbrıs ve Rusya'nın #1 Emlak Proje Platformu",
       title1: "WhatsApp Gruplarına",
       title2: "Elveda Deyin",
-      subtitle: "Türkiye'deki tüm yeni konut projelerini tek haritada görün. Saniyeler içinde markalı katalog oluşturun.",
+      subtitle: "Türkiye, Kıbrıs ve Rusya'daki tüm yeni konut projelerini tek haritada görün. Saniyeler içinde markalı katalog oluşturun.",
       btnBroker: "Ben Emlakçıyım →",
       btnDeveloper: "Ben Geliştiriciyim →",
     },
@@ -65,12 +65,12 @@ export const translations = {
     },
     cta: {
       title: "Hazır mısınız?",
-      subtitle: "Türkiye'nin en büyük B2B emlak platformuna katılın.",
-      btn: "Ücretsiz Başla →",
+      subtitle: "Türkiye, Kıbrıs ve Rusya'nın en büyük B2B emlak platformuna katılın.",
+      btn: "Hemen Başla →",
     },
     footer: {
       privacy: "Gizlilik",
-      imprint: "Impressum",
+      imprint: "Künye",
     },
   },
   en: {
@@ -79,10 +79,10 @@ export const translations = {
       try: "Register",
     },
     hero: {
-      badge: "🇹🇷 Turkey's #1 Real Estate Project Platform",
+      badge: "🏆 #1 Real Estate Platform in Turkey, Cyprus & Russia",
       title1: "Say Goodbye to",
       title2: "WhatsApp Groups",
-      subtitle: "Discover all new real estate projects in Turkey on one map. Create branded catalogs in seconds.",
+      subtitle: "Discover all new real estate projects in Turkey, Cyprus and Russia on one map. Create branded catalogs in seconds.",
       btnBroker: "I'm a Broker →",
       btnDeveloper: "I'm a Developer →",
     },
@@ -139,8 +139,8 @@ export const translations = {
     },
     cta: {
       title: "Ready to get started?",
-      subtitle: "Join Turkey's largest B2B real estate platform.",
-      btn: "Start for Free →",
+      subtitle: "Join the largest B2B real estate platform in Turkey, Cyprus and Russia.",
+      btn: "Get Started →",
     },
     footer: {
       privacy: "Privacy",
@@ -153,10 +153,10 @@ export const translations = {
       try: "Регистрация",
     },
     hero: {
-      badge: "🇹🇷 Платформа №1 для недвижимости в Турции",
+      badge: "🏆 Платформа №1 по недвижимости в Турции, на Кипре и в России",
       title1: "Забудьте о",
       title2: "группах WhatsApp",
-      subtitle: "Все новые жилые проекты Турции на одной карте. Создавайте брендированные каталоги за секунды.",
+      subtitle: "Все новые жилые проекты Турции, Кипра и России на одной карте. Создавайте брендированные каталоги за секунды.",
       btnBroker: "Я риелтор →",
       btnDeveloper: "Я застройщик →",
     },
@@ -213,12 +213,12 @@ export const translations = {
     },
     cta: {
       title: "Готовы начать?",
-      subtitle: "Присоединяйтесь к крупнейшей B2B-платформе недвижимости Турции.",
-      btn: "Начать бесплатно →",
+      subtitle: "Присоединяйтесь к крупнейшей B2B-платформе недвижимости в Турции, на Кипре и в России.",
+      btn: "Начать →",
     },
     footer: {
       privacy: "Конфиденциальность",
-      imprint: "Impressum",
+      imprint: "Импрессум",
     },
   },
 };

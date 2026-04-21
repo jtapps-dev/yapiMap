@@ -105,7 +105,7 @@ export default function Home() {
           {userRole ? (
             <Link href={userRole === "developer" ? "/developer" : "/broker/map"}
               style={{ backgroundColor: accent, color: "#0F1923", fontWeight: 700, padding: "8px 20px", borderRadius: 8, fontSize: 14, textDecoration: "none" }}>
-              {lang === "tr" ? "Dashboard →" : lang === "ru" ? "Панель →" : "Dashboard →"}
+              {lang === "tr" ? "Panelim →" : lang === "ru" ? "Кабинет →" : "Dashboard →"}
             </Link>
           ) : (
             <>
