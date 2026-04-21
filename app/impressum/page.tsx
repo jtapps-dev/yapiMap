@@ -16,7 +16,7 @@ const t = {
     office: "Türkiye Merkez Ofis",
     contact: "İletişim",
     platform: "Platform Hakkında",
-    platformText: "YapıMap, Türkiye'deki inşaat firmalarını ve emlak danışmanlarını birbirine bağlayan bir B2B platformdur. Platformda gösterilen tüm projeler ve bilgiler ilgili inşaat firmaları tarafından sağlanmaktadır.",
+    platformText: "YapıMap, Türkiye, Kıbrıs ve Rusya'daki inşaat firmalarını ve emlak danışmanlarını birbirine bağlayan bir B2B platformdur. Platformda gösterilen tüm projeler ve bilgiler ilgili inşaat firmaları tarafından sağlanmaktadır.",
     back: "← Ana Sayfaya Dön",
   },
   en: {
@@ -26,7 +26,7 @@ const t = {
     office: "Central Office in Turkey",
     contact: "Contact",
     platform: "About Platform",
-    platformText: "YapıMap is a B2B platform connecting real estate developers and brokers in Turkey. All projects and information displayed on the platform are provided by the respective developers.",
+    platformText: "YapıMap is a B2B platform connecting real estate developers and brokers in Turkey, Cyprus and Russia. All projects and information displayed on the platform are provided by the respective developers.",
     back: "← Back to Home",
   },
   ru: {
@@ -36,7 +36,7 @@ const t = {
     office: "Центральный офис в Турции",
     contact: "Контакты",
     platform: "О платформе",
-    platformText: "YapıMap — B2B-платформа, соединяющая застройщиков и агентов по недвижимости в Турции. Все проекты и информация на платформе предоставлены соответствующими застройщиками.",
+    platformText: "YapıMap — B2B-платформа, соединяющая застройщиков и агентов по недвижимости в Турции, на Кипре и в России. Все проекты и информация на платформе предоставлены соответствующими застройщиками.",
     back: "← На главную",
   },
 };

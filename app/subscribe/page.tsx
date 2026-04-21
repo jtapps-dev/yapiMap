@@ -18,15 +18,8 @@ const YEARLY_PLAN = {
   ru: { name: "Годовой план", period: "/ год", badge: "Лучшее предложение" },
 };
 
-type Profile = { role: string; subscription_status: string | null; created_at: string };
+type Profile = { role: string; subscription_status: string | null };
 
-function trialDaysLeft(createdAt: string): number {
-  const created = new Date(createdAt);
-  const trialEnd = new Date(created);
-  trialEnd.setMonth(trialEnd.getMonth() + 3);
-  const diff = Math.ceil((trialEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  return Math.max(0, diff);
-}
 
 export default function SubscribePage() {
   const { lang } = useLang();
@@ -130,8 +123,6 @@ export default function SubscribePage() {
       brokerFeatures: ["Tüm yayınlanan projelere tam erişim", "Proje detayları ve iletişim bilgileri", "PDF broşür indirme", "Harita filtreleri (fiyat, bölge, ikamet)"],
       cta: "Şimdi Başla",
       active: "Aboneliğiniz Aktif",
-      trialInfo: (days: number) => `Developer hesabınızda ${days} gün ücretsiz kullanım hakkınız kaldı.`,
-      trialExpired: "3 aylık ücretsiz süreniz doldu. Devam etmek için abone olun.",
       back: "← Geri Dön",
       devTitle: "Developer",
       brokerTitle: "Emlak Danışmanı",
@@ -143,8 +134,6 @@ export default function SubscribePage() {
       brokerFeatures: ["Full access to all published projects", "Project details & contact info", "PDF brochure download", "Map filters (price, region, permit)"],
       cta: "Get Started",
       active: "Subscription Active",
-      trialInfo: (days: number) => `You have ${days} days left in your free developer trial.`,
-      trialExpired: "Your 3-month free trial has ended. Subscribe to continue.",
       back: "← Go Back",
       devTitle: "Developer",
       brokerTitle: "Real Estate Agent",
@@ -156,8 +145,6 @@ export default function SubscribePage() {
       brokerFeatures: ["Полный доступ ко всем проектам", "Детали проектов и контакты", "Скачивание PDF-брошюр", "Фильтры карты (цена, район, ВНЖ)"],
       cta: "Начать",
       active: "Подписка активна",
-      trialInfo: (days: number) => `У вас осталось ${days} дней бесплатного пробного периода.`,
-      trialExpired: "Ваш 3-месячный пробный период завершён. Оформите подписку для продолжения.",
       back: "← Назад",
       devTitle: "Застройщик",
       brokerTitle: "Риелтор",
@@ -169,7 +156,7 @@ export default function SubscribePage() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push("/login"); return; }
-      supabase.from("profiles").select("role, subscription_status, created_at").eq("id", user.id).single()
+      supabase.from("profiles").select("role, subscription_status").eq("id", user.id).single()
         .then(({ data }) => setProfile(data));
     });
   }, []);  // eslint-disable-line
@@ -207,9 +194,6 @@ export default function SubscribePage() {
     );
   }
 
-  const isDev = profile?.role === "developer";
-  const daysLeft = profile ? trialDaysLeft(profile.created_at) : 0;
-
   return (
     <div style={{ minHeight: "100vh", backgroundColor: bgPrimary, fontFamily: "system-ui, sans-serif", color: "#F1F5F9" }}>
       <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -229,16 +213,6 @@ export default function SubscribePage() {
           <h1 style={{ fontSize: 40, fontWeight: 800, marginBottom: 12 }}>{t.title}</h1>
           <p style={{ color: textMuted, fontSize: 16 }}>{t.subtitle}</p>
         </div>
-
-        {/* Trial banner for developers */}
-        {isDev && (
-          <div style={{ backgroundColor: daysLeft > 0 ? "#10B98120" : "#EF444420", border: `1px solid ${daysLeft > 0 ? "#10B981" : "#EF4444"}`, borderRadius: 10, padding: "14px 20px", marginBottom: 32, display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 20 }}>{daysLeft > 0 ? "⏳" : "⚠️"}</span>
-            <span style={{ fontSize: 14, color: daysLeft > 0 ? "#10B981" : "#EF4444", fontWeight: 600 }}>
-              {daysLeft > 0 ? t.trialInfo(daysLeft) : t.trialExpired}
-            </span>
-          </div>
-        )}
 
         {/* Features für beide Rollen */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 40 }}>

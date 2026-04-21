@@ -52,11 +52,8 @@ export default function DeveloperPage() {
       unpublish: "Taslağa Al", delete: "Sil",
       confirmDelete: "Bu projeyi silmek istediğinizden emin misiniz?",
       allTypes: "Tüm Tipler", allStatus: "Tüm Durumlar",
-      trialDays: (d: number) => `🎁 Ücretsiz deneme süreniz: ${d} gün kaldı`,
-      trialLastDay: "⚠️ Ücretsiz deneme süreniz bugün bitiyor!",
-      trialSubscribe: "Abone Ol",
       profile: "Profil",
-      brokerBanner: (n: number) => `👥 ${n} aktif emlakçı / active brokers / активных маклеров`,
+      brokerBanner: (n: number) => `👥 ${n} aktif emlak danışmanı platforma kayıtlı`,
     },
     en: {
       title: "My Projects", add: "+ New Project", signout: "Sign Out", loading: "Loading...",
@@ -67,11 +64,8 @@ export default function DeveloperPage() {
       unpublish: "Unpublish", delete: "Delete",
       confirmDelete: "Are you sure you want to delete this project?",
       allTypes: "All Types", allStatus: "All Status",
-      trialDays: (d: number) => `🎁 Free trial: ${d} days remaining`,
-      trialLastDay: "⚠️ Your free trial ends today!",
-      trialSubscribe: "Subscribe",
       profile: "Profile",
-      brokerBanner: (n: number) => `👥 ${n} active brokers`,
+      brokerBanner: (n: number) => `👥 ${n} active brokers registered on the platform`,
     },
     ru: {
       title: "Мои проекты", add: "+ Новый проект", signout: "Выйти", loading: "Загрузка...",
@@ -82,11 +76,8 @@ export default function DeveloperPage() {
       unpublish: "Снять с публикации", delete: "Удалить",
       confirmDelete: "Вы уверены, что хотите удалить этот проект?",
       allTypes: "Все типы", allStatus: "Все статусы",
-      trialDays: (d: number) => `🎁 Пробный период: осталось ${d} дней`,
-      trialLastDay: "⚠️ Пробный период заканчивается сегодня!",
-      trialSubscribe: "Подписаться",
       profile: "Профиль",
-      brokerBanner: (n: number) => `👥 ${n} активных маклеров`,
+      brokerBanner: (n: number) => `👥 ${n} активных маклеров зарегистрировано на платформе`,
     },
   };
   const t = tLabels[lang as keyof typeof tLabels] ?? tLabels.en;
@@ -112,14 +103,6 @@ export default function DeveloperPage() {
           if (!data || data.status !== "active") { router.push("/pending"); return; }
           if (data.role === "admin") { router.push("/admin"); return; }
           if (data.role !== "developer") { router.push("/broker/map"); return; }
-          // 3 Monate Gratis-Testphase prüfen
-          const trialEnd = new Date(data.created_at);
-          trialEnd.setMonth(trialEnd.getMonth() + 3);
-          const trialActive = new Date() < trialEnd;
-          if (!trialActive && data.subscription_status !== "active") {
-            router.push("/subscribe");
-            return;
-          }
           setProfile(data);
           loadProjects(data.id);
           // Makler-Anzahl laden
@@ -152,15 +135,6 @@ export default function DeveloperPage() {
     if (profile) loadProjects(profile.id);
     if (selected?.id === id) setSelected(null);
   }
-
-  // Trial Banner berechnen
-  const trialDaysLeft = (() => {
-    if (!profile || profile.subscription_status === "active") return null;
-    const trialEnd = new Date(profile.created_at);
-    trialEnd.setMonth(trialEnd.getMonth() + 3);
-    const diff = Math.ceil((trialEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-    return diff > 0 ? diff : 0;
-  })();
 
   const statusColor = (s: string) => ({ draft: "#F59E0B", published: "#10B981", archived: textMuted }[s] || textMuted);
   const statusLabel = (s: string) => ({ draft: t.draft, published: t.published, archived: t.archived }[s] || s);
@@ -213,41 +187,6 @@ export default function DeveloperPage() {
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", backgroundColor: bgPrimary, fontFamily: "system-ui, sans-serif", color: "#F1F5F9" }}>
-
-      {/* Trial Banner */}
-      {trialDaysLeft !== null && (
-        <div style={{
-          background: trialDaysLeft <= 7
-            ? "linear-gradient(90deg, #7F1D1D, #991B1B)"
-            : trialDaysLeft <= 30
-            ? "linear-gradient(90deg, #78350F, #92400E)"
-            : "linear-gradient(90deg, #14532D, #166534)",
-          padding: "10px 24px",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          flexShrink: 0, gap: 12,
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>
-              {trialDaysLeft === 0 ? t.trialLastDay : t.trialDays(trialDaysLeft)}
-            </div>
-            {/* Progress Bar */}
-            <div style={{ width: 120, height: 6, backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 99, overflow: "hidden" }}>
-              <div style={{
-                height: "100%", borderRadius: 99,
-                width: `${Math.min(100, (trialDaysLeft / 90) * 100)}%`,
-                backgroundColor: trialDaysLeft <= 7 ? "#FCA5A5" : trialDaysLeft <= 30 ? "#FCD34D" : "#6EE7B7",
-              }} />
-            </div>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>
-              {trialDaysLeft}/90
-            </span>
-          </div>
-          <button onClick={() => router.push("/subscribe")}
-            style={{ padding: "6px 16px", backgroundColor: accent, color: bgPrimary, fontWeight: 800, fontSize: 12, borderRadius: 8, border: "none", cursor: "pointer", whiteSpace: "nowrap" }}>
-            {t.trialSubscribe} →
-          </button>
-        </div>
-      )}
 
       {/* Navbar */}
       <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>

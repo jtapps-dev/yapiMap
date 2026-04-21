@@ -357,7 +357,7 @@ function RegisterForm() {
           <div style={{ marginBottom: 24, backgroundColor: "#0F1923", borderRadius: 10, padding: 14, border: `1px solid ${borderColor}` }}>
             <label style={{ display: "block", fontSize: 13, color: accent, marginBottom: 4, fontWeight: 600 }}>💰 {t.iban}</label>
             <p style={{ fontSize: 11, color: textMuted, marginBottom: 8 }}>{t.ibanHint}</p>
-            <input style={inputStyle} value={form.iban} onChange={e => setForm({ ...form, iban: e.target.value })} placeholder="DE89 3704 0044 0532 0130 00" />
+            <input style={inputStyle} value={form.iban} onChange={e => setForm({ ...form, iban: e.target.value })} placeholder="TR33 0006 1005 1978 6457 8413 26" />
           </div>
 
           {error && (

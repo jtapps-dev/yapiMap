@@ -166,7 +166,7 @@ export default function ProfilePage() {
               style={{ ...inputStyle, borderColor: form.iban ? accent : borderColor }}
               value={form.iban}
               onChange={e => setForm({ ...form, iban: e.target.value.toUpperCase() })}
-              placeholder="DE89 3704 0044 0532 0130 00"
+              placeholder="TR33 0006 1005 1978 6457 8413 26"
             />
             <p style={{ fontSize: 11, color: textMuted, marginTop: 4 }}>{t.ibanHint}</p>
           </div>
