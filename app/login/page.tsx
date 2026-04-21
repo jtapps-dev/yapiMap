@@ -83,17 +83,16 @@ export default function LoginPage() {
       if (loginError) throw loginError;
 
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: profile } = await supabase.from("profiles").select("status").eq("id", user!.id).single();
+      const { data: profile } = await supabase.from("profiles").select("status, privacy_accepted_at").eq("id", user!.id).single();
 
       if (!profile || profile.status === "pending") { router.push("/pending"); return; }
       if (profile.status === "rejected") { router.push("/pending"); return; }
 
-      const destination = "/dashboard";
-      if (!localStorage.getItem("privacy_accepted")) {
-        setRedirectTo(destination);
+      if (!profile.privacy_accepted_at) {
+        setRedirectTo("/dashboard");
         setShowConsent(true);
       } else {
-        router.push(destination);
+        router.push("/dashboard");
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message.toLowerCase() : "";
@@ -107,8 +106,12 @@ export default function LoginPage() {
     }
   }
 
-  function handleConsentAccept() {
-    localStorage.setItem("privacy_accepted", "true");
+  async function handleConsentAccept() {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from("profiles").update({ privacy_accepted_at: new Date().toISOString() }).eq("id", user.id);
+    }
     setShowConsent(false);
     router.push(redirectTo);
   }
