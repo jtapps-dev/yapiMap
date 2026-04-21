@@ -26,6 +26,8 @@ const t = {
     active: "✓ Aktif",
     tax: "Vergi No",
     ref: "Ref",
+    privacy: "Gizlilik",
+    privacyNo: "Kabul edilmedi",
     commissions: "Komisyon Ödemeleri",
     pendingPay: "ödeme bekliyor",
     loading: "Yükleniyor...",
@@ -53,6 +55,8 @@ const t = {
     active: "✓ Active",
     tax: "Tax No",
     ref: "Ref",
+    privacy: "Privacy",
+    privacyNo: "Not accepted",
     commissions: "Commission Payments",
     pendingPay: "payments pending",
     loading: "Loading...",
@@ -80,6 +84,8 @@ const t = {
     active: "✓ Активен",
     tax: "ИНН",
     ref: "Реф",
+    privacy: "Конфиденциальность",
+    privacyNo: "Не принято",
     commissions: "Выплаты комиссий",
     pendingPay: "ожидают оплаты",
     loading: "Загрузка...",
@@ -277,9 +283,9 @@ export default function AdminClient({ initialProfiles }: { initialProfiles: Prof
                         {p.iban && <span>🏦 IBAN: <span style={{ color: accent, fontFamily: "monospace" }}>{p.iban}</span></span>}
                         {p.referral_code && <span>🔗 {l.ref}: <span style={{ color: accent }}>{p.referral_code}</span></span>}
                         <span style={{ color: p.privacy_accepted_at ? "#10B981" : "#EF4444" }}>
-                          🔒 DSGVO: {p.privacy_accepted_at
+                          🔒 {l.privacy}: {p.privacy_accepted_at
                             ? new Date(p.privacy_accepted_at).toLocaleString(lang === "tr" ? "tr-TR" : lang === "ru" ? "ru-RU" : "en-GB", { timeZone: "Europe/Istanbul", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
-                            : "—"}
+                            : l.privacyNo}
                         </span>
                       </div>
                       <p style={{ color: textMuted, fontSize: 11, marginTop: 6 }}>
