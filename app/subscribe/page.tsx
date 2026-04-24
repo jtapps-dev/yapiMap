@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/app/i18n/LanguageContext";
+import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 
 const accent = "#E8B84B";
 const bgPrimary = "#0F1923";
@@ -33,6 +34,19 @@ export default function SubscribePage() {
   const [referralStatus, setReferralStatus] = useState<"idle" | "valid" | "invalid" | "checking">("idle");
   const [referralName, setReferralName] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [paddle, setPaddle] = useState<Paddle | undefined>();
+
+  useEffect(() => {
+    initializePaddle({
+      token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
+      environment: "production",
+      eventCallback: (event) => {
+        if (event.name === "checkout.completed") {
+          router.push("/subscribe/success?provider=paddle");
+        }
+      },
+    }).then(setPaddle);
+  }, []); // eslint-disable-line
 
   // Referral-Code aus localStorage auto-einsetzen
   useEffect(() => {
@@ -162,6 +176,21 @@ export default function SubscribePage() {
   }, []);  // eslint-disable-line
 
   async function handleCheckout() {
+    if (!paddle) { alert("Payment not ready, please wait"); return; }
+    setLoading(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+
+    paddle.Checkout.open({
+      items: [{ priceId: process.env.NEXT_PUBLIC_PADDLE_PRICE_ID!, quantity: 1 }],
+      customer: { email: user.email! },
+      customData: { userId: user.id },
+    });
+    setLoading(false);
+  }
+
+  async function handleStripeCheckout() {
     if (!activePriceId) { alert("Stripe Price ID not configured"); return; }
     setLoading(true);
     const res = await fetch("/api/stripe/checkout", {
@@ -297,9 +326,15 @@ export default function SubscribePage() {
 
             <button
               onClick={handleCheckout}
-              disabled={loading}
-              style={{ width: "100%", padding: "14px", backgroundColor: accent, color: bgPrimary, fontWeight: 700, fontSize: 15, borderRadius: 8, border: "none", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1 }}>
+              disabled={loading || !paddle}
+              style={{ width: "100%", padding: "14px", backgroundColor: accent, color: bgPrimary, fontWeight: 700, fontSize: 15, borderRadius: 8, border: "none", cursor: (loading || !paddle) ? "not-allowed" : "pointer", opacity: (loading || !paddle) ? 0.7 : 1 }}>
               {loading ? "..." : t.cta}
+            </button>
+            <button
+              onClick={handleStripeCheckout}
+              disabled={loading}
+              style={{ width: "100%", marginTop: 10, padding: "10px", backgroundColor: "transparent", color: textMuted, fontWeight: 500, fontSize: 13, borderRadius: 8, border: `1px solid ${borderColor}`, cursor: loading ? "not-allowed" : "pointer" }}>
+              {lang === "tr" ? "Stripe ile öde" : lang === "ru" ? "Оплатить через Stripe" : "Pay with Stripe"}
             </button>
           </div>
         </div>

@@ -13,18 +13,22 @@ function SuccessContent() {
 
   useEffect(() => {
     const sessionId = searchParams.get("session_id");
+    const provider = searchParams.get("provider");
     const activate = async () => {
-      if (sessionId) {
+      if (provider === "paddle") {
+        // Webhook aktiviert DB — kurz warten dann weiter
+        await new Promise(r => setTimeout(r, 3000));
+      } else if (sessionId) {
         await fetch("/api/stripe/verify-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sessionId }),
         });
       }
-      setTimeout(() => router.push("/broker/map"), 2000);
+      router.push("/broker/map");
     };
     activate();
-  }, []);
+  }, []); // eslint-disable-line
 
   const tSuccess = {
     tr: { title: "Abonelik Aktif!", sub: "YapıMap Premium'a hoş geldiniz. Tüm projelere artık erişebilirsiniz.", redirect: "Haritaya yönlendiriliyorsunuz..." },
