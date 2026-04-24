@@ -70,6 +70,8 @@ export const translations = {
     },
     footer: {
       privacy: "Gizlilik",
+      terms: "Kullanım Koşulları",
+      refund: "İade Politikası",
       imprint: "Künye",
     },
   },
@@ -144,6 +146,8 @@ export const translations = {
     },
     footer: {
       privacy: "Privacy",
+      terms: "Terms of Service",
+      refund: "Refund Policy",
       imprint: "Imprint",
     },
   },
@@ -218,6 +222,8 @@ export const translations = {
     },
     footer: {
       privacy: "Конфиденциальность",
+      terms: "Условия использования",
+      refund: "Политика возврата",
       imprint: "Импрессум",
     },
   },

@@ -246,6 +246,10 @@ export default function Home() {
           © 2026 YapıMap ·{" "}
           <Link href="/privacy" style={{ color: textMuted }}>{t.footer.privacy}</Link>
           {" · "}
+          <Link href="/terms" style={{ color: textMuted }}>{t.footer.terms}</Link>
+          {" · "}
+          <Link href="/refund" style={{ color: textMuted }}>{t.footer.refund}</Link>
+          {" · "}
           <Link href="/impressum" style={{ color: textMuted }}>{t.footer.imprint}</Link>
         </p>
       </footer>
