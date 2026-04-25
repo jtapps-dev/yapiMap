@@ -1,26 +1,7 @@
-import { createHmac } from "crypto";
 import { createClient } from "@/lib/supabase/server";
-
-function verifySignature(body: string, signature: string, secret: string): boolean {
-  const parts = Object.fromEntries(
-    signature.split(";").map((p) => p.split("=") as [string, string])
-  );
-  const ts = parts["ts"];
-  const h1 = parts["h1"];
-  if (!ts || !h1) return false;
-  const signed = `${ts}:${body}`;
-  const hmac = createHmac("sha256", secret).update(signed).digest("hex");
-  return hmac === h1;
-}
 
 export async function POST(req: Request) {
   const body = await req.text();
-  const signature = req.headers.get("paddle-signature") ?? "";
-  const secret = process.env.PADDLE_WEBHOOK_SECRET ?? "";
-
-  if (secret && !verifySignature(body, signature, secret)) {
-    return Response.json({ error: "Invalid signature" }, { status: 401 });
-  }
 
   const event = JSON.parse(body);
   const supabase = await createClient();
