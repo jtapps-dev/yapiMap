@@ -48,14 +48,23 @@ export default function ProjectDetailPage() {
   const [rates, setRates] = useState<Record<string, number>>({ TRY: 1, USD: 40, EUR: 43 });
 
   useEffect(() => {
-    fetch("https://api.frankfurter.app/latest?from=EUR&to=USD,TRY")
+    fetch("https://open.er-api.com/v6/latest/EUR")
       .then(r => r.json())
       .then(d => {
-        if (d.rates?.TRY && d.rates?.USD) {
-          const tryPerEur = d.rates.TRY;
-          setRates({ TRY: 1, USD: tryPerEur / d.rates.USD, EUR: tryPerEur });
+        const usdPerEur = d.rates?.USD;
+        const tryPerEur = d.rates?.TRY;
+        if (tryPerEur && usdPerEur) {
+          setRates({ TRY: 1, USD: tryPerEur / usdPerEur, EUR: tryPerEur });
         }
-      }).catch(() => {});
+      })
+      .catch(() => {
+        fetch("https://api.frankfurter.app/latest?from=EUR&to=USD,TRY")
+          .then(r => r.json())
+          .then(d => {
+            if (d.rates?.TRY && d.rates?.USD)
+              setRates({ TRY: 1, USD: d.rates.TRY / d.rates.USD, EUR: d.rates.TRY });
+          }).catch(() => {});
+      });
   }, []);
 
   const tryRate = rates.EUR;

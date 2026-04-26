@@ -25,7 +25,7 @@ const TYPE_LABELS: Record<string, { tr: string; en: string; ru: string }> = {
 };
 const PROJECT_TYPES = Object.keys(TYPE_LABELS);
 
-const DEFAULT_RATES: Record<string, number> = { TRY: 1, USD: 38, EUR: 52 };
+const DEFAULT_RATES: Record<string, number> = { TRY: 1, USD: 40, EUR: 43 };
 
 type Project = {
   id: string; title: string; city: string; district: string;
@@ -84,14 +84,25 @@ export default function BrokerMapPage() {
   const t = (tLabels as any)[lang] ?? tLabels.en;
 
   useEffect(() => {
-    fetch("https://api.frankfurter.app/latest?from=EUR&to=USD,TRY")
+    fetch("https://open.er-api.com/v6/latest/EUR")
       .then(r => r.json())
       .then(data => {
-        if (data.rates?.TRY && data.rates?.USD) {
-          const tryPerEur = data.rates.TRY;
-          setRates({ TRY: 1, USD: tryPerEur / data.rates.USD, EUR: tryPerEur });
+        const usdPerEur = data.rates?.USD;
+        const tryPerEur = data.rates?.TRY;
+        if (tryPerEur && usdPerEur) {
+          setRates({ TRY: 1, USD: tryPerEur / usdPerEur, EUR: tryPerEur });
         }
-      }).catch(() => {});
+      })
+      .catch(() => {
+        // Fallback: frankfurter.app
+        fetch("https://api.frankfurter.app/latest?from=EUR&to=USD,TRY")
+          .then(r => r.json())
+          .then(data => {
+            if (data.rates?.TRY && data.rates?.USD) {
+              setRates({ TRY: 1, USD: data.rates.TRY / data.rates.USD, EUR: data.rates.TRY });
+            }
+          }).catch(() => {});
+      });
   }, []);
 
   useEffect(() => {
@@ -287,6 +298,11 @@ export default function BrokerMapPage() {
                 </button>
               ))}
             </div>
+            {currency !== "TRY" && (
+              <div style={{ fontSize: 10, color: textMuted, marginTop: 4, textAlign: "center" }}>
+                1 {currency === "USD" ? "$" : "€"} = {Math.round(rates[currency])} ₺
+              </div>
+            )}
           </div>
 
           <div style={{ borderTop: `1px solid ${borderColor}` }} />
