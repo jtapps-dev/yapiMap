@@ -40,8 +40,18 @@ export default function SubscribePage() {
     initializePaddle({
       token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
       environment: "production",
-      eventCallback: (event) => {
+      eventCallback: async (event) => {
         if (event.name === "checkout.completed") {
+          const data = (event as any).data;
+          await fetch("/api/paddle/activate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              transactionId: data?.transaction_id,
+              subscriptionId: data?.subscription_id,
+              customerId: data?.customer?.id,
+            }),
+          });
           router.push("/subscribe/success?provider=paddle");
         }
       },
