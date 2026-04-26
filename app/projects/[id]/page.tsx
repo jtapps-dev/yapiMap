@@ -23,6 +23,7 @@ type Project = {
   id: string; title: string; city: string; district: string; project_type: string;
   min_price: number; max_price: number;
   description: string | null; description_en: string | null; description_ru: string | null;
+  payment_plan: string | null; payment_plan_en: string | null; payment_plan_ru: string | null;
   ikamet_eligible: boolean; cover_image_url: string | null;
   pdf_url: string | null; pdf_url_en: string | null; pdf_url_ru: string | null;
   lat: number; lng: number;
@@ -65,7 +66,7 @@ export default function ProjectDetailPage() {
     tr: {
       back: "← Haritaya Dön", type: "Tip", location: "Konum", price: "Fiyat Aralığı",
       ikamet: "İkamet İzni Uygun", gallery: "Galeri", contact: "İletişim",
-      pdf: "Broşürü İndir", whatsapp: "WhatsApp ile İletişim",
+      pdf: "Broşürü İndir", whatsapp: "WhatsApp ile İletişim", paymentPlan: "Ödeme Planı",
       paywallTitle: "Premium İçerik",
       paywallText: "Proje detaylarını, iletişim bilgilerini ve PDF broşürü görmek için abone olun.",
       subscribe: `Abone Ol — ${monthlyPrice}`, alreadySub: yearlyLabel,
@@ -73,7 +74,7 @@ export default function ProjectDetailPage() {
     en: {
       back: "← Back to Map", type: "Type", location: "Location", price: "Price Range",
       ikamet: "Residence Permit Eligible", gallery: "Gallery", contact: "Contact",
-      pdf: "Download Brochure", whatsapp: "Contact via WhatsApp",
+      pdf: "Download Brochure", whatsapp: "Contact via WhatsApp", paymentPlan: "Payment Plan",
       paywallTitle: "Premium Content",
       paywallText: "Subscribe to view project details, contact info and PDF brochure.",
       subscribe: `Subscribe — ${monthlyPrice}`, alreadySub: yearlyLabel,
@@ -81,7 +82,7 @@ export default function ProjectDetailPage() {
     ru: {
       back: "← Назад к карте", type: "Тип", location: "Расположение", price: "Диапазон цен",
       ikamet: "Подходит для ВНЖ", gallery: "Галерея", contact: "Контакт",
-      pdf: "Скачать брошюру", whatsapp: "Связаться через WhatsApp",
+      pdf: "Скачать брошюру", whatsapp: "Связаться через WhatsApp", paymentPlan: "План оплаты",
       paywallTitle: "Премиум контент",
       paywallText: "Оформите подписку, чтобы просматривать детали проекта, контакты и PDF-брошюру.",
       subscribe: `Подписаться — ${monthlyPrice}`, alreadySub: yearlyLabel,
@@ -96,7 +97,7 @@ export default function ProjectDetailPage() {
 
       const [{ data: profile }, { data: proj }, { data: imgs }] = await Promise.all([
         supabase.from("profiles").select("subscription_status").eq("id", user.id).single(),
-        supabase.from("projects").select("id, title, city, district, project_type, min_price, max_price, description, description_en, description_ru, ikamet_eligible, cover_image_url, pdf_url, pdf_url_en, pdf_url_ru, lat, lng, contact_name, contact_phone, contact_email, profiles(full_name, logo_url, phone, email)").eq("id", id).eq("status", "published").single(),
+        supabase.from("projects").select("id, title, city, district, project_type, min_price, max_price, description, description_en, description_ru, payment_plan, payment_plan_en, payment_plan_ru, ikamet_eligible, cover_image_url, pdf_url, pdf_url_en, pdf_url_ru, lat, lng, contact_name, contact_phone, contact_email, profiles(full_name, logo_url, phone, email)").eq("id", id).eq("status", "published").single(),
         supabase.from("project_images").select("id, url").eq("project_id", id),
       ]);
 
@@ -243,6 +244,19 @@ export default function ProjectDetailPage() {
               return desc ? (
                 <div style={{ backgroundColor: bgCard, borderRadius: 12, padding: 24, border: `1px solid ${borderColor}` }}>
                   <p style={{ color: "#CBD5E1", lineHeight: 1.8, fontSize: 15 }}>{desc}</p>
+                </div>
+              ) : null;
+            })()}
+
+            {/* Payment Plan */}
+            {(() => {
+              const plan = lang === "en" ? (project.payment_plan_en || project.payment_plan)
+                         : lang === "ru" ? (project.payment_plan_ru || project.payment_plan)
+                         : project.payment_plan;
+              return plan ? (
+                <div style={{ backgroundColor: bgCard, borderRadius: 12, padding: 24, border: `1px solid ${borderColor}` }}>
+                  <div style={{ fontSize: 11, color: accent, letterSpacing: 2, textTransform: "uppercase", marginBottom: 12, fontWeight: 700 }}>{t.paymentPlan}</div>
+                  <p style={{ color: "#CBD5E1", lineHeight: 1.9, fontSize: 14, whiteSpace: "pre-line" }}>{plan}</p>
                 </div>
               ) : null;
             })()}

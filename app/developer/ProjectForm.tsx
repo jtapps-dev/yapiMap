@@ -62,6 +62,8 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
     ikamet_eligible: project?.ikamet_eligible || false,
     citizenship_eligible: project?.citizenship_eligible || false,
     payment_plan: project?.payment_plan || "",
+    payment_plan_en: project?.payment_plan_en || "",
+    payment_plan_ru: project?.payment_plan_ru || "",
     handover_date: project?.handover_date || "",
     amenities: (project?.amenities as string[]) || [],
     contact_name: project?.contact_name || "",
@@ -208,28 +210,41 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
     if (!pin) { setError(t.fields.pinMissing); return; }
     setLoading(true); setError("");
 
-    // Auto-Translate description to other 2 languages
+    // Auto-Translate description + payment_plan to other 2 languages
     const srcLang = lang as "tr"|"en"|"ru";
-    const srcDesc = srcLang === "en" ? form.description_en : srcLang === "ru" ? form.description_ru : form.description;
-    let descTR = form.description, descEN = form.description_en, descRU = form.description_ru;
-    if (srcDesc?.trim()) {
-      setTranslating(true);
-      const targets = (["tr","en","ru"] as const).filter(l => l !== srcLang);
+
+    async function translateToOthers(srcText: string, srcL: "tr"|"en"|"ru") {
+      const results: Record<string, string> = { tr: "", en: "", ru: "" };
+      results[srcL] = srcText;
+      const targets = (["tr","en","ru"] as const).filter(l => l !== srcL);
       await Promise.all(targets.map(async tgt => {
         try {
           const r = await fetch("/api/translate", {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: srcDesc, from: srcLang, to: tgt }),
+            body: JSON.stringify({ text: srcText, from: srcL, to: tgt }),
           });
           const { translated } = await r.json();
-          if (tgt === "tr") descTR = translated;
-          if (tgt === "en") descEN = translated;
-          if (tgt === "ru") descRU = translated;
+          results[tgt] = translated;
         } catch {}
       }));
-      if (srcLang === "tr") descTR = srcDesc;
-      if (srcLang === "en") descEN = srcDesc;
-      if (srcLang === "ru") descRU = srcDesc;
+      return results;
+    }
+
+    const srcDesc = srcLang === "en" ? form.description_en : srcLang === "ru" ? form.description_ru : form.description;
+    const srcPlan = srcLang === "en" ? form.payment_plan_en : srcLang === "ru" ? form.payment_plan_ru : form.payment_plan;
+
+    let descTR = form.description, descEN = form.description_en, descRU = form.description_ru;
+    let planTR = form.payment_plan, planEN = form.payment_plan_en, planRU = form.payment_plan_ru;
+
+    const toTranslate = [srcDesc?.trim() ? srcDesc : null, srcPlan?.trim() ? srcPlan : null];
+    if (toTranslate.some(Boolean)) {
+      setTranslating(true);
+      const [descRes, planRes] = await Promise.all([
+        srcDesc?.trim() ? translateToOthers(srcDesc, srcLang) : null,
+        srcPlan?.trim() ? translateToOthers(srcPlan, srcLang) : null,
+      ]);
+      if (descRes) { descTR = descRes.tr; descEN = descRes.en; descRU = descRes.ru; }
+      if (planRes) { planTR = planRes.tr; planEN = planRes.en; planRU = planRes.ru; }
       setTranslating(false);
     }
 
@@ -261,7 +276,9 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
       delivery_date: form.delivery_date || null,
       ikamet_eligible: form.ikamet_eligible,
       citizenship_eligible: form.citizenship_eligible,
-      payment_plan: form.payment_plan || null,
+      payment_plan: planTR || null,
+      payment_plan_en: planEN || null,
+      payment_plan_ru: planRU || null,
       handover_date: form.handover_date || null,
       amenities: form.amenities,
       contact_name: form.contact_name || null,
@@ -403,9 +420,16 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
               <input style={inputStyle} type="date" value={form.handover_date} onChange={e => set("handover_date", e.target.value)} />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.fields.paymentPlan}</label>
-              <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 100 }} value={form.payment_plan} onChange={e => set("payment_plan", e.target.value)}
-                placeholder={lang === "tr" ? "%30 Peşinat + 36 ay taksit\n%50 Peşinat + %5 indirim\nNakit + %8 indirim" : "35% Down + 36 months\n50% Down + 5% discount\nCash + 10% discount"} />
+              <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>
+                {t.fields.paymentPlan}
+                <span style={{ fontSize: 11, color: "#10B981", marginLeft: 8 }}>
+                  {lang === "tr" ? "✓ otomatik çevrilir" : lang === "ru" ? "✓ авто-перевод" : "✓ auto-translated"}
+                </span>
+              </label>
+              <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 100 }}
+                value={lang === "en" ? form.payment_plan_en : lang === "ru" ? form.payment_plan_ru : form.payment_plan}
+                onChange={e => set(lang === "en" ? "payment_plan_en" : lang === "ru" ? "payment_plan_ru" : "payment_plan", e.target.value)}
+                placeholder={lang === "tr" ? "%30 Peşinat + 36 ay taksit\n%50 Peşinat + %5 indirim\nNakit + %8 indirim" : lang === "ru" ? "35% аванс + 36 месяцев\n50% аванс + скидка 5%\nНаличные + скидка 10%" : "35% Down + 36 months\n50% Down + 5% discount\nCash + 10% discount"} />
             </div>
           </div>
 
