@@ -4,6 +4,15 @@ import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/app/i18n/LanguageContext";
 
+const TYPE_LABELS: Record<string, { tr: string; en: string; ru: string }> = {
+  daire:      { tr: "Daire",     en: "Apartment", ru: "Квартира" },
+  villa:      { tr: "Villa",     en: "Villa",      ru: "Вилла" },
+  rezidans:   { tr: "Rezidans",  en: "Residence",  ru: "Резиденция" },
+  ofis:       { tr: "Ofis",      en: "Office",     ru: "Офис" },
+  townhouse:  { tr: "Townhouse", en: "Townhouse",  ru: "Таунхаус" },
+  loft:       { tr: "Loft",      en: "Loft",       ru: "Лофт" },
+};
+
 const accent = "#E8B84B";
 const bgPrimary = "#0F1923";
 const bgCard = "#1E2D3D";
@@ -12,8 +21,10 @@ const borderColor = "#2A3F55";
 
 type Project = {
   id: string; title: string; city: string; district: string; project_type: string;
-  min_price: number; max_price: number; description: string | null;
-  ikamet_eligible: boolean; cover_image_url: string | null; pdf_url: string | null;
+  min_price: number; max_price: number;
+  description: string | null; description_en: string | null; description_ru: string | null;
+  ikamet_eligible: boolean; cover_image_url: string | null;
+  pdf_url: string | null; pdf_url_en: string | null; pdf_url_ru: string | null;
   lat: number; lng: number;
   contact_name: string | null; contact_phone: string | null; contact_email: string | null;
   profiles: { full_name: string; logo_url: string | null; phone: string | null; email: string | null } | null;
@@ -23,19 +34,21 @@ type Image = { id: string; url: string };
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { lang } = useLang();
+  const { lang, setLang } = useLang();
   const [project, setProject] = useState<Project | null>(null);
   const [images, setImages] = useState<Image[]>([]);
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedImg, setSelectedImg] = useState<string | null>(null);
   const [signedPdfUrl, setSignedPdfUrl] = useState<string | null>(null);
-  const [tryRate, setTryRate] = useState<number>(51);
+  const [signedPdfUrl_en, setSignedPdfUrl_en] = useState<string | null>(null);
+  const [signedPdfUrl_ru, setSignedPdfUrl_ru] = useState<string | null>(null);
+  const [tryRate, setTryRate] = useState<number>(43);
 
   useEffect(() => {
-    fetch("https://api.frankfurter.app/latest?from=TRY&to=EUR")
+    fetch("https://api.frankfurter.app/latest?from=EUR&to=TRY")
       .then(r => r.json())
-      .then(d => { if (d.rates?.EUR) setTryRate(1 / d.rates.EUR); })
+      .then(d => { if (d.rates?.TRY) setTryRate(d.rates.TRY); })
       .catch(() => {});
   }, []);
 
@@ -77,7 +90,7 @@ export default function ProjectDetailPage() {
 
       const [{ data: profile }, { data: proj }, { data: imgs }] = await Promise.all([
         supabase.from("profiles").select("subscription_status").eq("id", user.id).single(),
-        supabase.from("projects").select("id, title, city, district, project_type, min_price, max_price, description, ikamet_eligible, cover_image_url, pdf_url, lat, lng, contact_name, contact_phone, contact_email, profiles(full_name, logo_url, phone, email)").eq("id", id).eq("status", "published").single(),
+        supabase.from("projects").select("id, title, city, district, project_type, min_price, max_price, description, description_en, description_ru, ikamet_eligible, cover_image_url, pdf_url, pdf_url_en, pdf_url_ru, lat, lng, contact_name, contact_phone, contact_email, profiles(full_name, logo_url, phone, email)").eq("id", id).eq("status", "published").single(),
         supabase.from("project_images").select("id, url").eq("project_id", id),
       ]);
 
@@ -85,15 +98,21 @@ export default function ProjectDetailPage() {
       setProject(proj as Project | null);
       setImages((imgs as Image[]) || []);
 
-      // Signed URL für privaten PDF Bucket
-      const pdfUrl = (proj as any)?.pdf_url;
-      if (pdfUrl) {
-        const match = pdfUrl.match(/project-pdfs\/(.+)$/);
-        if (match) {
-          const { data } = await supabase.storage.from("project-pdfs").createSignedUrl(match[1], 3600);
-          if (data?.signedUrl) setSignedPdfUrl(data.signedUrl);
-        }
+      async function makeSignedUrl(rawUrl: string | null): Promise<string | null> {
+        if (!rawUrl) return null;
+        const match = rawUrl.match(/project-pdfs\/(.+)$/);
+        if (!match) return null;
+        const { data } = await supabase.storage.from("project-pdfs").createSignedUrl(match[1], 3600);
+        return data?.signedUrl ?? null;
       }
+      const [s, sEn, sRu] = await Promise.all([
+        makeSignedUrl((proj as any)?.pdf_url),
+        makeSignedUrl((proj as any)?.pdf_url_en),
+        makeSignedUrl((proj as any)?.pdf_url_ru),
+      ]);
+      if (s) setSignedPdfUrl(s);
+      if (sEn) setSignedPdfUrl_en(sEn);
+      if (sRu) setSignedPdfUrl_ru(sRu);
 
       setLoading(false);
     });
@@ -120,10 +139,20 @@ export default function ProjectDetailPage() {
       {/* Navbar */}
       <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span onClick={() => router.push("/")} style={{ color: accent, fontSize: 20, fontWeight: 800, cursor: "pointer" }}>YapıMap</span>
-        <button onClick={() => router.push("/broker/map")}
-          style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
-          {t.back}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            {(["tr", "en", "ru"] as const).map(l => (
+              <button key={l} onClick={() => setLang(l)}
+                style={{ padding: "3px 8px", borderRadius: 4, border: `1px solid ${lang === l ? accent : borderColor}`, backgroundColor: lang === l ? `${accent}22` : "transparent", color: lang === l ? accent : textMuted, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => router.push("/broker/map")}
+            style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
+            {t.back}
+          </button>
+        </div>
       </nav>
 
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>
@@ -148,7 +177,7 @@ export default function ProjectDetailPage() {
           <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>{project.title}</h1>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", color: textMuted, fontSize: 14 }}>
             <span>📍 {project.district}, {project.city}</span>
-            <span>🏠 {project.project_type}</span>
+            <span>🏠 {TYPE_LABELS[project.project_type]?.[lang as "tr"|"en"|"ru"] || project.project_type}</span>
             <span style={{ color: accent, fontWeight: 700 }}>{formatPrice(project.min_price)} – {formatPrice(project.max_price)}</span>
           </div>
           {project.ikamet_eligible && (
@@ -191,11 +220,16 @@ export default function ProjectDetailPage() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {/* Description */}
-            {project.description && (
-              <div style={{ backgroundColor: bgCard, borderRadius: 12, padding: 24, border: `1px solid ${borderColor}` }}>
-                <p style={{ color: "#CBD5E1", lineHeight: 1.8, fontSize: 15 }}>{project.description}</p>
-              </div>
-            )}
+            {(() => {
+              const desc = lang === "en" ? (project.description_en || project.description)
+                         : lang === "ru" ? (project.description_ru || project.description)
+                         : project.description;
+              return desc ? (
+                <div style={{ backgroundColor: bgCard, borderRadius: 12, padding: 24, border: `1px solid ${borderColor}` }}>
+                  <p style={{ color: "#CBD5E1", lineHeight: 1.8, fontSize: 15 }}>{desc}</p>
+                </div>
+              ) : null;
+            })()}
 
             {/* Contact + PDF */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -232,15 +266,20 @@ export default function ProjectDetailPage() {
                   </div>
                 );
               })()}
-              {(project.pdf_url && signedPdfUrl) && (
-                <div style={{ backgroundColor: bgCard, borderRadius: 12, padding: 20, border: `1px solid ${borderColor}`, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                  <div style={{ fontSize: 11, color: textMuted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>PDF</div>
-                  <a href={signedPdfUrl} target="_blank" rel="noopener noreferrer"
-                    style={{ display: "block", padding: "10px", backgroundColor: accent, color: bgPrimary, fontWeight: 700, fontSize: 13, borderRadius: 8, textAlign: "center", textDecoration: "none" }}>
-                    {t.pdf}
-                  </a>
-                </div>
-              )}
+              {(() => {
+                const activePdf = lang === "en" ? (signedPdfUrl_en || signedPdfUrl)
+                                : lang === "ru" ? (signedPdfUrl_ru || signedPdfUrl)
+                                : signedPdfUrl;
+                return activePdf ? (
+                  <div style={{ backgroundColor: bgCard, borderRadius: 12, padding: 20, border: `1px solid ${borderColor}`, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                    <div style={{ fontSize: 11, color: textMuted, letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 }}>PDF</div>
+                    <a href={activePdf} target="_blank" rel="noopener noreferrer"
+                      style={{ display: "block", padding: "10px", backgroundColor: accent, color: bgPrimary, fontWeight: 700, fontSize: 13, borderRadius: 8, textAlign: "center", textDecoration: "none" }}>
+                      {t.pdf}
+                    </a>
+                  </div>
+                ) : null;
+              })()}
             </div>
           </div>
         )}

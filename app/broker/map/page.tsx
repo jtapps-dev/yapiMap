@@ -15,6 +15,16 @@ const textMuted = "#94A3B8";
 const borderColor = "#2A3F55";
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
+const TYPE_LABELS: Record<string, { tr: string; en: string; ru: string }> = {
+  daire:      { tr: "Daire",     en: "Apartment", ru: "Квартира" },
+  villa:      { tr: "Villa",     en: "Villa",      ru: "Вилла" },
+  rezidans:   { tr: "Rezidans",  en: "Residence",  ru: "Резиденция" },
+  ofis:       { tr: "Ofis",      en: "Office",     ru: "Офис" },
+  townhouse:  { tr: "Townhouse", en: "Townhouse",  ru: "Таунхаус" },
+  loft:       { tr: "Loft",      en: "Loft",       ru: "Лофт" },
+};
+const PROJECT_TYPES = Object.keys(TYPE_LABELS);
+
 const DEFAULT_RATES: Record<string, number> = { TRY: 1, USD: 38, EUR: 52 };
 
 type Project = {
@@ -27,7 +37,7 @@ type Project = {
 type Profile = { full_name: string; status: string; role: string; subscription_status: string | null; referral_code: string | null };
 
 export default function BrokerMapPage() {
-  const { lang } = useLang();
+  const { lang, setLang } = useLang();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -51,7 +61,6 @@ export default function BrokerMapPage() {
       subscribe: "Abone Ol", cancel: "Vazgeç", ikamet: "İkamet İzni Uygun", citizenship: "Vatandaşlık Yatırımı Uygun",
       loading: "Yükleniyor...", projectsFound: "proje bulundu", noProjects: "Proje bulunamadı",
       profile: "Profil",
-      types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft"],
     },
     en: {
       signout: "Sign Out", showProjects: "View Details", filter: "Filter",
@@ -61,7 +70,6 @@ export default function BrokerMapPage() {
       subscribe: "Subscribe", cancel: "Cancel", ikamet: "Residence Permit Eligible", citizenship: "Eligible for Citizenship by Investment",
       loading: "Loading...", projectsFound: "projects found", noProjects: "No projects found",
       profile: "Profile",
-      types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft"],
     },
     ru: {
       signout: "Выйти", showProjects: "Подробнее", filter: "Фильтр",
@@ -71,17 +79,17 @@ export default function BrokerMapPage() {
       subscribe: "Подписаться", cancel: "Отмена", ikamet: "Подходит для ВНЖ", citizenship: "Подходит для гражданства через инвестиции",
       loading: "Загрузка...", projectsFound: "проектов найдено", noProjects: "Проекты не найдены",
       profile: "Профиль",
-      types: ["daire", "villa", "rezidans", "ofis", "townhouse", "loft"],
     },
   } as const;
   const t = (tLabels as any)[lang] ?? tLabels.en;
 
   useEffect(() => {
-    fetch("https://api.frankfurter.app/latest?from=TRY&to=USD,EUR")
+    fetch("https://api.frankfurter.app/latest?from=EUR&to=USD,TRY")
       .then(r => r.json())
       .then(data => {
-        if (data.rates) {
-          setRates({ TRY: 1, USD: 1 / data.rates.USD, EUR: 1 / data.rates.EUR });
+        if (data.rates?.TRY && data.rates?.USD) {
+          const tryPerEur = data.rates.TRY;
+          setRates({ TRY: 1, USD: tryPerEur / data.rates.USD, EUR: tryPerEur });
         }
       }).catch(() => {});
   }, []);
@@ -214,6 +222,14 @@ export default function BrokerMapPage() {
       <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <span onClick={() => router.push("/")} style={{ color: accent, fontSize: 20, fontWeight: 800, cursor: "pointer" }}>YapıMap</span>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            {(["tr", "en", "ru"] as const).map(l => (
+              <button key={l} onClick={() => setLang(l)}
+                style={{ padding: "3px 8px", borderRadius: 4, border: `1px solid ${lang === l ? accent : borderColor}`, backgroundColor: lang === l ? `${accent}22` : "transparent", color: lang === l ? accent : textMuted, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
           <span style={{ color: textMuted, fontSize: 13 }}>{profile.full_name}</span>
           <button onClick={() => router.push("/profile")}
             style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>
@@ -297,7 +313,7 @@ export default function BrokerMapPage() {
             <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.type}</label>
             <select style={{ ...inputStyle }} value={filters.type} onChange={e => setFilters(f => ({ ...f, type: e.target.value }))}>
               <option value="">{t.allTypes}</option>
-              {(t.types as string[]).map((tp: string) => <option key={tp} value={tp}>{tp}</option>)}
+              {PROJECT_TYPES.map(tp => <option key={tp} value={tp}>{TYPE_LABELS[tp]?.[lang as "tr"|"en"|"ru"] || tp}</option>)}
             </select>
           </div>
 
@@ -442,7 +458,7 @@ export default function BrokerMapPage() {
                   )}
                   <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3 }}>{selected.title}</div>
                   <div style={{ fontSize: 12, color: textMuted, marginBottom: 6 }}>{selected.district}, {selected.city}</div>
-                  <div style={{ fontSize: 12, color: textMuted, marginBottom: 4 }}>{selected.project_type}</div>
+                  <div style={{ fontSize: 12, color: textMuted, marginBottom: 4 }}>{TYPE_LABELS[selected.project_type]?.[lang as "tr"|"en"|"ru"] || selected.project_type}</div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: accent, marginBottom: 8 }}>
                     {formatPrice(selected.min_price)} – {formatPrice(selected.max_price)}
                   </div>

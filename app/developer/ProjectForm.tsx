@@ -48,6 +48,8 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
   const [form, setForm] = useState({
     title: project?.title || "",
     description: project?.description || "",
+    description_en: project?.description_en || "",
+    description_ru: project?.description_ru || "",
     city: project?.city || "",
     district: project?.district || "",
     address: project?.address || "",
@@ -76,7 +78,12 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfFile_en, setPdfFile_en] = useState<File | null>(null);
+  const [pdfFile_ru, setPdfFile_ru] = useState<File | null>(null);
   const [existingPdf, setExistingPdf] = useState<string>(project?.pdf_url || "");
+  const [existingPdf_en, setExistingPdf_en] = useState<string>(project?.pdf_url_en || "");
+  const [existingPdf_ru, setExistingPdf_ru] = useState<string>(project?.pdf_url_ru || "");
+  const [descTab, setDescTab] = useState<"tr"|"en"|"ru">("tr");
   const [docFiles, setDocFiles] = useState<File[]>([]);
   const [existingDocs, setExistingDocs] = useState<{ id: string; name: string; url: string }[]>([]);
   const mapRef = useRef<MapRef>(null);
@@ -208,10 +215,17 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
 
     let pdfUrl = existingPdf || null;
     if (pdfFile) pdfUrl = await uploadFile("project-pdfs", pdfFile, `${profile.id}/${timestamp}_brochure.pdf`);
+    let pdfUrl_en = existingPdf_en || null;
+    if (pdfFile_en) pdfUrl_en = await uploadFile("project-pdfs", pdfFile_en, `${profile.id}/${timestamp}_brochure_en.pdf`);
+    let pdfUrl_ru = existingPdf_ru || null;
+    if (pdfFile_ru) pdfUrl_ru = await uploadFile("project-pdfs", pdfFile_ru, `${profile.id}/${timestamp}_brochure_ru.pdf`);
 
     const payload = {
       developer_id: profile.id,
-      title: form.title, description: form.description || null,
+      title: form.title,
+      description: form.description || null,
+      description_en: form.description_en || null,
+      description_ru: form.description_ru || null,
       city: form.city, district: form.district || null, address: form.address || null,
       project_type: form.project_type,
       min_price: form.min_price ? parseInt(form.min_price) : null,
@@ -230,6 +244,8 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
       lat: pin.lat, lng: pin.lng,
       cover_image_url: coverUrl,
       pdf_url: pdfUrl,
+      pdf_url_en: pdfUrl_en,
+      pdf_url_ru: pdfUrl_ru,
     };
 
     let err; let projectId = project?.id;
@@ -296,8 +312,18 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.fields.description}</label>
-              <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 80 }} value={form.description} onChange={e => set("description", e.target.value)} />
+              <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 6 }}>{t.fields.description}</label>
+              <div style={{ display: "flex", gap: 0, marginBottom: 6, border: `1px solid ${borderColor}`, borderRadius: 6, overflow: "hidden" }}>
+                {(["tr", "en", "ru"] as const).map(l => (
+                  <button key={l} onClick={() => setDescTab(l)}
+                    style={{ flex: 1, padding: "6px 0", border: "none", cursor: "pointer", backgroundColor: descTab === l ? accent : bgPrimary, color: descTab === l ? "#0F1923" : textMuted, fontSize: 12, fontWeight: 700 }}>
+                    {l.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              {descTab === "tr" && <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 80 }} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Türkçe açıklama..." />}
+              {descTab === "en" && <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 80 }} value={form.description_en} onChange={e => set("description_en", e.target.value)} placeholder="English description..." />}
+              {descTab === "ru" && <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 80 }} value={form.description_ru} onChange={e => set("description_ru", e.target.value)} placeholder="Описание на русском..." />}
             </div>
           </div>
 
@@ -426,26 +452,35 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
             </label>
           </div>
 
-          {/* PDF */}
+          {/* PDFs — 3 Sprachen */}
           <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 14, padding: 20 }}>
-            <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 12 }}>{lang === "tr" ? "Broşür (PDF)" : "Brochure (PDF)"}</label>
-            {(existingPdf || pdfFile) && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "8px 12px", backgroundColor: bgPrimary, borderRadius: 7 }}>
-                <span style={{ fontSize: 20 }}>📄</span>
-                <span style={{ fontSize: 13, color: "#F1F5F9", flex: 1 }}>{pdfFile?.name || "Mevcut PDF"}</span>
-                {existingPdf && <a href={existingPdf} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: accent }}>Görüntüle</a>}
+            <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 14 }}>{lang === "tr" ? "Broşürler (PDF — TR / EN / RU)" : lang === "ru" ? "Брошюры (PDF — TR / EN / RU)" : "Brochures (PDF — TR / EN / RU)"}</label>
+            {([
+              { label: "🇹🇷 TR", file: pdfFile, setFile: setPdfFile, existing: existingPdf, key: "tr" },
+              { label: "🇬🇧 EN", file: pdfFile_en, setFile: setPdfFile_en, existing: existingPdf_en, key: "en" },
+              { label: "🇷🇺 RU", file: pdfFile_ru, setFile: setPdfFile_ru, existing: existingPdf_ru, key: "ru" },
+            ] as const).map(row => (
+              <div key={row.key} style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 12, color: textMuted, marginBottom: 4, fontWeight: 600 }}>{row.label}</div>
+                {(row.existing || row.file) && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, padding: "6px 10px", backgroundColor: bgPrimary, borderRadius: 7 }}>
+                    <span style={{ fontSize: 16 }}>📄</span>
+                    <span style={{ fontSize: 12, color: "#F1F5F9", flex: 1 }}>{(row.file as File | null)?.name || "PDF"}</span>
+                    {row.existing && <a href={row.existing} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: accent }}>↗</a>}
+                  </div>
+                )}
+                <label style={{ display: "block", padding: "7px 12px", backgroundColor: bgPrimary, border: `1px dashed ${borderColor}`, borderRadius: 8, textAlign: "center", cursor: "pointer", fontSize: 12, color: textMuted }}>
+                  {lang === "tr" ? "PDF Seç" : lang === "ru" ? "Выбрать PDF" : "Choose PDF"}
+                  <input type="file" accept=".pdf" onChange={e => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    if (f.type !== "application/pdf") { alert("Only PDF"); return; }
+                    if (f.size > 50 * 1024 * 1024) { alert("Max 50 MB"); return; }
+                    row.setFile(f as any);
+                  }} style={{ display: "none" }} />
+                </label>
               </div>
-            )}
-            <label style={{ display: "block", padding: "9px 14px", backgroundColor: bgPrimary, border: `1px dashed ${borderColor}`, borderRadius: 8, textAlign: "center", cursor: "pointer", fontSize: 13, color: textMuted }}>
-              {lang === "tr" ? "PDF Seç" : "Choose PDF"}
-              <input type="file" accept=".pdf" onChange={e => {
-  const f = e.target.files?.[0];
-  if (!f) return;
-  if (f.type !== "application/pdf") { alert("Sadece PDF / Only PDF"); return; }
-  if (f.size > 50 * 1024 * 1024) { alert("Maksimum 50 MB / Maximum 50 MB"); return; }
-  setPdfFile(f);
-}} style={{ display: "none" }} />
-            </label>
+            ))}
           </div>
 
           {/* Dokumente */}

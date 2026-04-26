@@ -1,0 +1,5 @@
+ALTER TABLE projects
+  ADD COLUMN IF NOT EXISTS description_en TEXT,
+  ADD COLUMN IF NOT EXISTS description_ru TEXT,
+  ADD COLUMN IF NOT EXISTS pdf_url_en TEXT,
+  ADD COLUMN IF NOT EXISTS pdf_url_ru TEXT;
