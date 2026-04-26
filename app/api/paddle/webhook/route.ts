@@ -6,6 +6,20 @@ export async function POST(req: Request) {
   const event = JSON.parse(body);
   const supabase = await createClient();
 
+  if (event.event_type === "transaction.completed") {
+    const userId = event.data?.custom_data?.userId;
+    const customerId = event.data?.customer_id;
+    const subscriptionId = event.data?.subscription_id;
+
+    if (userId) {
+      await supabase.from("profiles").update({
+        subscription_status: "active",
+        paddle_subscription_id: subscriptionId ?? null,
+        paddle_customer_id: customerId ?? null,
+      }).eq("id", userId);
+    }
+  }
+
   if (event.event_type === "subscription.activated" || event.event_type === "subscription.updated") {
     const userId = event.data?.custom_data?.userId;
     const subscriptionId = event.data?.id;
