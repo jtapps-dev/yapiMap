@@ -83,7 +83,7 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
   const [existingPdf, setExistingPdf] = useState<string>(project?.pdf_url || "");
   const [existingPdf_en, setExistingPdf_en] = useState<string>(project?.pdf_url_en || "");
   const [existingPdf_ru, setExistingPdf_ru] = useState<string>(project?.pdf_url_ru || "");
-  const [descTab, setDescTab] = useState<"tr"|"en"|"ru">("tr");
+  const [translating, setTranslating] = useState(false);
   const [docFiles, setDocFiles] = useState<File[]>([]);
   const [existingDocs, setExistingDocs] = useState<{ id: string; name: string; url: string }[]>([]);
   const mapRef = useRef<MapRef>(null);
@@ -207,6 +207,32 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
     if (!form.title || !form.city || !form.project_type) { setError(lang === "tr" ? "Zorunlu alanları doldurun." : lang === "ru" ? "Заполните обязательные поля." : "Fill in required fields."); return; }
     if (!pin) { setError(t.fields.pinMissing); return; }
     setLoading(true); setError("");
+
+    // Auto-Translate description to other 2 languages
+    const srcLang = lang as "tr"|"en"|"ru";
+    const srcDesc = srcLang === "en" ? form.description_en : srcLang === "ru" ? form.description_ru : form.description;
+    let descTR = form.description, descEN = form.description_en, descRU = form.description_ru;
+    if (srcDesc?.trim()) {
+      setTranslating(true);
+      const targets = (["tr","en","ru"] as const).filter(l => l !== srcLang);
+      await Promise.all(targets.map(async tgt => {
+        try {
+          const r = await fetch("/api/translate", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: srcDesc, from: srcLang, to: tgt }),
+          });
+          const { translated } = await r.json();
+          if (tgt === "tr") descTR = translated;
+          if (tgt === "en") descEN = translated;
+          if (tgt === "ru") descRU = translated;
+        } catch {}
+      }));
+      if (srcLang === "tr") descTR = srcDesc;
+      if (srcLang === "en") descEN = srcDesc;
+      if (srcLang === "ru") descRU = srcDesc;
+      setTranslating(false);
+    }
+
     const supabase = createClient();
     const timestamp = Date.now();
 
@@ -223,9 +249,9 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
     const payload = {
       developer_id: profile.id,
       title: form.title,
-      description: form.description || null,
-      description_en: form.description_en || null,
-      description_ru: form.description_ru || null,
+      description: descTR || null,
+      description_en: descEN || null,
+      description_ru: descRU || null,
       city: form.city, district: form.district || null, address: form.address || null,
       project_type: form.project_type,
       min_price: form.min_price ? parseInt(form.min_price) : null,
@@ -312,18 +338,15 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
               </select>
             </div>
             <div>
-              <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 6 }}>{t.fields.description}</label>
-              <div style={{ display: "flex", gap: 0, marginBottom: 6, border: `1px solid ${borderColor}`, borderRadius: 6, overflow: "hidden" }}>
-                {(["tr", "en", "ru"] as const).map(l => (
-                  <button key={l} onClick={() => setDescTab(l)}
-                    style={{ flex: 1, padding: "6px 0", border: "none", cursor: "pointer", backgroundColor: descTab === l ? accent : bgPrimary, color: descTab === l ? "#0F1923" : textMuted, fontSize: 12, fontWeight: 700 }}>
-                    {l.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-              {descTab === "tr" && <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 80 }} value={form.description} onChange={e => set("description", e.target.value)} placeholder="Türkçe açıklama..." />}
-              {descTab === "en" && <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 80 }} value={form.description_en} onChange={e => set("description_en", e.target.value)} placeholder="English description..." />}
-              {descTab === "ru" && <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 80 }} value={form.description_ru} onChange={e => set("description_ru", e.target.value)} placeholder="Описание на русском..." />}
+              <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>
+                {t.fields.description}
+                <span style={{ fontSize: 11, color: "#10B981", marginLeft: 8 }}>
+                  {lang === "tr" ? "✓ otomatik çevrilir" : lang === "ru" ? "✓ авто-перевод" : "✓ auto-translated"}
+                </span>
+              </label>
+              <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 80 }}
+                value={lang === "en" ? form.description_en : lang === "ru" ? form.description_ru : form.description}
+                onChange={e => set(lang === "en" ? "description_en" : lang === "ru" ? "description_ru" : "description", e.target.value)} />
             </div>
           </div>
 
@@ -521,7 +544,7 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
 
           <button onClick={handleSave} disabled={loading}
             style={{ width: "100%", padding: "14px", backgroundColor: accent, color: "#0F1923", fontWeight: 700, fontSize: 16, borderRadius: 10, border: "none", cursor: "pointer" }}>
-            {loading ? "..." : t.save}
+            {translating ? (lang === "tr" ? "Çevriliyor..." : lang === "ru" ? "Перевод..." : "Translating...") : loading ? "..." : t.save}
           </button>
         </div>
 

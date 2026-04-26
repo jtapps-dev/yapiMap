@@ -14,7 +14,16 @@ const bgCard = "#1E2D3D";
 const textMuted = "#94A3B8";
 const borderColor = "#2A3F55";
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
-const DEFAULT_RATES: Record<string, number> = { TRY: 1, USD: 38, EUR: 52 };
+const DEFAULT_RATES: Record<string, number> = { TRY: 1, USD: 40, EUR: 43 };
+
+const TYPE_LABELS: Record<string, { tr: string; en: string; ru: string }> = {
+  daire:      { tr: "Daire",     en: "Apartment", ru: "Квартира" },
+  villa:      { tr: "Villa",     en: "Villa",      ru: "Вилла" },
+  rezidans:   { tr: "Rezidans",  en: "Residence",  ru: "Резиденция" },
+  ofis:       { tr: "Ofis",      en: "Office",     ru: "Офис" },
+  townhouse:  { tr: "Townhouse", en: "Townhouse",  ru: "Таунхаус" },
+  loft:       { tr: "Loft",      en: "Loft",       ru: "Лофт" },
+};
 
 type Project = {
   id: string; title: string; city: string; district: string;
@@ -28,7 +37,7 @@ type Project = {
 type Profile = { id: string; full_name: string; role: string; status: string; logo_url: string | null; subscription_status: string | null; created_at: string; referral_code: string | null };
 
 export default function DeveloperPage() {
-  const { lang } = useLang();
+  const { lang, setLang } = useLang();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -85,11 +94,12 @@ export default function DeveloperPage() {
   const PROJECT_TYPES = ["daire", "villa", "rezidans", "ofis", "townhouse", "loft"];
 
   useEffect(() => {
-    fetch("https://api.frankfurter.app/latest?from=TRY&to=USD,EUR")
+    fetch("https://api.frankfurter.app/latest?from=EUR&to=USD,TRY")
       .then(r => r.json())
       .then(data => {
-        if (data.rates) {
-          setRates({ TRY: 1, USD: 1 / data.rates.USD, EUR: 1 / data.rates.EUR });
+        if (data.rates?.TRY && data.rates?.USD) {
+          const tryPerEur = data.rates.TRY;
+          setRates({ TRY: 1, USD: tryPerEur / data.rates.USD, EUR: tryPerEur });
         }
       }).catch(() => {});
   }, []);
@@ -201,6 +211,14 @@ export default function DeveloperPage() {
       <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <span onClick={() => router.push("/")} style={{ color: accent, fontSize: 20, fontWeight: 800, cursor: "pointer" }}>YapıMap</span>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            {(["tr", "en", "ru"] as const).map(l => (
+              <button key={l} onClick={() => setLang(l)}
+                style={{ padding: "3px 8px", borderRadius: 4, border: `1px solid ${lang === l ? accent : borderColor}`, backgroundColor: lang === l ? `${accent}22` : "transparent", color: lang === l ? accent : textMuted, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
           <label title="Firma logosunu yükle / Upload company logo" style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
             {profile.logo_url
               ? <img src={profile.logo_url} alt="logo" style={{ height: 32, maxWidth: 100, objectFit: "contain", borderRadius: 4, border: `1px solid ${borderColor}`, padding: 2, backgroundColor: "#0F1923" }} />
@@ -258,7 +276,7 @@ export default function DeveloperPage() {
             <select value={filterType} onChange={e => setFilterType(e.target.value)}
               style={{ flex: 1, padding: "6px 8px", backgroundColor: bgPrimary, border: `1px solid ${borderColor}`, borderRadius: 6, color: "#F1F5F9", fontSize: 12, outline: "none" }}>
               <option value="">{t.allTypes}</option>
-              {PROJECT_TYPES.map(tp => <option key={tp} value={tp}>{tp}</option>)}
+              {PROJECT_TYPES.map(tp => <option key={tp} value={tp}>{TYPE_LABELS[tp]?.[lang as "tr"|"en"|"ru"] || tp}</option>)}
             </select>
             <div style={{ display: "flex", gap: 4 }}>
               {(["TRY", "USD", "EUR"] as const).map(c => (
@@ -298,7 +316,7 @@ export default function DeveloperPage() {
                       </span>
                       {p.ikamet_eligible && <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 999, backgroundColor: "#10B98120", color: "#10B981" }}>İkamet</span>}
                     </div>
-                    <p style={{ color: textMuted, fontSize: 12, marginBottom: 2 }}>{p.district}, {p.city} · {p.project_type}</p>
+                    <p style={{ color: textMuted, fontSize: 12, marginBottom: 2 }}>{p.district}, {p.city} · {TYPE_LABELS[p.project_type]?.[lang as "tr"|"en"|"ru"] || p.project_type}</p>
                     <p style={{ color: accent, fontSize: 12, fontWeight: 600 }}>{formatPrice(p.min_price)} – {formatPrice(p.max_price)}</p>
                   </div>
                   {p.cover_image_url && (
