@@ -50,7 +50,6 @@ export default function DeveloperPage() {
   const [filterStatus, setFilterStatus] = useState("");
   const [logoUploading, setLogoUploading] = useState(false);
   const [brokerCount, setBrokerCount] = useState<number | null>(null);
-  const [translatingAll, setTranslatingAll] = useState(false);
 
   const tLabels = {
     tr: {
@@ -172,17 +171,6 @@ export default function DeveloperPage() {
     return true;
   });
 
-  async function translateAllProjects() {
-    setTranslatingAll(true);
-    try {
-      const res = await fetch("/api/translate-projects", { method: "POST" });
-      const { updated } = await res.json();
-      if (profile) loadProjects(profile.id);
-      alert(lang === "tr" ? `${updated} proje çevrildi!` : lang === "ru" ? `Переведено проектов: ${updated}` : `${updated} projects translated!`);
-    } catch {}
-    setTranslatingAll(false);
-  }
-
   async function handleLogoUpload(file: File) {
     if (!profile) return;
     setLogoUploading(true);
@@ -268,21 +256,12 @@ export default function DeveloperPage() {
         <div style={{ width: 380, borderRight: `1px solid ${borderColor}`, display: "flex", flexDirection: "column", flexShrink: 0 }}>
 
           {/* Header */}
-          <div style={{ padding: "16px 20px", borderBottom: `1px solid ${borderColor}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, gap: 8 }}>
+          <div style={{ padding: "16px 20px", borderBottom: `1px solid ${borderColor}`, display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
             <span style={{ fontWeight: 700, fontSize: 16 }}>{t.title} ({projects.length})</span>
-            <div style={{ display: "flex", gap: 6 }}>
-              {projects.length > 0 && (
-                <button onClick={translateAllProjects} disabled={translatingAll}
-                  title={lang === "tr" ? "Tüm projeleri çevir" : lang === "ru" ? "Перевести все проекты" : "Translate all projects"}
-                  style={{ padding: "7px 10px", backgroundColor: "transparent", color: translatingAll ? textMuted : "#10B981", fontWeight: 600, fontSize: 12, borderRadius: 7, border: `1px solid ${translatingAll ? borderColor : "#10B981"}`, cursor: "pointer", whiteSpace: "nowrap" }}>
-                  {translatingAll ? "⏳" : "🌐"} {lang === "tr" ? "Çevir" : lang === "ru" ? "Перевести" : "Translate"}
-                </button>
-              )}
-              <button onClick={() => requireSubscription(() => setShowForm(true))}
-                style={{ padding: "7px 14px", backgroundColor: accent, color: "#0F1923", fontWeight: 700, fontSize: 13, borderRadius: 7, border: "none", cursor: "pointer" }}>
-                {t.add}
-              </button>
-            </div>
+            <button onClick={() => requireSubscription(() => setShowForm(true))}
+              style={{ padding: "7px 14px", backgroundColor: accent, color: "#0F1923", fontWeight: 700, fontSize: 13, borderRadius: 7, border: "none", cursor: "pointer" }}>
+              {t.add}
+            </button>
           </div>
 
           {/* Filters */}
