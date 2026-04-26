@@ -43,15 +43,21 @@ export default function ProjectDetailPage() {
   const [signedPdfUrl, setSignedPdfUrl] = useState<string | null>(null);
   const [signedPdfUrl_en, setSignedPdfUrl_en] = useState<string | null>(null);
   const [signedPdfUrl_ru, setSignedPdfUrl_ru] = useState<string | null>(null);
-  const [tryRate, setTryRate] = useState<number>(43);
+  const [currency, setCurrency] = useState<"TRY"|"USD"|"EUR">("TRY");
+  const [rates, setRates] = useState<Record<string, number>>({ TRY: 1, USD: 40, EUR: 43 });
 
   useEffect(() => {
-    fetch("https://api.frankfurter.app/latest?from=EUR&to=TRY")
+    fetch("https://api.frankfurter.app/latest?from=EUR&to=USD,TRY")
       .then(r => r.json())
-      .then(d => { if (d.rates?.TRY) setTryRate(d.rates.TRY); })
-      .catch(() => {});
+      .then(d => {
+        if (d.rates?.TRY && d.rates?.USD) {
+          const tryPerEur = d.rates.TRY;
+          setRates({ TRY: 1, USD: tryPerEur / d.rates.USD, EUR: tryPerEur });
+        }
+      }).catch(() => {});
   }, []);
 
+  const tryRate = rates.EUR;
   const monthlyPrice = lang === "tr" ? `₺${Math.round(29 * tryRate).toLocaleString("tr-TR")}/ay` : "€29/mo";
   const yearlyLabel = lang === "tr" ? "Yıllık plan için →" : "Yearly plan →";
 
@@ -119,7 +125,9 @@ export default function ProjectDetailPage() {
   }, [id]);
 
   function formatPrice(n: number) {
-    return "₺" + n.toLocaleString("tr-TR");
+    const converted = Math.round(n / rates[currency]);
+    const symbol = currency === "USD" ? "$" : currency === "EUR" ? "€" : "₺";
+    return symbol + converted.toLocaleString();
   }
 
   if (loading) return (
@@ -175,10 +183,18 @@ export default function ProjectDetailPage() {
         {/* Title + basic info */}
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>{project.title}</h1>
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", color: textMuted, fontSize: 14 }}>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", color: textMuted, fontSize: 14 }}>
             <span>📍 {project.district}, {project.city}</span>
             <span>🏠 {TYPE_LABELS[project.project_type]?.[lang as "tr"|"en"|"ru"] || project.project_type}</span>
             <span style={{ color: accent, fontWeight: 700 }}>{formatPrice(project.min_price)} – {formatPrice(project.max_price)}</span>
+            <div style={{ display: "flex", gap: 4 }}>
+              {(["TRY", "USD", "EUR"] as const).map(c => (
+                <button key={c} onClick={() => setCurrency(c)}
+                  style={{ padding: "2px 8px", borderRadius: 4, border: `1px solid ${currency === c ? accent : borderColor}`, backgroundColor: currency === c ? `${accent}22` : "transparent", color: currency === c ? accent : textMuted, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+                  {c === "TRY" ? "₺" : c === "USD" ? "$" : "€"} {c}
+                </button>
+              ))}
+            </div>
           </div>
           {project.ikamet_eligible && (
             <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 10, backgroundColor: "#10B98120", color: "#10B981", padding: "4px 12px", borderRadius: 999, fontSize: 13, fontWeight: 600, border: "1px solid #10B981" }}>
