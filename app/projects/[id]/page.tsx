@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/app/i18n/LanguageContext";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 const TYPE_LABELS: Record<string, { tr: string; en: string; ru: string }> = {
   daire:      { tr: "Daire",     en: "Apartment", ru: "Квартира" },
@@ -36,6 +37,7 @@ export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { lang, setLang } = useLang();
+  const isMobile = useIsMobile();
   const [project, setProject] = useState<Project | null>(null);
   const [images, setImages] = useState<Image[]>([]);
   const [subscribed, setSubscribed] = useState(false);
@@ -173,7 +175,7 @@ export default function ProjectDetailPage() {
         </div>
       </nav>
 
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: isMobile ? "16px 12px" : "32px 24px" }}>
 
         {/* Cover + Logo */}
         <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", marginBottom: 28, backgroundColor: bgCard, height: 280 }}>
@@ -192,7 +194,7 @@ export default function ProjectDetailPage() {
 
         {/* Title + basic info */}
         <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>{project.title}</h1>
+          <h1 style={{ fontSize: isMobile ? 22 : 32, fontWeight: 800, marginBottom: 8 }}>{project.title}</h1>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", color: textMuted, fontSize: 14 }}>
             <span>📍 {project.district}, {project.city}</span>
             <span>🏠 {TYPE_LABELS[project.project_type]?.[lang as "tr"|"en"|"ru"] || project.project_type}</span>
@@ -271,7 +273,7 @@ export default function ProjectDetailPage() {
             })()}
 
             {/* Contact + PDF */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
               {(() => {
                 // Projektspezifischer Kontakt hat Vorrang, Fallback auf Account-Daten
                 const contactName = project.contact_name || project.profiles?.full_name || null;

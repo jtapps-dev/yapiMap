@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/app/i18n/LanguageContext";
 import ReferralBox from "@/app/components/ReferralBox";
+import { useIsMobile } from "@/app/hooks/useIsMobile";
 
 const accent = "#E8B84B";
 const bgPrimary = "#0F1923";
@@ -39,6 +40,8 @@ type Profile = { full_name: string; status: string; role: string; subscription_s
 export default function BrokerMapPage() {
   const { lang, setLang } = useLang();
   const router = useRouter();
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [selected, setSelected] = useState<Project | null>(null);
@@ -230,8 +233,16 @@ export default function BrokerMapPage() {
       )}
 
       {/* Navbar */}
-      <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "12px 24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-        <span onClick={() => router.push("/")} style={{ color: accent, fontSize: 20, fontWeight: 800, cursor: "pointer" }}>YapıMap</span>
+      <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {isMobile && (
+            <button onClick={() => setSidebarOpen(o => !o)}
+              style={{ background: "none", border: "none", color: accent, fontSize: 22, cursor: "pointer", padding: "0 4px", lineHeight: 1 }}>
+              ☰
+            </button>
+          )}
+          <span onClick={() => router.push("/")} style={{ color: accent, fontSize: 20, fontWeight: 800, cursor: "pointer" }}>YapıMap</span>
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             {(["tr", "en", "ru"] as const).map(l => (
@@ -256,10 +267,23 @@ export default function BrokerMapPage() {
       {/* Referral Banner */}
       {profile.referral_code && <ReferralBox referralCode={profile.referral_code} lang={lang} />}
 
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+      <div style={{ flex: 1, display: "flex", overflow: "hidden", position: "relative" }}>
+
+        {/* Mobile Overlay */}
+        {isMobile && sidebarOpen && (
+          <div onClick={() => setSidebarOpen(false)}
+            style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 50 }} />
+        )}
 
         {/* Sidebar */}
-        <div style={{ width: 280, backgroundColor: bgCard, borderRight: `1px solid ${borderColor}`, flexShrink: 0, display: "flex", flexDirection: "column" }}>
+        <div style={{
+          width: 280, backgroundColor: bgCard, borderRight: `1px solid ${borderColor}`, flexShrink: 0, display: "flex", flexDirection: "column",
+          ...(isMobile ? {
+            position: "absolute", top: 0, left: 0, bottom: 0, zIndex: 60,
+            transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+            transition: "transform 0.25s ease",
+          } : {}),
+        }}>
 
           {/* Tabs */}
           <div style={{ display: "flex", borderBottom: `1px solid ${borderColor}`, flexShrink: 0 }}>
