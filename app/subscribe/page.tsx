@@ -27,8 +27,8 @@ export default function SubscribePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [tryRate, setTryRate] = useState<number>(51);
-  const [eurPrice, setEurPrice] = useState<number>(249);
+  const [tryRate, setTryRate] = useState<number>(32);
+  const [usdPrice, setUsdPrice] = useState<number>(250);
   const [activePriceId, setActivePriceId] = useState<string>(YEARLY_PLAN.priceId);
   const [referralCode, setReferralCode] = useState("");
   const [referralStatus, setReferralStatus] = useState<"idle" | "valid" | "invalid" | "checking">("idle");
@@ -79,29 +79,26 @@ export default function SubscribePage() {
   }, []);
 
   useEffect(() => {
-    fetch("https://api.frankfurter.app/latest?from=TRY&to=EUR")
+    fetch("https://api.frankfurter.app/latest?from=USD&to=TRY")
       .then(r => r.json())
-      .then(d => { if (d.rates?.EUR) setTryRate(1 / d.rates.EUR); })
+      .then(d => { if (d.rates?.TRY) setTryRate(d.rates.TRY); })
       .catch(() => {});
   }, []);
 
   useEffect(() => {
     fetch("/api/paddle/prices")
       .then(r => r.json())
-      .then(d => { if (d.amountEur) setEurPrice(d.amountEur); })
+      .then(d => { if (d.amount) setUsdPrice(d.amount); })
       .catch(() => {});
   }, []);
 
-  function formatPrice(eurPrice: number) {
-    if (lang === "tr") {
-      const try_ = Math.round(eurPrice * tryRate);
-      return "₺" + try_.toLocaleString("tr-TR");
-    }
-    return "€" + eurPrice;
+  function formatPrice(usd: number) {
+    if (lang === "tr") return "₺" + Math.round(usd * tryRate).toLocaleString("tr-TR");
+    return "$" + usd;
   }
 
-  const DISCOUNT = 20; // €20 Rabatt
-  const discountedPrice = eurPrice - DISCOUNT;
+  const DISCOUNT = 20; // $20 discount
+  const discountedPrice = usdPrice - DISCOUNT;
 
   async function applyReferralCode(code?: string) {
     const val = (code ?? referralCode).trim();
@@ -133,10 +130,9 @@ export default function SubscribePage() {
   }
 
   function yearlyDesc() {
-    const monthlyTry = Math.round((eurPrice / 12) * tryRate);
-    if (lang === "tr") return `≈ ₺${monthlyTry.toLocaleString("tr-TR")}/ay — 2 ay ücretsiz.`;
-    if (lang === "ru") return `≈ ₺${monthlyTry.toLocaleString("tr-TR")}/мес — 2 месяца бесплатно.`;
-    return `≈ €${Math.round(eurPrice / 12)}/mo — 2 months free.`;
+    if (lang === "tr") return `≈ ₺${Math.round((usdPrice / 12) * tryRate).toLocaleString("tr-TR")}/ay — 2 ay ücretsiz.`;
+    if (lang === "ru") return `≈ $${Math.round(usdPrice / 12)}/мес — 2 месяца бесплатно.`;
+    return `≈ $${Math.round(usdPrice / 12)}/mo — 2 months free.`;
   }
 
   const tSub = {
@@ -281,11 +277,11 @@ export default function SubscribePage() {
             <div style={{ marginBottom: 8 }}>
               {referralStatus === "valid" ? (
                 <>
-                  <span style={{ fontSize: 32, fontWeight: 800, color: textMuted, textDecoration: "line-through", marginRight: 10 }}>{formatPrice(eurPrice)}</span>
+                  <span style={{ fontSize: 32, fontWeight: 800, color: textMuted, textDecoration: "line-through", marginRight: 10 }}>{formatPrice(usdPrice)}</span>
                   <span style={{ fontSize: 42, fontWeight: 800, color: accent }}>{formatPrice(discountedPrice)}</span>
                 </>
               ) : (
-                <span style={{ fontSize: 42, fontWeight: 800, color: accent }}>{formatPrice(eurPrice)}</span>
+                <span style={{ fontSize: 42, fontWeight: 800, color: accent }}>{formatPrice(usdPrice)}</span>
               )}
               <span style={{ color: textMuted, fontSize: 14, marginLeft: 6 }}>{YEARLY_PLAN[lang as "tr" | "en" | "ru"].period}</span>
             </div>
@@ -324,7 +320,7 @@ export default function SubscribePage() {
               </div>
               {referralStatus === "valid" && (
                 <div style={{ marginTop: 8, fontSize: 13, color: "#10B981", display: "flex", alignItems: "center", gap: 6, backgroundColor: "#10B98115", border: "1px solid #10B98133", borderRadius: 8, padding: "8px 12px" }}>
-                  🎉 {lang === "tr" ? `${referralName} sizi davet etti — €${DISCOUNT} indirim uygulandı!` : lang === "ru" ? `${referralName} пригласил вас — скидка €${DISCOUNT} применена!` : `${referralName} invited you — €${DISCOUNT} discount applied!`}
+                  🎉 {lang === "tr" ? `${referralName} sizi davet etti — $${DISCOUNT} indirim uygulandı!` : lang === "ru" ? `${referralName} пригласил вас — скидка $${DISCOUNT} применена!` : `${referralName} invited you — $${DISCOUNT} discount applied!`}
                 </div>
               )}
               {referralStatus === "invalid" && (

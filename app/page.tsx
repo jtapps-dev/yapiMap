@@ -17,9 +17,9 @@ export default function Home() {
   const { lang, setLang, t } = useLang();
   const router = useRouter();
   const isMobile = useIsMobile();
-  const [tryRate, setTryRate] = useState(51);
+  const [tryRate, setTryRate] = useState(32);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [eurPrice, setEurPrice] = useState<number>(249);
+  const [usdPrice, setUsdPrice] = useState<number>(250);
 
   // Implicit flow: access_token im Hash → zu reset-password weiterleiten
   useEffect(() => {
@@ -41,24 +41,24 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch("https://api.frankfurter.app/latest?from=TRY&to=EUR")
+    fetch("https://api.frankfurter.app/latest?from=USD&to=TRY")
       .then(r => r.json())
-      .then(d => { if (d.rates?.EUR) setTryRate(1 / d.rates.EUR); })
+      .then(d => { if (d.rates?.TRY) setTryRate(d.rates.TRY); })
       .catch(() => {});
   }, []);
 
   useEffect(() => {
     fetch("/api/paddle/prices")
       .then(r => r.json())
-      .then(d => { if (d.amountEur) setEurPrice(d.amountEur); })
+      .then(d => { if (d.amount) setUsdPrice(d.amount); })
       .catch(() => {});
   }, []);
 
-  function formatPrice(eur: number) {
-    if (lang === "tr") return "₺" + Math.round(eur * tryRate).toLocaleString("tr-TR");
-    return "€" + eur;
+  function formatPrice(usd: number) {
+    if (lang === "tr") return "₺" + Math.round(usd * tryRate).toLocaleString("tr-TR");
+    return "$" + usd;
   }
-  const price = formatPrice(eurPrice);
+  const price = formatPrice(usdPrice);
 
   return (
     <div style={{ backgroundColor: bgPrimary, color: "#F1F5F9", minHeight: "100vh", fontFamily: "system-ui, sans-serif" }}>

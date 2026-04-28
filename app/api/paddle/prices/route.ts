@@ -16,16 +16,9 @@ export async function GET() {
     const amount = parseInt(unitPrice.amount) / 100;
     const currency = unitPrice.currency_code as string;
 
-    // Convert to EUR if needed
-    let amountEur = amount;
-    if (currency === "USD") {
-      // approximate: 1 USD ≈ 0.92 EUR
-      amountEur = Math.round(amount * 0.92);
-    }
-
-    return NextResponse.json({ amount, amountEur, currency, priceId });
+    return NextResponse.json({ amount, currency, priceId });
   } catch {
-    const fallback = parseInt(process.env.PADDLE_PRICE_AMOUNT || "249");
-    return NextResponse.json({ amount: fallback, amountEur: fallback, currency: "EUR", priceId: process.env.NEXT_PUBLIC_PADDLE_PRICE_ID });
+    const fallback = parseInt(process.env.PADDLE_PRICE_AMOUNT || "250");
+    return NextResponse.json({ amount: fallback, currency: "USD", priceId: process.env.NEXT_PUBLIC_PADDLE_PRICE_ID });
   }
 }
