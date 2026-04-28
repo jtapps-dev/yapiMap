@@ -17,7 +17,7 @@ export default function Home() {
   const { lang, setLang, t } = useLang();
   const router = useRouter();
   const isMobile = useIsMobile();
-  const [tryRate, setTryRate] = useState(32);
+  const [tryRate, setTryRate] = useState(38);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [usdPrice, setUsdPrice] = useState<number>(250);
 
@@ -41,7 +41,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch("https://api.frankfurter.app/latest?from=USD&to=TRY")
+    fetch("https://open.er-api.com/v6/latest/USD")
       .then(r => r.json())
       .then(d => { if (d.rates?.TRY) setTryRate(d.rates.TRY); })
       .catch(() => {});

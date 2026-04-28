@@ -27,7 +27,7 @@ export default function SubscribePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [tryRate, setTryRate] = useState<number>(32);
+  const [tryRate, setTryRate] = useState<number>(38);
   const [usdPrice, setUsdPrice] = useState<number>(250);
   const [activePriceId, setActivePriceId] = useState<string>(YEARLY_PLAN.priceId);
   const [referralCode, setReferralCode] = useState("");
@@ -79,7 +79,7 @@ export default function SubscribePage() {
   }, []);
 
   useEffect(() => {
-    fetch("https://api.frankfurter.app/latest?from=USD&to=TRY")
+    fetch("https://open.er-api.com/v6/latest/USD")
       .then(r => r.json())
       .then(d => { if (d.rates?.TRY) setTryRate(d.rates.TRY); })
       .catch(() => {});
