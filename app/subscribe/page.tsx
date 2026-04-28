@@ -192,6 +192,7 @@ export default function SubscribePage() {
       items: [{ priceId: process.env.NEXT_PUBLIC_PADDLE_PRICE_ID!, quantity: 1 }],
       customer: { email: user.email! },
       customData: { userId: user.id },
+      ...(referralStatus === "valid" && { discountId: "dsc_01kq9n8xtrp6cdr9j9fcxg3fxq" }),
     });
     setLoading(false);
   }
