@@ -335,9 +335,9 @@ export default function SubscribePage() {
             </div>
 
             <button
-              onClick={handleStripeCheckout}
-              disabled={loading}
-              style={{ width: "100%", padding: "14px", backgroundColor: accent, color: bgPrimary, fontWeight: 700, fontSize: 15, borderRadius: 8, border: "none", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1 }}>
+              onClick={handleCheckout}
+              disabled={loading || !paddle}
+              style={{ width: "100%", padding: "14px", backgroundColor: accent, color: bgPrimary, fontWeight: 700, fontSize: 15, borderRadius: 8, border: "none", cursor: (loading || !paddle) ? "not-allowed" : "pointer", opacity: (loading || !paddle) ? 0.7 : 1 }}>
               {loading ? "..." : t.cta}
             </button>
           </div>
