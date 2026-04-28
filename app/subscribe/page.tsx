@@ -86,9 +86,9 @@ export default function SubscribePage() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/stripe/prices")
+    fetch("/api/paddle/prices")
       .then(r => r.json())
-      .then(d => { if (d.amountEur) setEurPrice(d.amountEur); if (d.priceId) setActivePriceId(d.priceId); })
+      .then(d => { if (d.amountEur) setEurPrice(d.amountEur); })
       .catch(() => {});
   }, []);
 

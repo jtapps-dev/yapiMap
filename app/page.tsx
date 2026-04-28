@@ -48,7 +48,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/stripe/prices")
+    fetch("/api/paddle/prices")
       .then(r => r.json())
       .then(d => { if (d.amountEur) setEurPrice(d.amountEur); })
       .catch(() => {});
