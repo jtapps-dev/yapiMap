@@ -24,7 +24,7 @@ const content = {
       },
       {
         heading: "3. Abonelik ve Ödeme",
-        text: "Belirli özellikler ücretli abonelik gerektirir. Abonelik ücretleri, ödeme sırasında belirtilen tutarlardadır. Ödemeler PayTR veya Stripe aracılığıyla güvenli biçimde işlenir. Abonelik, iptal edilene kadar otomatik olarak yenilenir.",
+        text: "Belirli özellikler ücretli abonelik gerektirir. Abonelik ücretleri, ödeme sırasında belirtilen tutarlardadır. Ödemeler Paddle aracılığıyla güvenli biçimde işlenir. Abonelik, iptal edilene kadar otomatik olarak yenilenir.",
       },
       {
         heading: "4. Kullanım Kuralları",
@@ -75,7 +75,7 @@ const content = {
       },
       {
         heading: "3. Subscription & Payment",
-        text: "Certain features require a paid subscription. Subscription fees are stated at the time of purchase. Payments are processed securely via PayTR or Stripe. Subscriptions renew automatically until cancelled.",
+        text: "Certain features require a paid subscription. Subscription fees are stated at the time of purchase. Payments are processed securely via Paddle. Subscriptions renew automatically until cancelled.",
       },
       {
         heading: "4. Acceptable Use",
@@ -126,7 +126,7 @@ const content = {
       },
       {
         heading: "3. Подписка и оплата",
-        text: "Некоторые функции требуют платной подписки. Стоимость подписки указывается в момент оформления. Платежи обрабатываются безопасно через PayTR или Stripe. Подписка продлевается автоматически до отмены.",
+        text: "Некоторые функции требуют платной подписки. Стоимость подписки указывается в момент оформления. Платежи обрабатываются безопасно через Paddle. Подписка продлевается автоматически до отмены.",
       },
       {
         heading: "4. Правила использования",
