@@ -171,7 +171,9 @@ export default function AdminClient({ initialProfiles, currentUserEmail }: { ini
 
   async function approveFree(userId: string) {
     setActionLoading(userId);
-    await fetch("/api/admin/approve-free", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId }) });
+    const r = await fetch("/api/admin/approve-free", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId }) });
+    const rj = await r.json();
+    if (rj.error) { alert("Error: " + rj.error); setActionLoading(null); return; }
     const res = await fetch("/api/admin/users");
     const json = await res.json();
     setProfiles(json.profiles || []);
