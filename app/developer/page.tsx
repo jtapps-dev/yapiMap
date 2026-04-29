@@ -158,7 +158,7 @@ export default function DeveloperPage() {
   }
 
   function requireSubscription(action: () => void) {
-    if (profile?.subscription_status !== "active") {
+    if (profile?.subscription_status !== "active" && profile?.subscription_status !== "admin_free") {
       router.push("/subscribe");
       return;
     }

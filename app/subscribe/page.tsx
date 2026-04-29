@@ -215,7 +215,7 @@ export default function SubscribePage() {
 
   const backUrl = profile?.role === "developer" ? "/developer" : "/broker/map";
 
-  if (profile?.subscription_status === "active") {
+  if (profile?.subscription_status === "active" || profile?.subscription_status === "admin_free") {
     return (
       <div style={{ minHeight: "100vh", backgroundColor: bgPrimary, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "system-ui, sans-serif" }}>
         <div style={{ textAlign: "center" }}>

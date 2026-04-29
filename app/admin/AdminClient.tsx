@@ -21,9 +21,12 @@ const t = {
     noUsers: "Kullanıcı bulunamadı",
     role: { broker: "🏠 Emlakçı", developer: "🏗️ Geliştirici" },
     approve: "✓ Onayla",
+    approveFree: "🎁 Onayla + Ücretsiz",
     reject: "✗ Reddet",
     reapprove: "Tekrar Onayla",
     active: "✓ Aktif",
+    activePaddle: "✓ Aktif (Paddle)",
+    activeFree: "✓ Aktif (Ücretsiz)",
     tax: "Vergi No",
     ref: "Ref",
     privacy: "Gizlilik",
@@ -52,9 +55,12 @@ const t = {
     noUsers: "No users found",
     role: { broker: "🏠 Broker", developer: "🏗️ Developer" },
     approve: "✓ Approve",
+    approveFree: "🎁 Approve + Free",
     reject: "✗ Reject",
     reapprove: "Re-approve",
     active: "✓ Active",
+    activePaddle: "✓ Active (Paddle)",
+    activeFree: "✓ Active (Free)",
     tax: "Tax No",
     ref: "Ref",
     privacy: "Privacy",
@@ -83,9 +89,12 @@ const t = {
     noUsers: "Пользователи не найдены",
     role: { broker: "🏠 Маклер", developer: "🏗️ Застройщик" },
     approve: "✓ Одобрить",
+    approveFree: "🎁 Одобрить + Бесплатно",
     reject: "✗ Отклонить",
     reapprove: "Одобрить снова",
     active: "✓ Активен",
+    activePaddle: "✓ Активен (Paddle)",
+    activeFree: "✓ Активен (Бесплатно)",
     tax: "ИНН",
     ref: "Реф",
     privacy: "Конфиденциальность",
@@ -154,6 +163,15 @@ export default function AdminClient({ initialProfiles, currentUserEmail }: { ini
   async function approve(userId: string) {
     setActionLoading(userId);
     await fetch("/api/admin/approve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId }) });
+    const res = await fetch("/api/admin/users");
+    const json = await res.json();
+    setProfiles(json.profiles || []);
+    setActionLoading(null);
+  }
+
+  async function approveFree(userId: string) {
+    setActionLoading(userId);
+    await fetch("/api/admin/approve-free", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId }) });
     const res = await fetch("/api/admin/users");
     const json = await res.json();
     setProfiles(json.profiles || []);
@@ -317,18 +335,28 @@ export default function AdminClient({ initialProfiles, currentUserEmail }: { ini
                       </p>
                     </div>
                     {p.status === "pending" && (
-                      <div style={{ display: "flex", gap: 10 }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         <button onClick={() => approve(p.id)} disabled={actionLoading === p.id}
                           style={{ backgroundColor: accent, color: "#0F1923", fontWeight: 700, padding: "10px 20px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 14, opacity: actionLoading === p.id ? 0.6 : 1 }}>
                           {actionLoading === p.id ? "..." : l.approve}
                         </button>
+                        {p.role === "developer" && (
+                          <button onClick={() => approveFree(p.id)} disabled={actionLoading === p.id}
+                            style={{ backgroundColor: "#10B981", color: "#fff", fontWeight: 700, padding: "10px 20px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 14, opacity: actionLoading === p.id ? 0.6 : 1 }}>
+                            {actionLoading === p.id ? "..." : l.approveFree}
+                          </button>
+                        )}
                         <button onClick={() => reject(p.id)} disabled={actionLoading === p.id}
                           style={{ backgroundColor: "transparent", color: "#EF4444", fontWeight: 600, padding: "10px 20px", borderRadius: 8, border: "1px solid #EF4444", cursor: "pointer", fontSize: 14 }}>
                           {l.reject}
                         </button>
                       </div>
                     )}
-                    {p.status === "active" && <span style={{ color: "#10B981", fontSize: 14, fontWeight: 600 }}>{l.active}</span>}
+                    {p.status === "active" && (
+                      <span style={{ fontSize: 14, fontWeight: 600, color: "#10B981" }}>
+                        {p.subscription_status === "admin_free" ? l.activeFree : p.subscription_status === "active" ? l.activePaddle : l.active}
+                      </span>
+                    )}
                     {p.status === "rejected" && (
                       <button onClick={() => approve(p.id)}
                         style={{ color: accent, fontSize: 13, background: "none", border: `1px solid ${borderColor}`, padding: "8px 16px", borderRadius: 8, cursor: "pointer" }}>
