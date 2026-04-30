@@ -223,7 +223,14 @@ function CatalogContent() {
       const pxH = canvas.height / 2;
       const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [pxW, pxH] });
       pdf.addImage(imgData, "JPEG", 0, 0, pxW, pxH);
-      pdf.save(`yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (isIOS) {
+        const blob = pdf.output("blob");
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank");
+      } else {
+        pdf.save(`yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`);
+      }
     } catch (e) {
       console.error("PDF error:", e);
     } finally {
