@@ -224,12 +224,20 @@ function CatalogContent() {
       const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [pxW, pxH] });
       pdf.addImage(imgData, "JPEG", 0, 0, pxW, pxH);
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const filename = `yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`;
       if (isIOS) {
         const blob = pdf.output("blob");
         const url = URL.createObjectURL(blob);
-        window.open(url, "_blank");
+        const a = document.createElement("a");
+        a.href = url;
+        a.target = "_blank";
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
       } else {
-        pdf.save(`yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`);
+        pdf.save(filename);
       }
     } catch (e) {
       console.error("PDF error:", e);
