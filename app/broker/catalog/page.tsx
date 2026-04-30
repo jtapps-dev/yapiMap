@@ -126,6 +126,7 @@ function CatalogContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [iosPdfUrl, setIosPdfUrl] = useState<string | null>(null);
   const catalogRef = useRef<HTMLDivElement>(null);
   const [brokerName, setBrokerName] = useState("");
   const [brokerPhone, setBrokerPhone] = useState("");
@@ -228,14 +229,7 @@ function CatalogContent() {
       if (isIOS) {
         const blob = pdf.output("blob");
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.target = "_blank";
-        a.rel = "noopener";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        setIosPdfUrl(url);
       } else {
         pdf.save(filename);
       }
@@ -260,6 +254,12 @@ function CatalogContent() {
           style={{ padding: "10px 24px", backgroundColor: pdfLoading ? "#888" : "#E8B84B", color: "#0F1923", fontWeight: 700, fontSize: 14, borderRadius: 8, border: "none", cursor: pdfLoading ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
           {pdfLoading ? tx.generating : `⬇ ${tx.savePdf}`}
         </button>
+        {iosPdfUrl && (
+          <a href={iosPdfUrl} target="_blank" rel="noopener"
+            style={{ padding: "10px 24px", backgroundColor: "#10B981", color: "#fff", fontWeight: 700, fontSize: 14, borderRadius: 8, textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
+            📄 {lang === "tr" ? "PDF'i Aç" : lang === "ru" ? "Открыть PDF" : "Open PDF"}
+          </a>
+        )}
         <button onClick={() => router.push("/broker/map")}
           style={{ padding: "10px 20px", backgroundColor: "transparent", color: "#94A3B8", fontSize: 14, borderRadius: 8, border: "1px solid #ffffff30", cursor: "pointer" }}>
           {tx.backToMap}
