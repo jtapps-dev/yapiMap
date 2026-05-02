@@ -198,25 +198,29 @@ function CatalogContent() {
       const allImgs = Array.from(el.querySelectorAll("img")) as HTMLImageElement[];
       await Promise.all(allImgs.map(img => new Promise<void>(resolve => {
         if (!img.src || img.src.startsWith("data:")) { resolve(); return; }
+        const timeout = setTimeout(() => resolve(), 5000); // max 5s per image
         fetch(img.src)
           .then(r => r.blob())
           .then(blob => {
             const reader = new FileReader();
-            reader.onloadend = () => { img.src = reader.result as string; resolve(); };
+            reader.onloadend = () => { clearTimeout(timeout); img.src = reader.result as string; resolve(); };
             reader.readAsDataURL(blob);
           })
-          .catch(() => resolve()); // skip on error, don't block
+          .catch(() => { clearTimeout(timeout); resolve(); });
       })));
 
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#0F1923",
-        logging: false,
-        windowWidth: el.scrollWidth,
-        windowHeight: el.scrollHeight,
-      });
+      const canvas = await Promise.race([
+        html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: "#0F1923",
+          logging: false,
+          windowWidth: el.scrollWidth,
+          windowHeight: el.scrollHeight,
+        }),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 30000)),
+      ]) as HTMLCanvasElement;
 
       const imgData = canvas.toDataURL("image/jpeg", 0.92);
       // Single tall page — no page-break cuts
@@ -233,8 +237,9 @@ function CatalogContent() {
       } else {
         pdf.save(filename);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("PDF error:", e);
+      alert(e?.message === "timeout" ? "PDF generation timed out. Please try again." : "PDF error. Please try again.");
     } finally {
       setPdfLoading(false);
     }
