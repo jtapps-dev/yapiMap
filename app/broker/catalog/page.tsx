@@ -207,6 +207,7 @@ function CatalogContent() {
             reader.onloadend = () => resolve(reader.result as string);
             reader.readAsDataURL(blob);
           });
+          img.setAttribute("src", dataUrl);
           img.src = dataUrl;
           await new Promise<void>(resolve => {
             if (img.complete) { resolve(); return; }
