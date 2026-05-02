@@ -193,23 +193,28 @@ function CatalogContent() {
       window.scrollTo(0, 0);
       await new Promise(r => setTimeout(r, 150));
 
-      // Replace all image srcs with same-origin proxy URLs to fix Safari CORS
+      // Fetch all images via proxy and set as data URLs (no CORS issues)
       const allImgs = Array.from(el.querySelectorAll("img")) as HTMLImageElement[];
-      allImgs.forEach(img => {
+      await Promise.all(allImgs.map(async img => {
         const src = img.getAttribute("src");
-        if (src && !src.startsWith("data:") && !src.startsWith("/api/image-proxy")) {
-          img.loading = "eager";
-          img.src = `/api/image-proxy?url=${encodeURIComponent(src)}`;
-        }
-      });
-
-      // Wait for all images to load
-      await Promise.all(allImgs.map(img => new Promise<void>(resolve => {
-        if (img.complete) { resolve(); return; }
-        img.onload = () => resolve();
-        img.onerror = () => resolve();
-        setTimeout(() => resolve(), 8000);
-      })));
+        if (!src || src.startsWith("data:")) return;
+        try {
+          const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(src)}`;
+          const res = await fetch(proxyUrl);
+          const blob = await res.blob();
+          const dataUrl = await new Promise<string>(resolve => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          img.src = dataUrl;
+          await new Promise<void>(resolve => {
+            if (img.complete) { resolve(); return; }
+            img.onload = () => resolve();
+            img.onerror = () => resolve();
+          });
+        } catch { /* skip */ }
+      }));
 
       await new Promise(r => setTimeout(r, 300));
 
