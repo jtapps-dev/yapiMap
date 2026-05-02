@@ -183,49 +183,27 @@ function CatalogContent() {
     if (!catalogRef.current) return;
     setPdfLoading(true);
     try {
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import("html2canvas"),
+      const [{ toJpeg }, { default: jsPDF }] = await Promise.all([
+        import("html-to-image"),
         import("jspdf"),
       ]);
 
       const el = catalogRef.current;
 
-      // Scroll to top so html2canvas captures the full element (incl. broker card above viewport)
       window.scrollTo(0, 0);
       await new Promise(r => setTimeout(r, 150));
 
-      // Convert all external images to data URLs so html2canvas can capture them
-      const allImgs = Array.from(el.querySelectorAll("img")) as HTMLImageElement[];
-      await Promise.all(allImgs.map(img => new Promise<void>(resolve => {
-        if (!img.src || img.src.startsWith("data:")) { resolve(); return; }
-        const timeout = setTimeout(() => resolve(), 5000); // max 5s per image
-        fetch(img.src)
-          .then(r => r.blob())
-          .then(blob => {
-            const reader = new FileReader();
-            reader.onloadend = () => { clearTimeout(timeout); img.src = reader.result as string; resolve(); };
-            reader.readAsDataURL(blob);
-          })
-          .catch(() => { clearTimeout(timeout); resolve(); });
-      })));
+      const imgData = await toJpeg(el, {
+        quality: 0.92,
+        backgroundColor: "#0F1923",
+        pixelRatio: 2,
+      });
 
-      const canvas = await Promise.race([
-        html2canvas(el, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: "#0F1923",
-          logging: false,
-          windowWidth: el.scrollWidth,
-          windowHeight: el.scrollHeight,
-        }),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 30000)),
-      ]) as HTMLCanvasElement;
-
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      // Single tall page — no page-break cuts
-      const pxW = canvas.width / 2;
-      const pxH = canvas.height / 2;
+      const img = new Image();
+      img.src = imgData;
+      await new Promise(r => { img.onload = r; });
+      const pxW = img.naturalWidth / 2;
+      const pxH = img.naturalHeight / 2;
       const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [pxW, pxH] });
       pdf.addImage(imgData, "JPEG", 0, 0, pxW, pxH);
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
