@@ -193,34 +193,25 @@ function CatalogContent() {
       window.scrollTo(0, 0);
       await new Promise(r => setTimeout(r, 150));
 
-      // Force all lazy images to load and convert to data URLs for Safari
+      // Replace all image srcs with same-origin proxy URLs to fix Safari CORS
       const allImgs = Array.from(el.querySelectorAll("img")) as HTMLImageElement[];
+      allImgs.forEach(img => {
+        const src = img.getAttribute("src");
+        if (src && !src.startsWith("data:") && !src.startsWith("/api/image-proxy")) {
+          img.loading = "eager";
+          img.src = `/api/image-proxy?url=${encodeURIComponent(src)}`;
+        }
+      });
+
+      // Wait for all images to load
       await Promise.all(allImgs.map(img => new Promise<void>(resolve => {
-        const src = img.getAttribute("src") || img.src;
-        if (!src || src.startsWith("data:")) { resolve(); return; }
-        img.loading = "eager";
-        const timeout = setTimeout(() => resolve(), 8000);
-        fetch(src, { mode: "cors" })
-          .then(r => r.blob())
-          .then(blob => new Promise<string>(res => {
-            const reader = new FileReader();
-            reader.onloadend = () => res(reader.result as string);
-            reader.readAsDataURL(blob);
-          }))
-          .then(dataUrl => {
-            clearTimeout(timeout);
-            img.src = dataUrl;
-            if (img.complete) resolve();
-            else { img.onload = () => resolve(); img.onerror = () => resolve(); }
-          })
-          .catch(() => { clearTimeout(timeout); resolve(); });
+        if (img.complete) { resolve(); return; }
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        setTimeout(() => resolve(), 8000);
       })));
 
-      await new Promise(r => setTimeout(r, 500));
-
-      // Safari needs two passes to render correctly
-      await toJpeg(el, { quality: 0.5, pixelRatio: 1 });
-      await new Promise(r => setTimeout(r, 200));
+      await new Promise(r => setTimeout(r, 300));
 
       const imgData = await toJpeg(el, {
         quality: 0.92,
