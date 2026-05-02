@@ -193,6 +193,23 @@ function CatalogContent() {
       window.scrollTo(0, 0);
       await new Promise(r => setTimeout(r, 150));
 
+      // Preload all images as data URLs to fix cross-origin issues on Safari
+      const allImgs = Array.from(el.querySelectorAll("img")) as HTMLImageElement[];
+      await Promise.all(allImgs.map(img => new Promise<void>(resolve => {
+        if (!img.src || img.src.startsWith("data:")) { resolve(); return; }
+        const timeout = setTimeout(() => resolve(), 5000);
+        fetch(img.src)
+          .then(r => r.blob())
+          .then(blob => {
+            const reader = new FileReader();
+            reader.onloadend = () => { clearTimeout(timeout); img.src = reader.result as string; resolve(); };
+            reader.readAsDataURL(blob);
+          })
+          .catch(() => { clearTimeout(timeout); resolve(); });
+      })));
+
+      await new Promise(r => setTimeout(r, 100));
+
       const imgData = await toJpeg(el, {
         quality: 0.92,
         backgroundColor: "#0F1923",
