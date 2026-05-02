@@ -193,22 +193,34 @@ function CatalogContent() {
       window.scrollTo(0, 0);
       await new Promise(r => setTimeout(r, 150));
 
-      // Preload all images as data URLs to fix cross-origin issues on Safari
+      // Force all lazy images to load and convert to data URLs for Safari
       const allImgs = Array.from(el.querySelectorAll("img")) as HTMLImageElement[];
       await Promise.all(allImgs.map(img => new Promise<void>(resolve => {
-        if (!img.src || img.src.startsWith("data:")) { resolve(); return; }
-        const timeout = setTimeout(() => resolve(), 5000);
-        fetch(img.src)
+        const src = img.getAttribute("src") || img.src;
+        if (!src || src.startsWith("data:")) { resolve(); return; }
+        img.loading = "eager";
+        const timeout = setTimeout(() => resolve(), 8000);
+        fetch(src, { mode: "cors" })
           .then(r => r.blob())
-          .then(blob => {
+          .then(blob => new Promise<string>(res => {
             const reader = new FileReader();
-            reader.onloadend = () => { clearTimeout(timeout); img.src = reader.result as string; resolve(); };
+            reader.onloadend = () => res(reader.result as string);
             reader.readAsDataURL(blob);
+          }))
+          .then(dataUrl => {
+            clearTimeout(timeout);
+            img.src = dataUrl;
+            if (img.complete) resolve();
+            else { img.onload = () => resolve(); img.onerror = () => resolve(); }
           })
           .catch(() => { clearTimeout(timeout); resolve(); });
       })));
 
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, 500));
+
+      // Safari needs two passes to render correctly
+      await toJpeg(el, { quality: 0.5, pixelRatio: 1 });
+      await new Promise(r => setTimeout(r, 200));
 
       const imgData = await toJpeg(el, {
         quality: 0.92,
