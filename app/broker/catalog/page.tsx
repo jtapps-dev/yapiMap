@@ -325,10 +325,10 @@ function CatalogContent() {
         setT(7, MUTED); pdf.text(san(tx.projectOf(i + 1, projects.length).toUpperCase()), M, py + 5); py += 11;
 
         if (coverDatas[i]) {
-          safeImg(coverDatas[i], M, py, CW, 62); py += 66;
+          safeImg(coverDatas[i], M, py, CW, 62); py += 72;
         } else {
           pdf.setFillColor(...CARD); pdf.rect(M, py, CW, 40, "F");
-          setT(10, MUTED); pdf.text("—", W / 2, py + 22, { align: "center" }); py += 44;
+          setT(10, MUTED); pdf.text("—", W / 2, py + 22, { align: "center" }); py += 48;
         }
 
         setT(20, WHITE, true);
@@ -385,32 +385,39 @@ function CatalogContent() {
           py += Math.ceil(maxGal / 3) * (gh + 3) + 4;
         }
 
+        // Advisor card is fixed at bottom — all content must end before it
+        const advY = H - M - 20;
+        const contentMax = advY - 4;
+
         // Amenities
-        if (p.amenities && p.amenities.length > 0 && py < H - 55) {
+        if (p.amenities && p.amenities.length > 0 && py < contentMax - 16) {
           setT(8, GOLD, true); pdf.text(san(tx.amenities.toUpperCase()), M, py);
           pdf.setDrawColor(...GOLD); pdf.setLineWidth(0.4); pdf.line(M, py + 2, W - M, py + 2);
           py += 8;
           const aw = (CW - 6) / 3;
-          p.amenities.forEach((a, j) => {
+          const maxARows = Math.floor((contentMax - py) / 8);
+          const maxA = Math.min(p.amenities.length, maxARows * 3);
+          p.amenities.slice(0, maxA).forEach((a, j) => {
             const ax = M + (j % 3) * (aw + 3), ay = py + Math.floor(j / 3) * 8;
             pdf.setFillColor(...CARD); pdf.rect(ax, ay, aw, 6.5, "F");
             setT(7, WHITE); pdf.text(san(translateAmenity(a, lang)), ax + 2, ay + 4.5);
           });
-          py += Math.ceil(p.amenities.length / 3) * 8 + 4;
+          py += Math.ceil(maxA / 3) * 8 + 4;
         }
 
         // Payment plan
-        if (p.payment_plan && py < H - 50) {
+        if (p.payment_plan && py < contentMax - 14) {
           const pLines = p.payment_plan.split("\n").filter(Boolean);
-          const pH = pLines.length * 5 + 12;
+          const pH = Math.min(pLines.length, Math.floor((contentMax - py - 12) / 5)) * 5 + 12;
           pdf.setFillColor(...DARK); pdf.rect(M, py, CW, pH, "F");
           setT(7, MUTED); pdf.text(san(tx.payment.toUpperCase()), M + 4, py + 6);
-          setT(8, WHITE); pLines.forEach((line, j) => pdf.text(`> ${san(line)}`, M + 4, py + 12 + j * 5));
+          setT(8, WHITE); pLines.forEach((line, j) => {
+            if (py + 12 + j * 5 < contentMax) pdf.text(`> ${san(line)}`, M + 4, py + 12 + j * 5);
+          });
           py += pH + 4;
         }
 
-        // Advisor card — fixed at bottom
-        const advY = H - M - 20;
+        // Advisor card
         pdf.setFillColor(...CARD); pdf.rect(M, advY, CW, 20, "F");
         setT(7, MUTED); pdf.text(san(tx.advisor.toUpperCase()), M + 5, advY + 5);
         setT(11, WHITE, true); pdf.text(san(brokerName || "—"), M + 5, advY + 12);
