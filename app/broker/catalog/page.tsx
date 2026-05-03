@@ -125,8 +125,7 @@ function CatalogContent() {
   const [images, setImages] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
-  const [iosPdfUrl, setIosPdfUrl] = useState<string | null>(null);
+  const [pdfLoading] = useState(false);
   const catalogRef = useRef<HTMLDivElement>(null);
   const [brokerName, setBrokerName] = useState("");
   const [brokerPhone, setBrokerPhone] = useState("");
@@ -200,50 +199,8 @@ function CatalogContent() {
     return new Date(d).toLocaleDateString(locale, { month: "long", year: "numeric" });
   }
 
-  async function downloadPDF() {
-    if (!catalogRef.current) return;
-    setPdfLoading(true);
-    try {
-      const [{ toJpeg }, { default: jsPDF }] = await Promise.all([
-        import("html-to-image"),
-        import("jspdf"),
-      ]);
-
-      const el = catalogRef.current;
-
-      window.scrollTo(0, 0);
-      await new Promise(r => setTimeout(r, 150));
-
-      await new Promise(r => setTimeout(r, 300));
-
-      const imgData = await toJpeg(el, {
-        quality: 0.92,
-        backgroundColor: "#0F1923",
-        pixelRatio: 2,
-      });
-
-      const img = new Image();
-      img.src = imgData;
-      await new Promise(r => { img.onload = r; });
-      const pxW = img.naturalWidth / 2;
-      const pxH = img.naturalHeight / 2;
-      const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [pxW, pxH] });
-      pdf.addImage(imgData, "JPEG", 0, 0, pxW, pxH);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const filename = `yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`;
-      if (isIOS) {
-        const blob = pdf.output("blob");
-        const url = URL.createObjectURL(blob);
-        setIosPdfUrl(url);
-      } else {
-        pdf.save(filename);
-      }
-    } catch (e: any) {
-      console.error("PDF error:", e);
-      alert(e?.message === "timeout" ? "PDF generation timed out. Please try again." : "PDF error. Please try again.");
-    } finally {
-      setPdfLoading(false);
-    }
+  function downloadPDF() {
+    window.print();
   }
 
   if (loading) return <div style={{ padding: 60, textAlign: "center", fontFamily: "system-ui", color: "#94A3B8", backgroundColor: "#0F1923", minHeight: "100vh" }}>{tx.loading}</div>;
@@ -253,19 +210,14 @@ function CatalogContent() {
 
   return (
     <div style={{ fontFamily: "'Georgia', serif", background: "linear-gradient(135deg, #1a1a2e 0%, #232323 50%, #1a1a2e 100%)", color: "#F1F5F9", maxWidth: 860, margin: "0 auto", padding: "40px 40px 60px" }}>
+      <style>{`@media print { .no-print { display: none !important; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } @page { margin: 0; } }`}</style>
 
       {/* Toolbar */}
-      <div style={{ marginBottom: 32, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: "16px 20px", backgroundColor: "#ffffff10", borderRadius: 10, border: "1px solid #ffffff20" }}>
+      <div className="no-print" style={{ marginBottom: 32, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: "16px 20px", backgroundColor: "#ffffff10", borderRadius: 10, border: "1px solid #ffffff20" }}>
         <button onClick={downloadPDF} disabled={pdfLoading}
           style={{ padding: "10px 24px", backgroundColor: pdfLoading ? "#888" : "#E8B84B", color: "#0F1923", fontWeight: 700, fontSize: 14, borderRadius: 8, border: "none", cursor: pdfLoading ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
           {pdfLoading ? tx.generating : `⬇ ${tx.savePdf}`}
         </button>
-        {iosPdfUrl && (
-          <a href={iosPdfUrl} target="_blank" rel="noopener"
-            style={{ padding: "10px 24px", backgroundColor: "#10B981", color: "#fff", fontWeight: 700, fontSize: 14, borderRadius: 8, textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
-            📄 {lang === "tr" ? "PDF'i Aç" : lang === "ru" ? "Открыть PDF" : "Open PDF"}
-          </a>
-        )}
         <button onClick={() => router.push("/broker/map")}
           style={{ padding: "10px 20px", backgroundColor: "transparent", color: "#94A3B8", fontSize: 14, borderRadius: 8, border: "1px solid #ffffff30", cursor: "pointer" }}>
           {tx.backToMap}
