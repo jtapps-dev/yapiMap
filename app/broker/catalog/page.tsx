@@ -189,69 +189,48 @@ function CatalogContent() {
       ]);
 
       const el = catalogRef.current;
-
-      // Scroll to top so html2canvas captures the full element (incl. broker card above viewport)
       window.scrollTo(0, 0);
       await new Promise(r => setTimeout(r, 150));
 
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
       const allImgs = Array.from(el.querySelectorAll("img")) as HTMLImageElement[];
 
-      // Fetch all images as data URLs via proxy
-      const imgDataUrls = await Promise.all(allImgs.map(async img => {
+      // Convert all images to same-origin data URLs via proxy (fixes Safari CORS black box)
+      await Promise.all(allImgs.map(async img => {
         const src = img.getAttribute("src");
-        if (!src || src.startsWith("data:")) return { img, dataUrl: src || "" };
+        if (!src || src.startsWith("data:")) return;
         try {
-          const res = await fetch(`/api/image-proxy?url=${encodeURIComponent(src)}`);
+          const controller = new AbortController();
+          const t = setTimeout(() => controller.abort(), 8000);
+          const res = await fetch(`/api/image-proxy?url=${encodeURIComponent(src)}`, { signal: controller.signal });
+          clearTimeout(t);
           const blob = await res.blob();
           const dataUrl = await new Promise<string>(r => {
             const reader = new FileReader();
             reader.onloadend = () => r(reader.result as string);
             reader.readAsDataURL(blob);
           });
-          return { img, dataUrl };
-        } catch { return { img, dataUrl: "" }; }
+          img.src = dataUrl;
+        } catch { /* keep original src on failure */ }
       }));
 
-      // For non-Safari: set data URLs directly and let html2canvas capture everything
-      if (!isSafari) {
-        imgDataUrls.forEach(({ img, dataUrl }) => { if (dataUrl) img.src = dataUrl; });
-        await new Promise(r => setTimeout(r, 200));
-      }
+      // Wait for all images to finish loading before capture
+      await Promise.all(allImgs.map(img => new Promise<void>(resolve => {
+        if (img.complete && img.naturalHeight > 0) { resolve(); return; }
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        setTimeout(resolve, 5000);
+      })));
 
-      // On Safari: hide images so html2canvas doesn't try to render them (black box bug)
-      if (isSafari) {
-        allImgs.forEach(img => { img.style.visibility = "hidden"; });
-      }
-
+      // useCORS: false because all images are now same-origin data URLs
       const canvas = await html2canvas(el, {
         scale: 2,
-        useCORS: true,
-        allowTaint: true,
+        useCORS: false,
+        allowTaint: false,
         backgroundColor: "#0F1923",
         logging: false,
         windowWidth: el.scrollWidth,
         windowHeight: el.scrollHeight,
       });
-
-      // On Safari: manually draw images on top of the canvas at correct positions
-      if (isSafari) {
-        allImgs.forEach(img => { img.style.visibility = ""; });
-        const elRect = el.getBoundingClientRect();
-        const ctx = canvas.getContext("2d")!;
-        await Promise.all(imgDataUrls.map(({ img, dataUrl }) => new Promise<void>(resolve => {
-          if (!dataUrl) { resolve(); return; }
-          const rect = img.getBoundingClientRect();
-          const x = (rect.left - elRect.left) * 2;
-          const y = (rect.top - elRect.top) * 2;
-          const w = rect.width * 2;
-          const h = rect.height * 2;
-          const image = new Image();
-          image.onload = () => { ctx.drawImage(image, x, y, w, h); resolve(); };
-          image.onerror = () => resolve();
-          image.src = dataUrl;
-        })));
-      }
 
       const imgData = canvas.toDataURL("image/jpeg", 0.92);
       const pxW = canvas.width / 2;
