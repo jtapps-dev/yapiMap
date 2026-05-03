@@ -162,10 +162,31 @@ function CatalogContent() {
       }
       const ordered = ids.map(id => (projs as Project[])?.find(p => p.id === id)).filter(Boolean) as Project[];
       setProjects(ordered);
+      // Convert all images to data URLs via proxy for Safari compatibility
+      const allUrls: string[] = [];
+      (imgs as Image[] || []).forEach(img => allUrls.push(img.url));
+      ordered.forEach(p => { if (p.cover_image_url) allUrls.push(p.cover_image_url); });
+
+      const dataUrlCache: Record<string, string> = {};
+      await Promise.all(allUrls.map(async url => {
+        try {
+          const res = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`);
+          const blob = await res.blob();
+          dataUrlCache[url] = await new Promise<string>(resolve => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+        } catch { dataUrlCache[url] = url; }
+      }));
+
       const imgMap: Record<string, string[]> = {};
       (imgs as Image[] || []).forEach(img => {
         if (!imgMap[img.project_id]) imgMap[img.project_id] = [];
-        imgMap[img.project_id].push(img.url);
+        imgMap[img.project_id].push(dataUrlCache[img.url] || img.url);
+      });
+      ordered.forEach(p => {
+        if (p.cover_image_url) p.cover_image_url = dataUrlCache[p.cover_image_url] || p.cover_image_url;
       });
       setImages(imgMap);
       setLoading(false);
@@ -192,30 +213,6 @@ function CatalogContent() {
 
       window.scrollTo(0, 0);
       await new Promise(r => setTimeout(r, 150));
-
-      // Fetch all images via proxy and set as data URLs (no CORS issues)
-      const allImgs = Array.from(el.querySelectorAll("img")) as HTMLImageElement[];
-      await Promise.all(allImgs.map(async img => {
-        const src = img.getAttribute("src");
-        if (!src || src.startsWith("data:")) return;
-        try {
-          const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(src)}`;
-          const res = await fetch(proxyUrl);
-          const blob = await res.blob();
-          const dataUrl = await new Promise<string>(resolve => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(blob);
-          });
-          img.setAttribute("src", dataUrl);
-          img.src = dataUrl;
-          await new Promise<void>(resolve => {
-            if (img.complete) { resolve(); return; }
-            img.onload = () => resolve();
-            img.onerror = () => resolve();
-          });
-        } catch { /* skip */ }
-      }));
 
       await new Promise(r => setTimeout(r, 300));
 
