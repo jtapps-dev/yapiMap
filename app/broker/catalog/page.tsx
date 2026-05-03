@@ -182,8 +182,49 @@ function CatalogContent() {
   async function downloadPDF() {
     if (!catalogRef.current) return;
     setPdfLoading(true);
+
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const filename = `yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`;
+
+    // ── Chrome / Firefox / Android: pixel-perfect html2canvas screenshot ──
+    if (!isSafari) {
+      try {
+        const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+          import("html2canvas"),
+          import("jspdf"),
+        ]);
+        const el = catalogRef.current!;
+        window.scrollTo(0, 0);
+        await new Promise(r => setTimeout(r, 150));
+        const canvas = await html2canvas(el, {
+          scale: 2, useCORS: true, allowTaint: true,
+          backgroundColor: "#0F1923", logging: false,
+          windowWidth: el.scrollWidth, windowHeight: el.scrollHeight,
+        });
+        const imgData = canvas.toDataURL("image/jpeg", 0.92);
+        const pxW = canvas.width / 2, pxH = canvas.height / 2;
+        const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [pxW, pxH] });
+        pdf.addImage(imgData, "JPEG", 0, 0, pxW, pxH);
+        if (isIOS) {
+          setIosPdfUrl(URL.createObjectURL(pdf.output("blob")));
+        } else {
+          pdf.save(filename);
+        }
+      } catch (e) { console.error("PDF error:", e); }
+      finally { setPdfLoading(false); }
+      return;
+    }
+
+    // ── Safari / iOS: jsPDF direct (no canvas CORS issues) ──
     try {
       const { default: jsPDF } = await import("jspdf");
+
+      // Turkish chars not in Latin-1 → readable fallback
+      const san = (t: string) => (t || "")
+        .replace(/ı/g, "i").replace(/İ/g, "I")
+        .replace(/ğ/g, "g").replace(/Ğ/g, "G")
+        .replace(/ş/g, "s").replace(/Ş/g, "S");
 
       async function fetchImg(url: string): Promise<string> {
         if (!url || url.startsWith("data:")) return url;
@@ -245,22 +286,19 @@ function CatalogContent() {
       if (logoData) { safeImg(logoData, W / 2 - 22, y, 44, 18); y += 24; }
 
       setT(24, GOLD, true);
-      pdf.text(tx.catalogTitle, W / 2, y, { align: "center" });
+      pdf.text(san(tx.catalogTitle), W / 2, y, { align: "center" });
       y += 9;
       setT(9, MUTED);
-      pdf.text(
-        `${tx.projects(projects.length)}  ·  ${new Date().toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}`,
-        W / 2, y, { align: "center" }
-      );
+      pdf.text(san(`${tx.projects(projects.length)}  ·  ${new Date().toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}`), W / 2, y, { align: "center" });
       y += 8;
       pdf.setDrawColor(...GOLD); pdf.setLineWidth(0.7); pdf.line(M, y, W - M, y);
       y += 10;
 
       // Broker card
       pdf.setFillColor(...CARD); pdf.rect(M, y, CW, 38, "F");
-      setT(7, MUTED); pdf.text(tx.preparedBy.toUpperCase(), M + 6, y + 7);
-      setT(14, WHITE, true); pdf.text(brokerName || "—", M + 6, y + 15);
-      if (brokerCompany) { setT(10, GOLD); pdf.text(brokerCompany, M + 6, y + 22); }
+      setT(7, MUTED); pdf.text(san(tx.preparedBy.toUpperCase()), M + 6, y + 7);
+      setT(14, WHITE, true); pdf.text(san(brokerName || "—"), M + 6, y + 15);
+      if (brokerCompany) { setT(10, GOLD); pdf.text(san(brokerCompany), M + 6, y + 22); }
       const cY = brokerCompany ? y + 29 : y + 23;
       setT(9, MUTED);
       if (brokerPhone) pdf.text(`Tel: ${brokerPhone}`, M + 6, cY);
@@ -269,11 +307,11 @@ function CatalogContent() {
 
       // TOC
       if (projects.length > 1) {
-        setT(8, GOLD, true); pdf.text(tx.toc.toUpperCase(), M, y); y += 5;
+        setT(8, GOLD, true); pdf.text(san(tx.toc.toUpperCase()), M, y); y += 5;
         hline(y); y += 5;
         projects.forEach((p, i) => {
-          setT(10, WHITE, true); pdf.text(`${i + 1}.  ${p.title}`, M, y);
-          setT(10, MUTED); pdf.text(p.city, W - M, y, { align: "right" });
+          setT(10, WHITE, true); pdf.text(`${i + 1}.  ${san(p.title)}`, M, y);
+          setT(10, MUTED); pdf.text(san(p.city), W - M, y, { align: "right" });
           y += 5; hline(y); y += 4;
         });
       }
@@ -284,7 +322,7 @@ function CatalogContent() {
         pdf.addPage(); fillPage();
         let py = M;
 
-        setT(7, MUTED); pdf.text(tx.projectOf(i + 1, projects.length).toUpperCase(), M, py + 5); py += 11;
+        setT(7, MUTED); pdf.text(san(tx.projectOf(i + 1, projects.length).toUpperCase()), M, py + 5); py += 11;
 
         if (coverDatas[i]) {
           safeImg(coverDatas[i], M, py, CW, 62); py += 66;
@@ -294,11 +332,11 @@ function CatalogContent() {
         }
 
         setT(20, WHITE, true);
-        const titleLines = pdf.splitTextToSize(p.title, CW);
+        const titleLines = pdf.splitTextToSize(san(p.title), CW);
         pdf.text(titleLines, M, py); py += titleLines.length * 8 + 2;
 
-        const locParts = [`${p.district ? p.district + ", " : ""}${p.city}`, translateType(p.project_type, lang)];
-        if (p.handover_date) locParts.push(formatDate(p.handover_date));
+        const locParts = [san(`${p.district ? p.district + ", " : ""}${p.city}`), san(translateType(p.project_type, lang))];
+        if (p.handover_date) locParts.push(san(formatDate(p.handover_date)));
         setT(9, MUTED); pdf.text(locParts.join("   |   "), M, py); py += 8;
 
         // Price box
@@ -306,18 +344,20 @@ function CatalogContent() {
         setT(13, GOLD, true); pdf.text(`${formatPrice(p.min_price)}  —  ${formatPrice(p.max_price)}`, M + 4, py + 9);
         let bx = W - M - 4;
         if (p.citizenship_eligible) {
+          const label = san(tx.citizenship);
           setT(7, BLUE, true);
-          const bw = pdf.getTextWidth(tx.citizenship) + 6;
+          const bw = pdf.getTextWidth(label) + 6;
           bx -= bw + 2;
           pdf.setDrawColor(...BLUE); pdf.setLineWidth(0.3); pdf.rect(bx, py + 3, bw, 8, "S");
-          pdf.text(tx.citizenship, bx + bw / 2, py + 8.5, { align: "center" });
+          pdf.text(label, bx + bw / 2, py + 8.5, { align: "center" });
         }
         if (p.ikamet_eligible) {
+          const label = san(tx.residence);
           setT(7, GREEN, true);
-          const bw = pdf.getTextWidth(tx.residence) + 6;
+          const bw = pdf.getTextWidth(label) + 6;
           bx -= bw + 2;
           pdf.setDrawColor(...GREEN); pdf.setLineWidth(0.3); pdf.rect(bx, py + 3, bw, 8, "S");
-          pdf.text(tx.residence, bx + bw / 2, py + 8.5, { align: "center" });
+          pdf.text(label, bx + bw / 2, py + 8.5, { align: "center" });
         }
         py += 18;
 
@@ -325,7 +365,7 @@ function CatalogContent() {
         if (p.description && py < H - 80) {
           pdf.setFillColor(30, 45, 61);
           setT(8.5, [203, 213, 225] as [number,number,number]);
-          const descLines = pdf.splitTextToSize(p.description.substring(0, 400), CW - 8);
+          const descLines = pdf.splitTextToSize(san(p.description.substring(0, 400)), CW - 8);
           const shown = descLines.slice(0, 6);
           const dH = shown.length * 4.5 + 6;
           pdf.rect(M + 1, py, CW - 1, dH, "F");
@@ -347,14 +387,14 @@ function CatalogContent() {
 
         // Amenities
         if (p.amenities && p.amenities.length > 0 && py < H - 55) {
-          setT(8, GOLD, true); pdf.text(tx.amenities.toUpperCase(), M, py);
+          setT(8, GOLD, true); pdf.text(san(tx.amenities.toUpperCase()), M, py);
           pdf.setDrawColor(...GOLD); pdf.setLineWidth(0.4); pdf.line(M, py + 2, W - M, py + 2);
           py += 8;
           const aw = (CW - 6) / 3;
           p.amenities.forEach((a, j) => {
             const ax = M + (j % 3) * (aw + 3), ay = py + Math.floor(j / 3) * 8;
             pdf.setFillColor(...CARD); pdf.rect(ax, ay, aw, 6.5, "F");
-            setT(7, WHITE); pdf.text(translateAmenity(a, lang), ax + 2, ay + 4.5);
+            setT(7, WHITE); pdf.text(san(translateAmenity(a, lang)), ax + 2, ay + 4.5);
           });
           py += Math.ceil(p.amenities.length / 3) * 8 + 4;
         }
@@ -364,24 +404,22 @@ function CatalogContent() {
           const pLines = p.payment_plan.split("\n").filter(Boolean);
           const pH = pLines.length * 5 + 12;
           pdf.setFillColor(...DARK); pdf.rect(M, py, CW, pH, "F");
-          setT(7, MUTED); pdf.text(tx.payment.toUpperCase(), M + 4, py + 6);
-          setT(8, WHITE); pLines.forEach((line, j) => pdf.text(`> ${line}`, M + 4, py + 12 + j * 5));
+          setT(7, MUTED); pdf.text(san(tx.payment.toUpperCase()), M + 4, py + 6);
+          setT(8, WHITE); pLines.forEach((line, j) => pdf.text(`> ${san(line)}`, M + 4, py + 12 + j * 5));
           py += pH + 4;
         }
 
         // Advisor card — fixed at bottom
         const advY = H - M - 20;
         pdf.setFillColor(...CARD); pdf.rect(M, advY, CW, 20, "F");
-        setT(7, MUTED); pdf.text(tx.advisor.toUpperCase(), M + 5, advY + 5);
-        setT(11, WHITE, true); pdf.text(brokerName || "—", M + 5, advY + 12);
-        if (brokerCompany) { setT(8, GOLD); pdf.text(brokerCompany, M + 5, advY + 18); }
+        setT(7, MUTED); pdf.text(san(tx.advisor.toUpperCase()), M + 5, advY + 5);
+        setT(11, WHITE, true); pdf.text(san(brokerName || "—"), M + 5, advY + 12);
+        if (brokerCompany) { setT(8, GOLD); pdf.text(san(brokerCompany), M + 5, advY + 18); }
         setT(8, MUTED);
         if (brokerPhone) pdf.text(`Tel: ${brokerPhone}`, W - M - 4, advY + 12, { align: "right" });
         if (brokerEmail) pdf.text(`E-Mail: ${brokerEmail}`, W - M - 4, advY + 18, { align: "right" });
       }
 
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const filename = `yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`;
       if (isIOS) {
         const blob = pdf.output("blob");
         setIosPdfUrl(URL.createObjectURL(blob));
