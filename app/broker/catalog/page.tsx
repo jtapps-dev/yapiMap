@@ -400,7 +400,9 @@ function CatalogContent() {
           p.amenities.slice(0, maxA).forEach((a, j) => {
             const ax = M + (j % 3) * (aw + 3), ay = py + Math.floor(j / 3) * 8;
             pdf.setFillColor(...CARD); pdf.rect(ax, ay, aw, 6.5, "F");
-            setT(7, WHITE); pdf.text(san(translateAmenity(a, lang)), ax + 2, ay + 4.5);
+            // gold dot as icon replacement
+            pdf.setFillColor(...GOLD); pdf.circle(ax + 3.5, ay + 3.2, 1.3, "F");
+            setT(7, WHITE); pdf.text(san(translateAmenity(a, lang)), ax + 6.5, ay + 4.5);
           });
           py += Math.ceil(maxA / 3) * 8 + 4;
         }
