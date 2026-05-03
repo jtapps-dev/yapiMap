@@ -183,65 +183,208 @@ function CatalogContent() {
     if (!catalogRef.current) return;
     setPdfLoading(true);
     try {
-      const { toJpeg } = await import("html-to-image");
       const { default: jsPDF } = await import("jspdf");
 
-      const el = catalogRef.current;
-      window.scrollTo(0, 0);
-      await new Promise(r => setTimeout(r, 150));
-
-      const allImgs = Array.from(el.querySelectorAll("img")) as HTMLImageElement[];
-
-      // Convert all images to same-origin data URLs via proxy before capture
-      await Promise.all(allImgs.map(async img => {
-        const src = img.getAttribute("src");
-        if (!src || src.startsWith("data:")) return;
+      async function fetchImg(url: string): Promise<string> {
+        if (!url || url.startsWith("data:")) return url;
         try {
-          const controller = new AbortController();
-          const t = setTimeout(() => controller.abort(), 8000);
-          const res = await fetch(`/api/image-proxy?url=${encodeURIComponent(src)}`, { signal: controller.signal });
+          const ctrl = new AbortController();
+          const t = setTimeout(() => ctrl.abort(), 8000);
+          const res = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`, { signal: ctrl.signal });
           clearTimeout(t);
           const blob = await res.blob();
-          const dataUrl = await new Promise<string>(r => {
-            const reader = new FileReader();
-            reader.onloadend = () => r(reader.result as string);
-            reader.readAsDataURL(blob);
+          return await new Promise<string>(r => {
+            const fr = new FileReader();
+            fr.onloadend = () => r(fr.result as string);
+            fr.readAsDataURL(blob);
           });
-          img.src = dataUrl;
-        } catch { /* keep original src */ }
-      }));
+        } catch { return ""; }
+      }
 
-      // Wait for all images to fully render
-      await Promise.all(allImgs.map(img => new Promise<void>(resolve => {
-        if (img.complete && img.naturalHeight > 0) { resolve(); return; }
-        img.onload = () => resolve();
-        img.onerror = () => resolve();
-        setTimeout(resolve, 5000);
-      })));
+      const logoData = await fetchImg(brokerLogo);
+      const coverDatas = await Promise.all(projects.map(p => fetchImg(p.cover_image_url || "")));
+      const galleryDatas = await Promise.all(
+        projects.map(p => Promise.all((images[p.id] || []).slice(0, 6).map(fetchImg)))
+      );
 
-      const dataUrl = await toJpeg(el, {
-        quality: 0.92,
-        backgroundColor: "#0F1923",
-        pixelRatio: 2,
-        skipFonts: true,
-        fetchRequestInit: { mode: "cors" },
-      });
+      const W = 210, H = 297, M = 15, CW = W - M * 2;
+      const BG:   [number,number,number] = [15, 25, 35];
+      const DARK: [number,number,number] = [10, 18, 25];
+      const CARD: [number,number,number] = [30, 45, 61];
+      const GOLD: [number,number,number] = [232, 184, 75];
+      const WHITE:[number,number,number] = [241, 245, 249];
+      const MUTED:[number,number,number] = [148, 163, 184];
+      const GREEN:[number,number,number] = [16, 185, 129];
+      const BLUE: [number,number,number] = [59, 130, 246];
+      const BORD: [number,number,number] = [42, 63, 85];
 
-      const img = new Image();
-      img.src = dataUrl;
-      await new Promise(r => { img.onload = r; });
+      const pdf = new jsPDF({ unit: "mm", format: "a4" });
 
-      const pxW = img.naturalWidth / 2;
-      const pxH = img.naturalHeight / 2;
-      const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [pxW, pxH] });
-      pdf.addImage(dataUrl, "JPEG", 0, 0, pxW, pxH);
+      const fillPage = () => { pdf.setFillColor(...BG); pdf.rect(0, 0, W, H, "F"); };
+
+      const setT = (size: number, col: [number,number,number], bold = false) => {
+        pdf.setFont("helvetica", bold ? "bold" : "normal");
+        pdf.setFontSize(size);
+        pdf.setTextColor(...col);
+      };
+
+      const safeImg = (data: string, x: number, y: number, w: number, h: number) => {
+        if (!data) return;
+        const fmt = data.startsWith("data:image/png") ? "PNG" : "JPEG";
+        try { pdf.addImage(data, fmt, x, y, w, h, undefined, "FAST"); } catch {}
+      };
+
+      const hline = (y: number, col: [number,number,number] = BORD, lw = 0.25) => {
+        pdf.setDrawColor(...col); pdf.setLineWidth(lw); pdf.line(M, y, W - M, y);
+      };
+
+      // ===== COVER PAGE =====
+      fillPage();
+      let y = M + 8;
+
+      if (logoData) { safeImg(logoData, W / 2 - 22, y, 44, 18); y += 24; }
+
+      setT(24, GOLD, true);
+      pdf.text(tx.catalogTitle, W / 2, y, { align: "center" });
+      y += 9;
+      setT(9, MUTED);
+      pdf.text(
+        `${tx.projects(projects.length)}  ·  ${new Date().toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })}`,
+        W / 2, y, { align: "center" }
+      );
+      y += 8;
+      pdf.setDrawColor(...GOLD); pdf.setLineWidth(0.7); pdf.line(M, y, W - M, y);
+      y += 10;
+
+      // Broker card
+      pdf.setFillColor(...CARD); pdf.rect(M, y, CW, 38, "F");
+      setT(7, MUTED); pdf.text(tx.preparedBy.toUpperCase(), M + 6, y + 7);
+      setT(14, WHITE, true); pdf.text(brokerName || "—", M + 6, y + 15);
+      if (brokerCompany) { setT(10, GOLD); pdf.text(brokerCompany, M + 6, y + 22); }
+      const cY = brokerCompany ? y + 29 : y + 23;
+      setT(9, MUTED);
+      if (brokerPhone) pdf.text(`Tel: ${brokerPhone}`, M + 6, cY);
+      if (brokerEmail) pdf.text(`E-Mail: ${brokerEmail}`, M + 6, cY + (brokerPhone ? 6 : 0));
+      y += 46;
+
+      // TOC
+      if (projects.length > 1) {
+        setT(8, GOLD, true); pdf.text(tx.toc.toUpperCase(), M, y); y += 5;
+        hline(y); y += 5;
+        projects.forEach((p, i) => {
+          setT(10, WHITE, true); pdf.text(`${i + 1}.  ${p.title}`, M, y);
+          setT(10, MUTED); pdf.text(p.city, W - M, y, { align: "right" });
+          y += 5; hline(y); y += 4;
+        });
+      }
+
+      // ===== PROJECT PAGES =====
+      for (let i = 0; i < projects.length; i++) {
+        const p = projects[i];
+        pdf.addPage(); fillPage();
+        let py = M;
+
+        setT(7, MUTED); pdf.text(tx.projectOf(i + 1, projects.length).toUpperCase(), M, py + 5); py += 11;
+
+        if (coverDatas[i]) {
+          safeImg(coverDatas[i], M, py, CW, 62); py += 66;
+        } else {
+          pdf.setFillColor(...CARD); pdf.rect(M, py, CW, 40, "F");
+          setT(10, MUTED); pdf.text("—", W / 2, py + 22, { align: "center" }); py += 44;
+        }
+
+        setT(20, WHITE, true);
+        const titleLines = pdf.splitTextToSize(p.title, CW);
+        pdf.text(titleLines, M, py); py += titleLines.length * 8 + 2;
+
+        const locParts = [`${p.district ? p.district + ", " : ""}${p.city}`, translateType(p.project_type, lang)];
+        if (p.handover_date) locParts.push(formatDate(p.handover_date));
+        setT(9, MUTED); pdf.text(locParts.join("   |   "), M, py); py += 8;
+
+        // Price box
+        pdf.setFillColor(...DARK); pdf.rect(M, py, CW, 14, "F");
+        setT(13, GOLD, true); pdf.text(`${formatPrice(p.min_price)}  —  ${formatPrice(p.max_price)}`, M + 4, py + 9);
+        let bx = W - M - 4;
+        if (p.citizenship_eligible) {
+          setT(7, BLUE, true);
+          const bw = pdf.getTextWidth(tx.citizenship) + 6;
+          bx -= bw + 2;
+          pdf.setDrawColor(...BLUE); pdf.setLineWidth(0.3); pdf.rect(bx, py + 3, bw, 8, "S");
+          pdf.text(tx.citizenship, bx + bw / 2, py + 8.5, { align: "center" });
+        }
+        if (p.ikamet_eligible) {
+          setT(7, GREEN, true);
+          const bw = pdf.getTextWidth(tx.residence) + 6;
+          bx -= bw + 2;
+          pdf.setDrawColor(...GREEN); pdf.setLineWidth(0.3); pdf.rect(bx, py + 3, bw, 8, "S");
+          pdf.text(tx.residence, bx + bw / 2, py + 8.5, { align: "center" });
+        }
+        py += 18;
+
+        // Description
+        if (p.description && py < H - 80) {
+          pdf.setFillColor(30, 45, 61);
+          setT(8.5, [203, 213, 225] as [number,number,number]);
+          const descLines = pdf.splitTextToSize(p.description.substring(0, 400), CW - 8);
+          const shown = descLines.slice(0, 6);
+          const dH = shown.length * 4.5 + 6;
+          pdf.rect(M + 1, py, CW - 1, dH, "F");
+          pdf.setDrawColor(...GOLD); pdf.setLineWidth(0.8); pdf.line(M, py, M, py + dH);
+          pdf.text(shown, M + 5, py + 5); py += dH + 4;
+        }
+
+        // Gallery
+        const gal = galleryDatas[i].filter(Boolean);
+        if (gal.length > 0 && py < H - 65) {
+          const gw = (CW - 6) / 3, gh = 27;
+          const maxRows = Math.floor((H - 65 - py) / (gh + 3));
+          const maxGal = Math.min(gal.length, maxRows * 3, 6);
+          for (let j = 0; j < maxGal; j++) {
+            safeImg(gal[j], M + (j % 3) * (gw + 3), py + Math.floor(j / 3) * (gh + 3), gw, gh);
+          }
+          py += Math.ceil(maxGal / 3) * (gh + 3) + 4;
+        }
+
+        // Amenities
+        if (p.amenities && p.amenities.length > 0 && py < H - 55) {
+          setT(8, GOLD, true); pdf.text(tx.amenities.toUpperCase(), M, py);
+          pdf.setDrawColor(...GOLD); pdf.setLineWidth(0.4); pdf.line(M, py + 2, W - M, py + 2);
+          py += 8;
+          const aw = (CW - 6) / 3;
+          p.amenities.forEach((a, j) => {
+            const ax = M + (j % 3) * (aw + 3), ay = py + Math.floor(j / 3) * 8;
+            pdf.setFillColor(...CARD); pdf.rect(ax, ay, aw, 6.5, "F");
+            setT(7, WHITE); pdf.text(translateAmenity(a, lang), ax + 2, ay + 4.5);
+          });
+          py += Math.ceil(p.amenities.length / 3) * 8 + 4;
+        }
+
+        // Payment plan
+        if (p.payment_plan && py < H - 50) {
+          const pLines = p.payment_plan.split("\n").filter(Boolean);
+          const pH = pLines.length * 5 + 12;
+          pdf.setFillColor(...DARK); pdf.rect(M, py, CW, pH, "F");
+          setT(7, MUTED); pdf.text(tx.payment.toUpperCase(), M + 4, py + 6);
+          setT(8, WHITE); pLines.forEach((line, j) => pdf.text(`> ${line}`, M + 4, py + 12 + j * 5));
+          py += pH + 4;
+        }
+
+        // Advisor card — fixed at bottom
+        const advY = H - M - 20;
+        pdf.setFillColor(...CARD); pdf.rect(M, advY, CW, 20, "F");
+        setT(7, MUTED); pdf.text(tx.advisor.toUpperCase(), M + 5, advY + 5);
+        setT(11, WHITE, true); pdf.text(brokerName || "—", M + 5, advY + 12);
+        if (brokerCompany) { setT(8, GOLD); pdf.text(brokerCompany, M + 5, advY + 18); }
+        setT(8, MUTED);
+        if (brokerPhone) pdf.text(`Tel: ${brokerPhone}`, W - M - 4, advY + 12, { align: "right" });
+        if (brokerEmail) pdf.text(`E-Mail: ${brokerEmail}`, W - M - 4, advY + 18, { align: "right" });
+      }
 
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const filename = `yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`;
       if (isIOS) {
         const blob = pdf.output("blob");
-        const url = URL.createObjectURL(blob);
-        setIosPdfUrl(url);
+        setIosPdfUrl(URL.createObjectURL(blob));
       } else {
         pdf.save(filename);
       }
