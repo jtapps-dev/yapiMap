@@ -125,7 +125,8 @@ function CatalogContent() {
   const [images, setImages] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [pdfLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [iosPdfUrl, setIosPdfUrl] = useState<string | null>(null);
   const catalogRef = useRef<HTMLDivElement>(null);
   const [brokerName, setBrokerName] = useState("");
   const [brokerPhone, setBrokerPhone] = useState("");
@@ -161,31 +162,10 @@ function CatalogContent() {
       }
       const ordered = ids.map(id => (projs as Project[])?.find(p => p.id === id)).filter(Boolean) as Project[];
       setProjects(ordered);
-      // Convert all images to data URLs via proxy for Safari compatibility
-      const allUrls: string[] = [];
-      (imgs as Image[] || []).forEach(img => allUrls.push(img.url));
-      ordered.forEach(p => { if (p.cover_image_url) allUrls.push(p.cover_image_url); });
-
-      const dataUrlCache: Record<string, string> = {};
-      await Promise.all(allUrls.map(async url => {
-        try {
-          const res = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`);
-          const blob = await res.blob();
-          dataUrlCache[url] = await new Promise<string>(resolve => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(blob);
-          });
-        } catch { dataUrlCache[url] = url; }
-      }));
-
       const imgMap: Record<string, string[]> = {};
       (imgs as Image[] || []).forEach(img => {
         if (!imgMap[img.project_id]) imgMap[img.project_id] = [];
-        imgMap[img.project_id].push(dataUrlCache[img.url] || img.url);
-      });
-      ordered.forEach(p => {
-        if (p.cover_image_url) p.cover_image_url = dataUrlCache[p.cover_image_url] || p.cover_image_url;
+        imgMap[img.project_id].push(img.url);
       });
       setImages(imgMap);
       setLoading(false);
@@ -199,8 +179,99 @@ function CatalogContent() {
     return new Date(d).toLocaleDateString(locale, { month: "long", year: "numeric" });
   }
 
-  function downloadPDF() {
-    window.print();
+  async function downloadPDF() {
+    if (!catalogRef.current) return;
+    setPdfLoading(true);
+    try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+
+      const el = catalogRef.current;
+
+      // Scroll to top so html2canvas captures the full element (incl. broker card above viewport)
+      window.scrollTo(0, 0);
+      await new Promise(r => setTimeout(r, 150));
+
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const allImgs = Array.from(el.querySelectorAll("img")) as HTMLImageElement[];
+
+      // Fetch all images as data URLs via proxy
+      const imgDataUrls = await Promise.all(allImgs.map(async img => {
+        const src = img.getAttribute("src");
+        if (!src || src.startsWith("data:")) return { img, dataUrl: src || "" };
+        try {
+          const res = await fetch(`/api/image-proxy?url=${encodeURIComponent(src)}`);
+          const blob = await res.blob();
+          const dataUrl = await new Promise<string>(r => {
+            const reader = new FileReader();
+            reader.onloadend = () => r(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          return { img, dataUrl };
+        } catch { return { img, dataUrl: "" }; }
+      }));
+
+      // For non-Safari: set data URLs directly and let html2canvas capture everything
+      if (!isSafari) {
+        imgDataUrls.forEach(({ img, dataUrl }) => { if (dataUrl) img.src = dataUrl; });
+        await new Promise(r => setTimeout(r, 200));
+      }
+
+      // On Safari: hide images so html2canvas doesn't try to render them (black box bug)
+      if (isSafari) {
+        allImgs.forEach(img => { img.style.visibility = "hidden"; });
+      }
+
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#0F1923",
+        logging: false,
+        windowWidth: el.scrollWidth,
+        windowHeight: el.scrollHeight,
+      });
+
+      // On Safari: manually draw images on top of the canvas at correct positions
+      if (isSafari) {
+        allImgs.forEach(img => { img.style.visibility = ""; });
+        const elRect = el.getBoundingClientRect();
+        const ctx = canvas.getContext("2d")!;
+        await Promise.all(imgDataUrls.map(({ img, dataUrl }) => new Promise<void>(resolve => {
+          if (!dataUrl) { resolve(); return; }
+          const rect = img.getBoundingClientRect();
+          const x = (rect.left - elRect.left) * 2;
+          const y = (rect.top - elRect.top) * 2;
+          const w = rect.width * 2;
+          const h = rect.height * 2;
+          const image = new Image();
+          image.onload = () => { ctx.drawImage(image, x, y, w, h); resolve(); };
+          image.onerror = () => resolve();
+          image.src = dataUrl;
+        })));
+      }
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.92);
+      const pxW = canvas.width / 2;
+      const pxH = canvas.height / 2;
+      const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [pxW, pxH] });
+      pdf.addImage(imgData, "JPEG", 0, 0, pxW, pxH);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const filename = `yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`;
+      if (isIOS) {
+        const blob = pdf.output("blob");
+        const url = URL.createObjectURL(blob);
+        setIosPdfUrl(url);
+      } else {
+        pdf.save(filename);
+      }
+    } catch (e) {
+      console.error("PDF error:", e);
+    } finally {
+      setPdfLoading(false);
+    }
   }
 
   if (loading) return <div style={{ padding: 60, textAlign: "center", fontFamily: "system-ui", color: "#94A3B8", backgroundColor: "#0F1923", minHeight: "100vh" }}>{tx.loading}</div>;
@@ -210,14 +281,19 @@ function CatalogContent() {
 
   return (
     <div style={{ fontFamily: "'Georgia', serif", background: "linear-gradient(135deg, #1a1a2e 0%, #232323 50%, #1a1a2e 100%)", color: "#F1F5F9", maxWidth: 860, margin: "0 auto", padding: "40px 40px 60px" }}>
-      <style>{`@media print { .no-print { display: none !important; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } @page { margin: 0; } }`}</style>
 
       {/* Toolbar */}
-      <div className="no-print" style={{ marginBottom: 32, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: "16px 20px", backgroundColor: "#ffffff10", borderRadius: 10, border: "1px solid #ffffff20" }}>
+      <div style={{ marginBottom: 32, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", padding: "16px 20px", backgroundColor: "#ffffff10", borderRadius: 10, border: "1px solid #ffffff20" }}>
         <button onClick={downloadPDF} disabled={pdfLoading}
           style={{ padding: "10px 24px", backgroundColor: pdfLoading ? "#888" : "#E8B84B", color: "#0F1923", fontWeight: 700, fontSize: 14, borderRadius: 8, border: "none", cursor: pdfLoading ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
           {pdfLoading ? tx.generating : `⬇ ${tx.savePdf}`}
         </button>
+        {iosPdfUrl && (
+          <a href={iosPdfUrl} target="_blank" rel="noopener"
+            style={{ padding: "10px 24px", backgroundColor: "#10B981", color: "#fff", fontWeight: 700, fontSize: 14, borderRadius: 8, textDecoration: "none", display: "flex", alignItems: "center", gap: 8 }}>
+            📄 {lang === "tr" ? "PDF'i Aç" : lang === "ru" ? "Открыть PDF" : "Open PDF"}
+          </a>
+        )}
         <button onClick={() => router.push("/broker/map")}
           style={{ padding: "10px 20px", backgroundColor: "transparent", color: "#94A3B8", fontSize: 14, borderRadius: 8, border: "1px solid #ffffff30", cursor: "pointer" }}>
           {tx.backToMap}
