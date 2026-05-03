@@ -183,10 +183,8 @@ function CatalogContent() {
     if (!catalogRef.current) return;
     setPdfLoading(true);
     try {
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import("html2canvas"),
-        import("jspdf"),
-      ]);
+      const { toJpeg } = await import("html-to-image");
+      const { default: jsPDF } = await import("jspdf");
 
       const el = catalogRef.current;
       window.scrollTo(0, 0);
@@ -194,7 +192,7 @@ function CatalogContent() {
 
       const allImgs = Array.from(el.querySelectorAll("img")) as HTMLImageElement[];
 
-      // Convert all images to same-origin data URLs via proxy (fixes Safari CORS black box)
+      // Convert all images to same-origin data URLs via proxy before capture
       await Promise.all(allImgs.map(async img => {
         const src = img.getAttribute("src");
         if (!src || src.startsWith("data:")) return;
@@ -210,10 +208,10 @@ function CatalogContent() {
             reader.readAsDataURL(blob);
           });
           img.src = dataUrl;
-        } catch { /* keep original src on failure */ }
+        } catch { /* keep original src */ }
       }));
 
-      // Wait for all images to finish loading before capture
+      // Wait for all images to fully render
       await Promise.all(allImgs.map(img => new Promise<void>(resolve => {
         if (img.complete && img.naturalHeight > 0) { resolve(); return; }
         img.onload = () => resolve();
@@ -221,22 +219,23 @@ function CatalogContent() {
         setTimeout(resolve, 5000);
       })));
 
-      // useCORS: false because all images are now same-origin data URLs
-      const canvas = await html2canvas(el, {
-        scale: 2,
-        useCORS: false,
-        allowTaint: false,
+      const dataUrl = await toJpeg(el, {
+        quality: 0.92,
         backgroundColor: "#0F1923",
-        logging: false,
-        windowWidth: el.scrollWidth,
-        windowHeight: el.scrollHeight,
+        pixelRatio: 2,
+        skipFonts: true,
+        fetchRequestInit: { mode: "cors" },
       });
 
-      const imgData = canvas.toDataURL("image/jpeg", 0.92);
-      const pxW = canvas.width / 2;
-      const pxH = canvas.height / 2;
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise(r => { img.onload = r; });
+
+      const pxW = img.naturalWidth / 2;
+      const pxH = img.naturalHeight / 2;
       const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [pxW, pxH] });
-      pdf.addImage(imgData, "JPEG", 0, 0, pxW, pxH);
+      pdf.addImage(dataUrl, "JPEG", 0, 0, pxW, pxH);
+
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const filename = `yapimap-katalog-${new Date().toISOString().split("T")[0]}.pdf`;
       if (isIOS) {
