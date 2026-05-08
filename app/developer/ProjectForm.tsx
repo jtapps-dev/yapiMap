@@ -133,6 +133,7 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
 
   async function geocodeAndFly(query: string, zoom: number) {
     if (!query || query.length < 2) return;
+    query = query.slice(0, 490);
     try {
       const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&country=TR,CY,RU&limit=1&language=tr`);
       const data = await res.json();
