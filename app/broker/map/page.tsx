@@ -9,11 +9,6 @@ import { useLang } from "@/app/i18n/LanguageContext";
 import ReferralBox from "@/app/components/ReferralBox";
 import { useIsMobile } from "@/app/hooks/useIsMobile";
 
-function imgUrl(url: string | null, width: number, quality = 70): string {
-  if (!url) return "";
-  return url.replace("/object/public/", "/render/image/public/") + `?width=${width}&quality=${quality}`;
-}
-
 const accent = "#E8B84B";
 const bgPrimary = "#0F1923";
 const bgCard = "#1E2D3D";
@@ -493,12 +488,12 @@ export default function BrokerMapPage() {
                 <div style={{ backgroundColor: bgCard, borderRadius: 10, padding: 14, width: 230, color: "#F1F5F9", fontFamily: "system-ui, sans-serif" }}>
                   {selected.developer_logo_url && (
                     <div style={{ width: "100%", height: 80, backgroundColor: "#0F1923", borderRadius: 7, marginBottom: 10, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: "6px" }}>
-                      <img src={imgUrl(selected.developer_logo_url, 300)} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                      <img src={selected.developer_logo_url} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
                     </div>
                   )}
                   {selected.cover_image_url && !selected.developer_logo_url && (
                     <div style={{ width: "100%", height: 90, backgroundColor: "#0F1923", borderRadius: 7, marginBottom: 10, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <img src={imgUrl(selected.cover_image_url, 400)} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                      <img src={selected.cover_image_url} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
                     </div>
                   )}
                   <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3 }}>{selected.title}</div>

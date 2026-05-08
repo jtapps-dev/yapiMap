@@ -14,11 +14,6 @@ const TYPE_LABELS: Record<string, { tr: string; en: string; ru: string }> = {
   loft:       { tr: "Loft",      en: "Loft",       ru: "Лофт" },
 };
 
-function imgUrl(url: string | null, width: number, quality = 70): string {
-  if (!url) return "";
-  return url.replace("/object/public/", `/render/image/public/`) + `?width=${width}&quality=${quality}`;
-}
-
 const accent = "#E8B84B";
 const bgPrimary = "#0F1923";
 const bgCard = "#1E2D3D";
@@ -185,7 +180,7 @@ export default function ProjectDetailPage() {
         {/* Cover + Logo */}
         <div style={{ position: "relative", borderRadius: 12, overflow: "hidden", marginBottom: 28, backgroundColor: bgCard, height: 280 }}>
           {project.cover_image_url
-            ? <img src={imgUrl(project.cover_image_url, 1200)} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} loading="eager" />
+            ? <img src={project.cover_image_url} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
             : <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1E2D3D, #0F1923)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <span style={{ color: borderColor, fontSize: 48 }}>🏢</span>
               </div>
@@ -226,7 +221,7 @@ export default function ProjectDetailPage() {
             <div style={{ fontSize: 12, color: accent, letterSpacing: 2, textTransform: "uppercase", marginBottom: 12, fontWeight: 700 }}>{t.gallery}</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 10 }}>
               {images.map(img => (
-                <img key={img.id} src={imgUrl(img.url, 600)} alt="" onClick={() => setSelectedImg(imgUrl(img.url, 1400, 85))}
+                <img key={img.id} src={img.url} alt="" onClick={() => setSelectedImg(img.url)}
                   style={{ width: "100%", height: 110, objectFit: "cover", borderRadius: 8, cursor: "pointer", border: `1px solid ${borderColor}` }} />
               ))}
             </div>
@@ -335,7 +330,7 @@ export default function ProjectDetailPage() {
       {selectedImg && (
         <div onClick={() => setSelectedImg(null)}
           style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.9)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-          <img src={selectedImg ?? ""} alt="" style={{ maxWidth: "90vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 8 }} />
+          <img src={selectedImg} alt="" style={{ maxWidth: "90vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 8 }} />
         </div>
       )}
     </div>
