@@ -316,8 +316,21 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
     onSave();
   }
 
+  const savingMsg = loading
+    ? (project
+        ? (lang === "tr" ? "Projeniz güncelleniyor..." : lang === "ru" ? "Проект обновляется..." : "Updating your project...")
+        : (lang === "tr" ? "Projeniz oluşturuluyor..." : lang === "ru" ? "Ваш проект создаётся..." : "Your project is being created..."))
+    : null;
+
   return (
     <div style={{ backgroundColor: bgPrimary, minHeight: "100vh", color: "#F1F5F9", fontFamily: "system-ui, sans-serif" }}>
+      {savingMsg && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 9999, backgroundColor: accent, color: "#0F1923", padding: "14px 24px", display: "flex", alignItems: "center", justifyContent: "center", gap: 12, fontWeight: 700, fontSize: 15, boxShadow: "0 2px 16px rgba(0,0,0,0.4)" }}>
+          <div style={{ width: 18, height: 18, border: "3px solid #0F192360", borderTopColor: "#0F1923", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+          {savingMsg}
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
       <nav style={{ backgroundColor: "#162030", borderBottom: `1px solid ${borderColor}`, padding: "14px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span onClick={() => router.push("/")} style={{ color: accent, fontSize: 20, fontWeight: 800, cursor: "pointer" }}>YapıMap</span>
         <button onClick={onCancel} style={{ color: textMuted, fontSize: 13, background: "none", border: "none", cursor: "pointer" }}>{t.cancel}</button>
@@ -389,10 +402,6 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
                 <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.fields.maxSqm}</label>
                 <input style={inputStyle} type="number" value={form.max_sqm} onChange={e => set("max_sqm", e.target.value)} />
               </div>
-            </div>
-            <div>
-              <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.fields.delivery}</label>
-              <input style={inputStyle} type="date" value={form.delivery_date} onChange={e => set("delivery_date", e.target.value)} />
             </div>
           </div>
 
