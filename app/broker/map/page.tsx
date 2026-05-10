@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import Map, { Marker, Popup, NavigationControl, Source, Layer } from "react-map-gl/mapbox";
-import type { MapRef, MapLayerMouseEvent } from "react-map-gl/mapbox";
+import type { MapRef } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -65,7 +65,8 @@ export default function BrokerMapPage() {
     })),
   }), [projects]);
 
-  const onMapClick = useCallback((e: MapLayerMouseEvent) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onMapClick = useCallback((e: any) => {
     if (!mapRef.current) return;
     const features = mapRef.current.queryRenderedFeatures(e.point, { layers: ["clusters", "unclustered-point"] });
     if (!features.length) { setSelected(null); return; }
