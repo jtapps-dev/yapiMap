@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
-import Map, { Marker, Popup, NavigationControl } from "react-map-gl/mapbox";
-import type { MapRef } from "react-map-gl/mapbox";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import Map, { Marker, Popup, NavigationControl, Source, Layer } from "react-map-gl/mapbox";
+import type { MapRef, MapLayerMouseEvent } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -52,8 +52,42 @@ export default function BrokerMapPage() {
   const [sidebarTab, setSidebarTab] = useState<"filter" | "list">("filter");
   const [showPaywall, setShowPaywall] = useState(false);
   const mapRef = useRef<MapRef>(null);
+  const [cursor, setCursor] = useState("grab");
 
   const subscribed = profile?.subscription_status === "active";
+
+  const geojson = useMemo(() => ({
+    type: "FeatureCollection" as const,
+    features: projects.map(p => ({
+      type: "Feature" as const,
+      geometry: { type: "Point" as const, coordinates: [p.lng, p.lat] },
+      properties: { ...p },
+    })),
+  }), [projects]);
+
+  const onMapClick = useCallback((e: MapLayerMouseEvent) => {
+    if (!mapRef.current) return;
+    const features = mapRef.current.queryRenderedFeatures(e.point, { layers: ["clusters", "unclustered-point"] });
+    if (!features.length) { setSelected(null); return; }
+    const f = features[0];
+    if (f.layer?.id === "clusters") {
+      const clusterId = f.properties?.cluster_id;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const source = mapRef.current.getSource("projects") as any;
+      source.getClusterExpansionZoom(clusterId, (err: Error | null, zoom: number) => {
+        if (err || !mapRef.current) return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const coords = (f.geometry as any).coordinates as [number, number];
+        mapRef.current.flyTo({ center: coords, zoom: zoom + 0.5, duration: 500 });
+      });
+    } else {
+      const projectId = f.properties?.id;
+      const project = projects.find(p => p.id === projectId);
+      if (!project) return;
+      if (!subscribed) { setShowPaywall(true); return; }
+      setSelected(project);
+    }
+  }, [projects, subscribed]);
 
   const tLabels = {
     tr: {
@@ -462,25 +496,45 @@ export default function BrokerMapPage() {
             initialViewState={{ longitude: 35.2433, latitude: 38.9637, zoom: 5.5 }}
             style={{ width: "100%", height: "100%" }}
             mapStyle="mapbox://styles/mapbox/dark-v11"
+            cursor={cursor}
+            interactiveLayerIds={["clusters", "unclustered-point"]}
+            onClick={onMapClick}
+            onMouseEnter={() => setCursor("pointer")}
+            onMouseLeave={() => setCursor("grab")}
           >
             <NavigationControl position="bottom-right" />
 
-            {projects.map(p => (
-              <Marker key={p.id} longitude={p.lng} latitude={p.lat} anchor="bottom"
-                onClick={e => { e.originalEvent.stopPropagation(); if (!subscribed) { setShowPaywall(true); return; } setSelected(p); }}>
-                <div style={{
-                  backgroundColor: !subscribed ? accent : selectedIds.has(p.id) ? "#10B981" : selected?.id === p.id ? "#fff" : accent,
-                  color: "#0F1923", fontSize: 11, fontWeight: 700,
-                  padding: "4px 10px", borderRadius: 6, cursor: "pointer",
-                  whiteSpace: "nowrap", boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
-                  transform: selected?.id === p.id ? "scale(1.15)" : "scale(1)",
-                  transition: "all 0.15s",
-                  outline: selectedIds.has(p.id) ? "2px solid #fff" : "none",
-                }}>
-                  {!subscribed ? "🔒 " : selectedIds.has(p.id) ? "✓ " : ""}{p.city}
-                </div>
-              </Marker>
-            ))}
+            <Source id="projects" type="geojson" data={geojson} cluster clusterMaxZoom={14} clusterRadius={50}>
+              <Layer id="clusters" type="circle" filter={["has", "point_count"]} paint={{
+                "circle-color": accent,
+                "circle-radius": ["step", ["get", "point_count"], 22, 5, 30, 20, 38],
+                "circle-stroke-width": 3,
+                "circle-stroke-color": "#0F1923",
+              }} />
+              <Layer id="cluster-count" type="symbol" filter={["has", "point_count"]} layout={{
+                "text-field": "{point_count_abbreviated}",
+                "text-size": 14,
+                "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+              }} paint={{ "text-color": "#0F1923" }} />
+              <Layer id="unclustered-point" type="circle"
+                filter={["!", ["has", "point_count"]]}
+                paint={{
+                  "circle-color": ["case", ["==", ["get", "id"], selected?.id ?? ""], "#ffffff", accent],
+                  "circle-radius": 10,
+                  "circle-stroke-width": 2,
+                  "circle-stroke-color": "#0F1923",
+                }} />
+              <Layer id="unclustered-label" type="symbol"
+                filter={["!", ["has", "point_count"]]}
+                layout={{
+                  "text-field": ["get", "city"],
+                  "text-size": 11,
+                  "text-anchor": "left",
+                  "text-offset": [1.2, 0],
+                  "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+                }}
+                paint={{ "text-color": accent, "text-halo-color": "#0F1923", "text-halo-width": 1.5 }} />
+            </Source>
 
             {selected && (
               <Popup longitude={selected.lng} latitude={selected.lat} anchor="top"
