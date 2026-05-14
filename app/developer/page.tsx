@@ -127,7 +127,7 @@ export default function DeveloperPage() {
   function loadProjects(userId: string) {
     const supabase = createClient();
     supabase.from("projects")
-      .select("id, title, city, district, project_type, min_price, max_price, lat, lng, status, ikamet_eligible, created_at, cover_image_url, pdf_url, description, amenities, contact_name, contact_phone, contact_email")
+      .select("id, title, city, district, project_type, min_price, max_price, min_sqm, max_sqm, lat, lng, status, ikamet_eligible, citizenship_eligible, created_at, cover_image_url, pdf_url, pdf_url_en, pdf_url_ru, description, description_en, description_ru, amenities, contact_name, contact_phone, contact_email, payment_plan, payment_plan_en, payment_plan_ru, handover_date, address, project_images(id, url, sort_order)")
       .eq("developer_id", userId)
       .order("created_at", { ascending: false })
       .then(({ data }) => setProjects(data || []));

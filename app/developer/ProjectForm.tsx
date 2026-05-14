@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Map, { Marker, NavigationControl } from "react-map-gl/mapbox";
 import type { MapRef } from "react-map-gl/mapbox";
@@ -79,6 +79,11 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
   const [coverPreview, setCoverPreview] = useState<string>(project?.cover_image_url || "");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<{ id: string; url: string }[]>(
+    project?.project_images
+      ? [...project.project_images].sort((a: any, b: any) => a.sort_order - b.sort_order)
+      : []
+  );
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfFile_en, setPdfFile_en] = useState<File | null>(null);
   const [pdfFile_ru, setPdfFile_ru] = useState<File | null>(null);
@@ -493,12 +498,27 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
           {/* Galeri */}
           <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 14, padding: 20 }}>
             <label style={{ fontSize: 13, fontWeight: 600, display: "block", marginBottom: 12 }}>{lang === "tr" ? "Galeri Fotoğrafları" : "Gallery Images"}</label>
+            {/* Bestehende Bilder */}
+            {existingImages.length > 0 && (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                {existingImages.map((img) => (
+                  <div key={img.id} style={{ position: "relative" }}>
+                    <img src={img.url} alt="" style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 6, border: `2px solid ${borderColor}` }} />
+                    <button type="button" onClick={async () => {
+                      const supabase = createClient();
+                      await supabase.from("project_images").delete().eq("id", img.id);
+                      setExistingImages(prev => prev.filter(x => x.id !== img.id));
+                    }} style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, backgroundColor: "#EF4444", color: "#fff", borderRadius: "50%", border: "none", fontSize: 10, cursor: "pointer" }}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
             {imagePreviews.length > 0 && (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
                 {imagePreviews.map((src, i) => (
                   <div key={i} style={{ position: "relative" }}>
                     <img src={src} alt="" style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 6 }} />
-                    <button onClick={() => removeImage(i)} style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, backgroundColor: "#EF4444", color: "#fff", borderRadius: "50%", border: "none", fontSize: 10, cursor: "pointer" }}>×</button>
+                    <button type="button" onClick={() => removeImage(i)} style={{ position: "absolute", top: -6, right: -6, width: 18, height: 18, backgroundColor: "#EF4444", color: "#fff", borderRadius: "50%", border: "none", fontSize: 10, cursor: "pointer" }}>×</button>
                   </div>
                 ))}
               </div>
