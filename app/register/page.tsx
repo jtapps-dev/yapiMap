@@ -207,6 +207,21 @@ function RegisterForm() {
 
       if (profileError) throw profileError;
 
+      // Telegram Benachrichtigung (fire & forget)
+      fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.full_name,
+          email: form.email,
+          phone: dialCode + form.phone.replace(/^0/, '').replace(/\D/g, ''),
+          company: form.company_name,
+          role,
+          city: form.city,
+          country: form.country,
+        }),
+      }).catch(() => {})
+
       // Sofort ausloggen – User wartet auf Freischaltung durch Admin
       await supabase.auth.signOut();
 
