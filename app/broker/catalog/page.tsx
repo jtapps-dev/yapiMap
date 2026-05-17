@@ -174,9 +174,11 @@ function CatalogContent() {
   }, []); // eslint-disable-line
 
   const locale = lang === "ru" ? "ru-RU" : lang === "en" ? "en-GB" : "tr-TR";
-  function formatPrice(n: number) { return "TL " + n.toLocaleString("tr-TR"); }
-  function formatDate(d: string) {
-    return new Date(d).toLocaleDateString(locale, { month: "long", year: "numeric" });
+  function formatPrice(n: number | null | undefined) { return "TL " + (n ?? 0).toLocaleString("tr-TR"); }
+  function formatDate(d: string | null | undefined) {
+    if (!d) return "";
+    try { return new Date(d).toLocaleDateString(locale, { month: "long", year: "numeric" }); }
+    catch { return ""; }
   }
 
   async function downloadPDF() {
@@ -248,6 +250,7 @@ function CatalogContent() {
         projects.map(p => Promise.all((images[p.id] || []).slice(0, 6).map(fetchImg)))
       );
 
+      function safeFmt(n: number | null | undefined) { return "TL " + (n ?? 0).toLocaleString("tr-TR"); }
       const W = 210, H = 297, M = 15, CW = W - M * 2;
       const BG:   [number,number,number] = [15, 25, 35];
       const DARK: [number,number,number] = [10, 18, 25];
@@ -341,7 +344,7 @@ function CatalogContent() {
 
         // Price box
         pdf.setFillColor(...DARK); pdf.rect(M, py, CW, 14, "F");
-        setT(13, GOLD, true); pdf.text(`${formatPrice(p.min_price)}  —  ${formatPrice(p.max_price)}`, M + 4, py + 9);
+        setT(13, GOLD, true); pdf.text(`${safeFmt(p.min_price)}  —  ${safeFmt(p.max_price)}`, M + 4, py + 9);
         let bx = W - M - 4;
         if (p.citizenship_eligible) {
           const label = san(tx.citizenship);
