@@ -167,7 +167,7 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
         amenities: "Sosyal Olanaklar", contact: "Proje İletişim Bilgileri",
         contactName: "Yetkili Adı", contactPhone: "Telefon", contactEmail: "E-posta",
         paymentPlan: "Ödeme Planı", handoverDate: "Teslim Tarihi",
-        documents: "Belgeler (Maks. 5)", docsHint: "Teknik şartname, kat planı vb.",
+        documents: "Belgeler (Maks. 5)", docsHint: "Teknik şartname, kat planı vb. — Yalnızca PDF kabul edilir.",
       },
     },
     en: {
@@ -183,7 +183,7 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
         amenities: "Amenities", contact: "Project Contact",
         contactName: "Contact Name", contactPhone: "Phone", contactEmail: "Email",
         paymentPlan: "Payment Plan", handoverDate: "Handover Date",
-        documents: "Documents (Max. 5)", docsHint: "Technical specs, floor plans, etc.",
+        documents: "Documents (Max. 5)", docsHint: "Technical specs, floor plans, etc. — PDF only.",
       },
     },
     ru: {
@@ -199,7 +199,7 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
         amenities: "Удобства", contact: "Контакты проекта",
         contactName: "Имя контактного лица", contactPhone: "Телефон", contactEmail: "Эл. почта",
         paymentPlan: "План оплаты", handoverDate: "Дата сдачи",
-        documents: "Документы (макс. 5)", docsHint: "Техническая спецификация, поэтажные планы и т.д.",
+        documents: "Документы (макс. 5)", docsHint: "Техническая спецификация, поэтажные планы и т.д. — Только PDF.",
       },
     },
   };
