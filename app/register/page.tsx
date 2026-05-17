@@ -29,7 +29,9 @@ function RegisterForm() {
 
   function handleRoleChange(r: "broker" | "developer") {
     setRole(r);
-    router.replace(`/register?role=${r}`, { scroll: false });
+    const ref = searchParams.get("ref");
+    const url = ref ? `/register?role=${r}&ref=${ref}` : `/register?role=${r}`;
+    router.replace(url, { scroll: false });
   }
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);

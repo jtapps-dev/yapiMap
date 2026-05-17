@@ -42,7 +42,7 @@ export default function ReferralBox({ referralCode, lang }: Props) {
   }
 
   function copyLink() {
-    navigator.clipboard.writeText(shareText);
+    navigator.clipboard.writeText(shareUrl);
     setLinkCopied(true);
     setTimeout(() => setLinkCopied(false), 2500);
   }
