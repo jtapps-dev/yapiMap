@@ -543,7 +543,13 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, padding: "6px 10px", backgroundColor: bgPrimary, borderRadius: 7 }}>
                     <span style={{ fontSize: 16 }}>📄</span>
                     <span style={{ fontSize: 12, color: "#F1F5F9", flex: 1 }}>{(row.file as File | null)?.name || "PDF"}</span>
-                    {row.existing && <a href={row.existing} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: accent }}>↗</a>}
+                    {row.existing && <button onClick={async () => {
+                      const supabase = createClient();
+                      const match = row.existing.match(/project-pdfs\/(.+)$/);
+                      if (!match) return;
+                      const { data } = await supabase.storage.from("project-pdfs").createSignedUrl(match[1], 3600);
+                      if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                    }} style={{ background: "none", border: "none", color: accent, cursor: "pointer", fontSize: 11 }}>↗</button>}
                   </div>
                 )}
                 <label style={{ display: "block", padding: "7px 12px", backgroundColor: bgPrimary, border: `1px dashed ${borderColor}`, borderRadius: 8, textAlign: "center", cursor: "pointer", fontSize: 12, color: textMuted }}>
