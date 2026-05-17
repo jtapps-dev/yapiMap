@@ -130,7 +130,16 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
 
   async function uploadFile(bucket: string, file: File, path: string): Promise<string | null> {
     const supabase = createClient();
-    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+    const mimeMap: Record<string, string> = {
+      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ".doc":  "application/msword",
+      ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      ".xls":  "application/vnd.ms-excel",
+      ".pdf":  "application/pdf",
+    };
+    const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+    const contentType = mimeMap[ext] || file.type || "application/octet-stream";
+    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true, contentType });
     if (error) return null;
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return data.publicUrl;
