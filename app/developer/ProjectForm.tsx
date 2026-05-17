@@ -130,16 +130,7 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
 
   async function uploadFile(bucket: string, file: File, path: string): Promise<string | null> {
     const supabase = createClient();
-    const mimeMap: Record<string, string> = {
-      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      ".doc":  "application/msword",
-      ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      ".xls":  "application/vnd.ms-excel",
-      ".pdf":  "application/pdf",
-    };
-    const ext = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
-    const contentType = mimeMap[ext] || file.type || "application/octet-stream";
-    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true, contentType });
+    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true, contentType: "application/pdf" });
     if (error) return null;
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return data.publicUrl;
@@ -590,7 +581,7 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
             {(existingDocs.length + docFiles.length) < 5 && (
               <label style={{ display: "block", padding: "9px 14px", backgroundColor: bgPrimary, border: `1px dashed ${borderColor}`, borderRadius: 8, textAlign: "center", cursor: "pointer", fontSize: 13, color: textMuted }}>
                 {lang === "tr" ? `+ Belge Ekle (${existingDocs.length + docFiles.length}/5)` : `+ Add Document (${existingDocs.length + docFiles.length}/5)`}
-                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={e => {
+                <input type="file" accept=".pdf" onChange={e => {
                   const f = e.target.files?.[0];
                   if (!f) return;
                   if (f.size > 50 * 1024 * 1024) { alert("Max 50 MB"); return; }
