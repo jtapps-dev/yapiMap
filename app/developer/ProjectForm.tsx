@@ -350,8 +350,8 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
           {/* Basis */}
           <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 14, padding: 20 }}>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.fields.title} *</label>
-              <input style={inputStyle} value={form.title} onChange={e => set("title", e.target.value)} />
+              <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.fields.title} * <span style={{ fontWeight: 400, color: form.title.length > 120 ? "#EF4444" : textMuted }}>({form.title.length}/150)</span></label>
+              <input style={inputStyle} value={form.title} maxLength={150} onChange={e => set("title", e.target.value)} />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
               <div>

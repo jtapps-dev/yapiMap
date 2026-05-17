@@ -310,7 +310,7 @@ export default function DeveloperPage() {
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3, flexWrap: "wrap" }}>
-                      <span style={{ fontWeight: 700, fontSize: 14 }}>{p.title}</span>
+                      <span style={{ fontWeight: 700, fontSize: 14 }}>{p.title.length > 60 ? p.title.slice(0, 60) + "…" : p.title}</span>
                       <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 999, backgroundColor: `${statusColor(p.status)}20`, color: statusColor(p.status) }}>
                         {statusLabel(p.status)}
                       </span>
@@ -385,7 +385,7 @@ export default function DeveloperPage() {
                   transform: selected?.id === p.id ? "scale(1.15)" : "scale(1)",
                   transition: "all 0.15s",
                 }}>
-                  {p.title || p.city}
+                  {(p.title || p.city).slice(0, 30)}{(p.title || p.city).length > 30 ? "…" : ""}
                 </div>
               </Marker>
             ))}
