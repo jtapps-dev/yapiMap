@@ -391,11 +391,11 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
               <div>
                 <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.fields.minPrice}</label>
-                <input style={inputStyle} type="number" value={form.min_price} onChange={e => set("min_price", e.target.value)} />
+                <input style={inputStyle} type="text" inputMode="numeric" value={form.min_price ? parseInt(form.min_price).toLocaleString("tr-TR") : ""} onChange={e => set("min_price", e.target.value.replace(/\./g, "").replace(/\D/g, ""))} />
               </div>
               <div>
                 <label style={{ fontSize: 12, color: textMuted, display: "block", marginBottom: 4 }}>{t.fields.maxPrice}</label>
-                <input style={inputStyle} type="number" value={form.max_price} onChange={e => set("max_price", e.target.value)} />
+                <input style={inputStyle} type="text" inputMode="numeric" value={form.max_price ? parseInt(form.max_price).toLocaleString("tr-TR") : ""} onChange={e => set("max_price", e.target.value.replace(/\./g, "").replace(/\D/g, ""))} />
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
