@@ -568,7 +568,13 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
               <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "8px 12px", backgroundColor: bgPrimary, borderRadius: 7 }}>
                 <span style={{ fontSize: 16 }}>📄</span>
                 <span style={{ fontSize: 13, color: "#F1F5F9", flex: 1 }}>{d.name}</span>
-                <a href={d.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: accent }}>↗</a>
+                <button onClick={async () => {
+                  const supabase = createClient();
+                  const match = d.url.match(/project-pdfs\/(.+)$/);
+                  if (!match) return;
+                  const { data } = await supabase.storage.from("project-pdfs").createSignedUrl(match[1], 3600);
+                  if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                }} style={{ background: "none", border: "none", color: accent, cursor: "pointer", fontSize: 16 }}>↗</button>
               </div>
             ))}
             {docFiles.map((f, i) => (
