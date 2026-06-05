@@ -140,7 +140,7 @@ export default function ProjectForm({ profile, project, onSave, onCancel, lang }
     if (!query || query.length < 2) return;
     query = query.slice(0, 490);
     try {
-      const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&country=TR,CY,RU&limit=1&language=tr`);
+      const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&country=TR,CY,RU,AE&limit=1&language=tr`);
       const data = await res.json();
       if (data.features?.length > 0) {
         const [lng, lat] = data.features[0].center;
