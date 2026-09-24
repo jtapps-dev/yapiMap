@@ -13,8 +13,11 @@ const t = {
     title: "Künye",
     subtitle: "Yasal Bilgiler",
     operator: "İşletici / Firma",
+    pendingCompany: "[Şirket bilgisi — kuruluş sonrası eklenecektir]",
     office: "Türkiye Merkez Ofis",
+    pendingAddress: "[Adres — kuruluş sonrası eklenecektir]",
     contact: "İletişim",
+    pendingContact: "[İletişim bilgileri — kuruluş sonrası eklenecektir]",
     platform: "Platform Hakkında",
     platformText: "YapıMap, Türkiye, Kıbrıs ve Rusya'daki inşaat firmalarını ve emlak danışmanlarını birbirine bağlayan bir B2B platformdur. Platformda gösterilen tüm projeler ve bilgiler ilgili inşaat firmaları tarafından sağlanmaktadır.",
     back: "← Ana Sayfaya Dön",
@@ -23,8 +26,11 @@ const t = {
     title: "Imprint",
     subtitle: "Legal Notice",
     operator: "Operator / Company",
+    pendingCompany: "[Company details — to be added upon incorporation]",
     office: "Central Office in Turkey",
+    pendingAddress: "[Address — to be added upon incorporation]",
     contact: "Contact",
+    pendingContact: "[Contact details — to be added upon incorporation]",
     platform: "About Platform",
     platformText: "YapıMap is a B2B platform connecting real estate developers and brokers in Turkey, Cyprus and Russia. All projects and information displayed on the platform are provided by the respective developers.",
     back: "← Back to Home",
@@ -33,8 +39,11 @@ const t = {
     title: "Импрессум",
     subtitle: "Правовая информация",
     operator: "Оператор / Компания",
+    pendingCompany: "[Данные компании — будут добавлены после регистрации]",
     office: "Центральный офис в Турции",
+    pendingAddress: "[Адрес — будет добавлен после регистрации]",
     contact: "Контакты",
+    pendingContact: "[Контактные данные — будут добавлены после регистрации]",
     platform: "О платформе",
     platformText: "YapıMap — B2B-платформа, соединяющая застройщиков и агентов по недвижимости в Турции, на Кипре и в России. Все проекты и информация на платформе предоставлены соответствующими застройщиками.",
     back: "← На главную",
@@ -58,39 +67,17 @@ export default function ImpressumPage() {
 
         <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 16, padding: 32, marginBottom: 24 }}>
           <h2 style={{ fontSize: 18, fontWeight: 800, color: accent, marginBottom: 20 }}>{tx.operator}</h2>
-          <p style={{ fontWeight: 700, fontSize: 16, marginBottom: 4 }}>Global Trade Real Estate / Emlak / Недвижимость</p>
-          <p style={{ color: textMuted, fontSize: 14, lineHeight: 1.8 }}>
-            Şehit Astsubay Ömer Halis Demir Cad.<br />
-            Ekpa 1207 Sitesi, A3 Blok NO:95AN<br />
-            Kepez / Antalya, Türkiye
-          </p>
+          <p style={{ color: textMuted, fontSize: 14, lineHeight: 1.8 }}>{tx.pendingCompany}</p>
         </div>
 
         <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 16, padding: 32, marginBottom: 24 }}>
           <h2 style={{ fontSize: 18, fontWeight: 800, color: accent, marginBottom: 20 }}>{tx.office}</h2>
-          <p style={{ color: textMuted, fontSize: 14, lineHeight: 1.8 }}>
-            Ekpa 1207, Güneş Mahallesi<br />
-            4409 Sokak, A3 Blok 163<br />
-            07260 Kepez / Antalya, Türkiye
-          </p>
+          <p style={{ color: textMuted, fontSize: 14, lineHeight: 1.8 }}>{tx.pendingAddress}</p>
         </div>
 
         <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 16, padding: 32, marginBottom: 24 }}>
           <h2 style={{ fontSize: 18, fontWeight: 800, color: accent, marginBottom: 20 }}>{tx.contact}</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <span style={{ color: textMuted, fontSize: 13, minWidth: 60 }}>Tel 1</span>
-              <a href="tel:+905013619006" style={{ color: "#F1F5F9", fontSize: 15, textDecoration: "none" }}>+90 501 361 90 06</a>
-            </div>
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <span style={{ color: textMuted, fontSize: 13, minWidth: 60 }}>Tel 2</span>
-              <a href="tel:+77009993939" style={{ color: "#F1F5F9", fontSize: 15, textDecoration: "none" }}>+7 700 999 39 39</a>
-            </div>
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-              <span style={{ color: textMuted, fontSize: 13, minWidth: 60 }}>E-Mail</span>
-              <a href="mailto:kaz.bigsale@gmail.com" style={{ color: accent, fontSize: 15, textDecoration: "none" }}>kaz.bigsale@gmail.com</a>
-            </div>
-          </div>
+          <p style={{ color: textMuted, fontSize: 14, lineHeight: 1.8 }}>{tx.pendingContact}</p>
         </div>
 
         <div style={{ backgroundColor: bgCard, border: `1px solid ${borderColor}`, borderRadius: 16, padding: 32 }}>

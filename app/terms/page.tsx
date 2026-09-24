@@ -44,7 +44,7 @@ const content = {
       },
       {
         heading: "8. Fikri Mülkiyet",
-        text: "YapıMap platformunun tüm hakları Global Trade Real Estate'e aittir. Kullanıcı içerikleri üzerindeki haklar kullanıcıda kalır; ancak kullanıcı, YapıMap'e içeriği platform dahilinde kullanma lisansı verir.",
+        text: "YapıMap platformunun tüm hakları platformu işleten şirkete aittir. Kullanıcı içerikleri üzerindeki haklar kullanıcıda kalır; ancak kullanıcı, YapıMap'e içeriği platform dahilinde kullanma lisansı verir.",
       },
       {
         heading: "9. Yükümlülük Sınırlaması",
@@ -95,7 +95,7 @@ const content = {
       },
       {
         heading: "8. Intellectual Property",
-        text: "All rights to the YapıMap platform belong to Global Trade Real Estate. Users retain ownership of their content but grant YapıMap a license to display and use that content within the platform.",
+        text: "All rights to the YapıMap platform belong to the company operating the platform. Users retain ownership of their content but grant YapıMap a license to display and use that content within the platform.",
       },
       {
         heading: "9. Limitation of Liability",
@@ -146,7 +146,7 @@ const content = {
       },
       {
         heading: "8. Интеллектуальная собственность",
-        text: "Все права на платформу YapıMap принадлежат Global Trade Real Estate. Пользователи сохраняют право на свой контент, однако предоставляют YapıMap лицензию на его использование в рамках платформы.",
+        text: "Все права на платформу YapıMap принадлежат компании, управляющей платформой. Пользователи сохраняют право на свой контент, однако предоставляют YapıMap лицензию на его использование в рамках платформы.",
       },
       {
         heading: "9. Ограничение ответственности",

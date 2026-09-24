@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { LanguageProvider } from "./i18n/LanguageContext";
-import WhatsAppButton from "./components/WhatsAppButton";
 
 export const metadata: Metadata = {
   title: "YapıMap – Türkiye'nin Proje Haritası",
@@ -14,7 +13,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{ margin: 0 }}>
         <LanguageProvider>
           {children}
-          <WhatsAppButton />
         </LanguageProvider>
       </body>
     </html>
